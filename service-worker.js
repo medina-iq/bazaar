@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v3";
+const CACHE_NAME = "medina-bazaar-v4";
 
 const APP_SHELL = [
   "./",
