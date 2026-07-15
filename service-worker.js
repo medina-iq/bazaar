@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v8";
+consconst CACHE_NAME = "medina-bazaar-v9";
 const FONT_CACHE = "medina-bazaar-fonts-v1";
 
 const APP_SHELL = [
