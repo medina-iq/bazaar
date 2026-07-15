@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v1";
+const CACHE_NAME = "medina-bazaar-v3";
 
 const APP_SHELL = [
   "./",
@@ -14,6 +14,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
+
   self.skipWaiting();
 });
 
@@ -27,15 +28,26 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
+
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const requestUrl = new URL(event.request.url);
+
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        if (!response || response.status !== 200) {
+          return response;
+        }
+
         const copy = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
@@ -46,7 +58,16 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() =>
         caches.match(event.request).then((cached) => {
-          return cached || caches.match("./index.html");
+          if (cached) return cached;
+
+          if (event.request.mode === "navigate") {
+            return caches.match("./index.html");
+          }
+
+          return new Response("Offline", {
+            status: 503,
+            statusText: "Offline"
+          });
         })
       )
   );
