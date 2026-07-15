@@ -1,4 +1,5 @@
-const CACHE_NAME = "medina-bazaar-v4";
+const CACHE_NAME = "medina-bazaar-v5";
+const FONT_CACHE = "medina-bazaar-fonts-v1";
 
 const APP_SHELL = [
   "./",
@@ -14,7 +15,6 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
-
   self.skipWaiting();
 });
 
@@ -23,42 +23,57 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => key !== CACHE_NAME && key !== FONT_CACHE)
           .map((key) => caches.delete(key))
       )
     )
   );
-
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
-  const requestUrl = new URL(event.request.url);
+  const url = new URL(event.request.url);
 
-  if (requestUrl.origin !== self.location.origin) {
+  // حفظ خطوط Cairo وMaterial Symbols بعد أول فتح بالإنترنت.
+  if (
+    url.hostname === "fonts.googleapis.com" ||
+    url.hostname === "fonts.gstatic.com"
+  ) {
+    event.respondWith(
+      caches.open(FONT_CACHE).then(async (cache) => {
+        const saved = await cache.match(event.request);
+        if (saved) return saved;
+
+        try {
+          const response = await fetch(event.request);
+          await cache.put(event.request, response.clone());
+          return response;
+        } catch (error) {
+          return saved || Response.error();
+        }
+      })
+    );
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (!response || response.status !== 200) {
+  // ملفات الموقع: الإنترنت أولاً، والكاش عند الانقطاع.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, copy);
+            });
+          }
           return response;
-        }
-
-        const copy = response.clone();
-
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, copy);
-        });
-
-        return response;
-      })
-      .catch(() =>
-        caches.match(event.request).then((cached) => {
-          if (cached) return cached;
+        })
+        .catch(async () => {
+          const saved = await caches.match(event.request);
+          if (saved) return saved;
 
           if (event.request.mode === "navigate") {
             return caches.match("./index.html");
@@ -69,6 +84,6 @@ self.addEventListener("fetch", (event) => {
             statusText: "Offline"
           });
         })
-      )
-  );
+    );
+  }
 });
