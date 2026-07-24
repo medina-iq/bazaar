@@ -1,17 +1,14 @@
 <!DOCTYPE html>
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
-<html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="color-scheme" content="light">
-<style id="linkoDirectLoginStartupV51">
-html,body{margin:0!important;min-height:100%!important;background:#f8fbf9!important;color:#101828!important;}
-#splash{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
-#authPage{display:grid!important;visibility:visible!important;opacity:1!important;min-height:100dvh!important;}
-#authPage.active{display:grid!important;}
-#authPage .auth-card{visibility:visible!important;opacity:1!important;}
-#authPage .brand-logo,#authPage .linko-auth-star,#authPage .auth-card{animation:none!important;transition:none!important;}
-</style><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
-html,body{background:#f8fafc!important;}
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
+html{color-scheme:light!important;background:#f8fafc!important;}
+html,body{margin:0!important;background:#f8fafc!important;}
 #splash{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;animation:none!important;transition:none!important;}
+#authPage.app-page.active{display:grid!important;visibility:visible!important;opacity:1!important;}
+#authPage.app-page.active .auth-card{visibility:visible!important;opacity:1!important;}
+#authPage.app-page.active .brand-logo,
+#authPage.app-page.active .linko-auth-star,
+#authPage.app-page.active .auth-card{animation:none!important;transition:none!important;}
 </style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,0,0" rel="stylesheet"><style>
 :root{
 --bg:#f5f8f6;--card:#ffffff;--ink:#101828;--muted:#667085;--line:#e5e7eb;--green:#0f8a55;--green2:#16c784;--gold:#f5b544;--dark:#111827;--red:#ef4444;--blue:#2563eb;--orange:#f59e0b;--shadow:0 24px 70px rgba(16,24,40,.12);--soft:0 12px 32px rgba(16,24,40,.08);--radius:28px;--max:1160px;
@@ -591,23 +588,7 @@ body.theme-dark .linko-chart-axis{stroke:#475569}
 }
 </style>
 
-</head><body><script id="linkoDirectLoginBootV51">
-(function(){
-  document.documentElement.style.background='#f8fbf9';
-  document.addEventListener('DOMContentLoaded',function(){
-    var splash=document.getElementById('splash');
-    if(splash)splash.remove();
-    var auth=document.getElementById('authPage');
-    if(auth){
-      document.querySelectorAll('.app-page').forEach(function(p){p.classList.remove('active');});
-      auth.classList.add('active');
-      auth.style.display='grid';
-    }
-    var nav=document.getElementById('bottomNav');if(nav)nav.style.display='none';
-    var cart=document.getElementById('floatCart');if(cart)cart.classList.remove('show');
-  },{once:true});
-})();
-</script>
+</head><body>
 
 <div id="linkoConnectionAlert" class="linko-connection-alert" role="status" aria-live="polite">
   <span class="linko-alert-dot" aria-hidden="true"></span>
@@ -1186,7 +1167,7 @@ Object.assign(productImages,{
 const products=[]; Object.keys(branchProducts).forEach((bid,bi)=>{branchProducts[bid].forEach((name,i)=>products.push({id:bid+'_'+i,branch:bid,name,status:'متوفر',badge:'',group:productGroups[bid]?.[name]||'',icon:branches.find(b=>b.id===bid)?.icon||'shopping_bag',image:productImages[bid+'::'+name]||productImages[name]||''}))});
 branches.forEach(b=>{if(branchProducts[b.id]) b.count=branchProducts[b.id].length;});
 const notes=[{title:'مرحباً بك في سوق المدينة الكبير',text:'يمكنك الآن تصفح الفروع وإضافة المنتجات للسلة.',type:'info'},{title:'حسابك مفعل',text:'بطاقة العضوية جاهزة للاستخدام.',type:'ok'},{title:'تنبيه طلبات الإدارة',text:'طلبات التعديل تظهر في حسابك بحالة قيد المراجعة.',type:'pending'}];
-window.addEventListener('load',()=>{const s=document.getElementById('splash');if(s)s.remove();renderAll();});
+window.addEventListener('load',()=>{setTimeout(()=>document.getElementById('splash').classList.add('hide'),1700);renderAll();});
 let pendingAvatarData='', avatarScale=1, avatarX=0, avatarY=0, dragStart=null;
 function getSavedMembers(){return JSON.parse(localStorage.getItem('lm_members')||'[]')}
 function setSavedMembers(v){localStorage.setItem('lm_members',JSON.stringify(v))}
