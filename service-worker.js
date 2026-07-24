@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v43";
+const CACHE_NAME = "medina-bazaar-v45";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -21,7 +21,7 @@ self.addEventListener("install", (event) => {
 
       /*
         نخزن الأيقونات والـ manifest فقط.
-        ممنوع تخزين index.html هنا حتى لا يفتح التطبيق نسخة قديمة.
+        ممنوع تخزين index.html هنا.
       */
       await Promise.allSettled(
         STATIC_ASSETS.map(async (assetUrl) => {
@@ -44,7 +44,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-/* تفعيل النسخة ومسح كاشات سوق المدينة القديمة */
+/* تفعيل النسخة ومسح جميع كاشات سوق المدينة القديمة */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -62,15 +62,22 @@ self.addEventListener("activate", (event) => {
       );
 
       /*
-        يقلل وقت انتظار فتح الصفحة داخل التطبيق.
+        نوقف Navigation Preload نهائياً.
+        هذا يمنع Safari والتطبيق من إعادة index.html قديم.
       */
       if (self.registration.navigationPreload) {
         try {
-          await self.registration.navigationPreload.enable();
+          await self.registration.navigationPreload.disable();
         } catch (error) {
           // بعض الأجهزة لا تدعم Navigation Preload.
         }
       }
+
+      /*
+        نتأكد أن الكاش الجديد لا يحتوي index.html قديماً.
+      */
+      const cache = await caches.open(CACHE_NAME);
+      await cache.delete(INDEX_URL);
 
       await self.clients.claim();
     })()
@@ -94,9 +101,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  /*
-    خطوط Google فقط تستخدم كاش مستقل.
-  */
+  /* خطوط Google فقط تستخدم كاش مستقل */
   if (
     url.hostname === "fonts.googleapis.com" ||
     url.hostname === "fonts.gstatic.com"
@@ -105,25 +110,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /*
-    لا نتدخل مطلقاً بطلبات Firebase أو أي موقع خارجي.
-  */
+  /* لا نتدخل بطلبات Firebase أو أي موقع خارجي */
   if (url.origin !== self.location.origin) {
     return;
   }
 
   /*
     الصفحة الرئيسية:
-    الإنترنت أولاً دائماً، والكاش فقط عند انقطاع الإنترنت.
+    طلب شبكة صريح بدون Navigation Preload وبدون كاش Safari.
   */
   if (request.mode === "navigate") {
-    event.respondWith(handleNavigation(event));
+    event.respondWith(handleNavigation(request));
     return;
   }
 
-  /*
-    لا نخزن ملف Service Worker داخل نفسه.
-  */
+  /* لا نخزن ملف Service Worker داخل نفسه */
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
@@ -133,44 +134,35 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /*
-    بقية ملفات الموقع:
-    أحدث نسخة من الإنترنت أولاً، والكاش عند انقطاع الإنترنت.
-  */
+  /* بقية ملفات الموقع: الإنترنت أولاً */
   event.respondWith(handleSameOriginAsset(request));
 });
 
 /* فتح الصفحة الرئيسية */
-async function handleNavigation(event) {
+async function handleNavigation(request) {
   const cache = await caches.open(CACHE_NAME);
 
   try {
     /*
-      نستخدم التحميل المسبق عندما يكون متوفراً لتقليل تأخير الفتح.
+      cache: reload يجبر Safari والتطبيق على مراجعة الخادم،
+      ولا يسمح لهما بإعادة HTML قديم من كاش المتصفح.
     */
-    let networkResponse = await event.preloadResponse;
-
-    if (!networkResponse) {
-      networkResponse = await fetch(event.request, {
-        cache: "no-store",
-        redirect: "follow"
-      });
-    }
+    const networkResponse = await fetch(request, {
+      cache: "reload",
+      redirect: "follow"
+    });
 
     if (!networkResponse || !networkResponse.ok) {
       throw new Error("Navigation network response failed");
     }
 
     /*
-      نحفظ آخر نسخة ناجحة فقط للاستخدام عند انقطاع الإنترنت.
+      نحفظ آخر نسخة ناجحة للاستخدام فقط عند انقطاع الإنترنت.
     */
     await cache.put(INDEX_URL, networkResponse.clone());
 
     return networkResponse;
   } catch (error) {
-    /*
-      لا نستخدم النسخة المحفوظة إلا عندما يفشل الإنترنت فعلياً.
-    */
     const cachedIndex = await cache.match(INDEX_URL);
 
     if (cachedIndex) {
@@ -187,7 +179,7 @@ async function handleSameOriginAsset(request) {
 
   try {
     const networkResponse = await fetch(request, {
-      cache: "no-store"
+      cache: "reload"
     });
 
     if (networkResponse && networkResponse.ok) {
