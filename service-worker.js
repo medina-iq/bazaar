@@ -1,11 +1,11 @@
-const CACHE_NAME = "medina-bazaar-v41";
-const FONT_CACHE = "medina-bazaar-fonts-v3";
+const CACHE_NAME = "medina-bazaar-v42";
+const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
 
-const APP_SHELL = [
+const STATIC_ASSETS = [
   new URL("manifest.webmanifest", SCOPE_URL).href,
   new URL("apple-touch-icon.png", SCOPE_URL).href,
   new URL("icon-192.png", SCOPE_URL).href,
@@ -13,63 +13,78 @@ const APP_SHELL = [
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
 
+/* تثبيت النسخة الجديدة */
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
+      /*
+        نخزن الأيقونات والـ manifest فقط.
+        ممنوع تخزين index.html هنا حتى لا يفتح التطبيق نسخة قديمة.
+      */
       await Promise.allSettled(
-        APP_SHELL.map(async (fileUrl) => {
-          const response = await fetch(fileUrl, { cache: "reload" });
+        STATIC_ASSETS.map(async (assetUrl) => {
+          try {
+            const response = await fetch(assetUrl, {
+              cache: "reload"
+            });
 
-          if (response && response.ok) {
-            await cache.put(fileUrl, response.clone());
+            if (response && response.ok) {
+              await cache.put(assetUrl, response.clone());
+            }
+          } catch (error) {
+            // عدم وجود أحد ملفات الأيقونات لا يوقف تثبيت التطبيق.
           }
         })
       );
-
-      try {
-        const response = await fetch(INDEX_URL, { cache: "no-store" });
-
-        if (response && response.ok) {
-          await cache.put(INDEX_URL, response.clone());
-        }
-      } catch (error) {
-        // نكمل التثبيت حتى إذا لم يتوفر الإنترنت مؤقتاً.
-      }
     })()
   );
 
   self.skipWaiting();
 });
 
+/* تفعيل النسخة ومسح كاشات سوق المدينة القديمة */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
+      const cacheKeys = await caches.keys();
 
       await Promise.all(
-        keys
+        cacheKeys
           .filter(
-            (key) =>
-              key.startsWith(CACHE_PREFIX) &&
-              key !== CACHE_NAME &&
-              key !== FONT_CACHE
+            (cacheKey) =>
+              cacheKey.startsWith(CACHE_PREFIX) &&
+              cacheKey !== CACHE_NAME &&
+              cacheKey !== FONT_CACHE
           )
-          .map((key) => caches.delete(key))
+          .map((cacheKey) => caches.delete(cacheKey))
       );
+
+      /*
+        يقلل وقت انتظار فتح الصفحة داخل التطبيق.
+      */
+      if (self.registration.navigationPreload) {
+        try {
+          await self.registration.navigationPreload.enable();
+        } catch (error) {
+          // بعض الأجهزة لا تدعم Navigation Preload.
+        }
+      }
 
       await self.clients.claim();
     })()
   );
 });
 
+/* تفعيل النسخة الجديدة مباشرة */
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
+/* استقبال طلبات الموقع */
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -79,149 +94,201 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
+  /*
+    خطوط Google فقط تستخدم كاش مستقل.
+  */
   if (
     url.hostname === "fonts.googleapis.com" ||
     url.hostname === "fonts.gstatic.com"
   ) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(FONT_CACHE);
-        const cached = await cache.match(request);
-
-        if (cached) {
-          return cached;
-        }
-
-        try {
-          const response = await fetch(request);
-
-          if (response && response.ok) {
-            await cache.put(request, response.clone());
-          }
-
-          return response;
-        } catch (error) {
-          return new Response("", {
-            status: 504,
-            statusText: "Offline"
-          });
-        }
-      })()
-    );
-
+    event.respondWith(handleFontRequest(request));
     return;
   }
 
+  /*
+    لا نتدخل مطلقاً بطلبات Firebase أو أي موقع خارجي.
+  */
   if (url.origin !== self.location.origin) {
     return;
   }
 
+  /*
+    الصفحة الرئيسية:
+    الإنترنت أولاً دائماً، والكاش فقط عند انقطاع الإنترنت.
+  */
   if (request.mode === "navigate") {
+    event.respondWith(handleNavigation(event));
+    return;
+  }
+
+  /*
+    لا نخزن ملف Service Worker داخل نفسه.
+  */
+  if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_NAME);
+      fetch(request, {
+        cache: "no-store"
+      })
+    );
+    return;
+  }
 
-        const cachedIndex =
-          (await cache.match(INDEX_URL)) ||
-          (await cache.match(SCOPE_URL.href));
+  /*
+    بقية ملفات الموقع:
+    أحدث نسخة من الإنترنت أولاً، والكاش عند انقطاع الإنترنت.
+  */
+  event.respondWith(handleSameOriginAsset(request));
+});
 
-        const networkUpdate = fetch(request, { cache: "no-store" })
-          .then(async (networkResponse) => {
-            if (networkResponse && networkResponse.ok) {
-              await cache.put(INDEX_URL, networkResponse.clone());
-            }
+/* فتح الصفحة الرئيسية */
+async function handleNavigation(event) {
+  const cache = await caches.open(CACHE_NAME);
 
-            return networkResponse;
-          });
+  try {
+    /*
+      نستخدم التحميل المسبق عندما يكون متوفراً لتقليل تأخير الفتح.
+    */
+    let networkResponse = await event.preloadResponse;
 
-        if (cachedIndex) {
-          event.waitUntil(networkUpdate.catch(() => undefined));
-          return cachedIndex;
-        }
+    if (!networkResponse) {
+      networkResponse = await fetch(event.request, {
+        cache: "no-store",
+        redirect: "follow"
+      });
+    }
 
-        try {
-          return await networkUpdate;
-        } catch (error) {
-          return new Response(
-            `<!doctype html>
+    if (!networkResponse || !networkResponse.ok) {
+      throw new Error("Navigation network response failed");
+    }
+
+    /*
+      نحفظ آخر نسخة ناجحة فقط للاستخدام عند انقطاع الإنترنت.
+    */
+    await cache.put(INDEX_URL, networkResponse.clone());
+
+    return networkResponse;
+  } catch (error) {
+    /*
+      لا نستخدم النسخة المحفوظة إلا عندما يفشل الإنترنت فعلياً.
+    */
+    const cachedIndex = await cache.match(INDEX_URL);
+
+    if (cachedIndex) {
+      return cachedIndex;
+    }
+
+    return createOfflinePage();
+  }
+}
+
+/* تحميل ملفات الموقع */
+async function handleSameOriginAsset(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const networkResponse = await fetch(request, {
+      cache: "no-store"
+    });
+
+    if (networkResponse && networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+    }
+
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await cache.match(request);
+
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    return new Response("Offline", {
+      status: 503,
+      statusText: "Offline"
+    });
+  }
+}
+
+/* تحميل خطوط Google */
+async function handleFontRequest(request) {
+  const cache = await caches.open(FONT_CACHE);
+  const cachedResponse = await cache.match(request);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  try {
+    const networkResponse = await fetch(request);
+
+    if (networkResponse && networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+    }
+
+    return networkResponse;
+  } catch (error) {
+    return new Response("", {
+      status: 504,
+      statusText: "Offline"
+    });
+  }
+}
+
+/* صفحة تظهر فقط إذا كان أول تشغيل بدون إنترنت */
+function createOfflinePage() {
+  return new Response(
+    `<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8fafc">
   <title>سوق المدينة</title>
+
   <style>
-    body{
-      margin:0;
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      text-align:center;
-      font-family:Arial,sans-serif;
-      background:#f8fafc;
-      color:#111827;
-      padding:24px;
-      box-sizing:border-box;
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: #f8fafc;
+      color: #111827;
+      font-family: Arial, sans-serif;
     }
 
-    div{
-      width:min(100%,420px);
-      background:#fff;
-      border:1px solid #e5e7eb;
-      border-radius:24px;
-      padding:24px;
-      box-sizing:border-box;
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .offline-box {
+      width: min(100%, 420px);
+      padding: 24px;
+      box-sizing: border-box;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 24px;
     }
   </style>
 </head>
+
 <body>
-  <div>
+  <div class="offline-box">
     <h2>لا يوجد اتصال بالإنترنت</h2>
-    <p>اتصل بالإنترنت ثم أعد فتح الموقع.</p>
+    <p>اتصل بالإنترنت ثم افتح التطبيق مرة ثانية.</p>
   </div>
 </body>
 </html>`,
-            {
-              status: 503,
-              headers: {
-                "Content-Type": "text/html; charset=UTF-8",
-                "Cache-Control": "no-store"
-              }
-            }
-          );
-        }
-      })()
-    );
-
-    return;
-  }
-
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-
-      try {
-        const networkResponse = await fetch(request, {
-          cache: "no-store"
-        });
-
-        if (networkResponse && networkResponse.ok) {
-          await cache.put(request, networkResponse.clone());
-        }
-
-        return networkResponse;
-      } catch (error) {
-        const cached = await cache.match(request);
-
-        if (cached) {
-          return cached;
-        }
-
-        return new Response("Offline", {
-          status: 503,
-          statusText: "Offline"
-        });
+    {
+      status: 503,
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Cache-Control": "no-store"
       }
-    })()
+    }
   );
-});
+}
