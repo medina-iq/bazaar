@@ -3201,14 +3201,52 @@ function officialBranches(){
  }catch(e){}
  return fallback.map(b=&gt;({...b}));
 }
-function seed(){return{settings:{market:&#x27;سوق المدينة الكبير&#x27;,whatsapp:&#x27;9647887624967&#x27;,currency:&#x27;د.ع&#x27;},requests:[],members:[{id:101,name:&#x27;محمد كريم&#x27;,phone:&#x27;07711111111&#x27;,area:&#x27;زيونة&#x27;,code:&#x27;4455&#x27;,balance:25000,status:&#x27;active&#x27;,img:&#x27;&#x27;},{id:102,name:&#x27;زينب أحمد&#x27;,phone:&#x27;07822222222&#x27;,area:&#x27;الأعظمية&#x27;,code:&#x27;7788&#x27;,balance:0,status:&#x27;stopped&#x27;,img:&#x27;&#x27;}],products:[{id:201,name:&#x27;رز عنبر&#x27;,price:2500,cat:&#x27;المواد الغذائية&#x27;,branch:&#x27;كل الفروع&#x27;,status:&#x27;available&#x27;,sell:&#x27;بالوزن&#x27;,qty:&#x27;1 كغم&#x27;,badge:&#x27;جديد&#x27;,img:&#x27;&#x27;},{id:202,name:&#x27;زيت طبخ&#x27;,price:18000,cat:&#x27;المواد الغذائية&#x27;,branch:&#x27;كل الفروع&#x27;,status:&#x27;available&#x27;,sell:&#x27;بالكرتون&#x27;,qty:&#x27;12 قطعة&#x27;,badge:&#x27;عرض&#x27;,img:&#x27;&#x27;},{id:203,name:&#x27;عصير برتقال&#x27;,price:1500,cat:&#x27;المشروبات&#x27;,branch:&#x27;فرع الكرادة&#x27;,status:&#x27;unavailable&#x27;,sell:&#x27;بالحجم&#x27;,qty:&#x27;1 لتر&#x27;,badge:&#x27;&#x27;,img:&#x27;&#x27;}],branches:officialBranches(),notifications:[],logs:[{id:1,type:&#x27;تهيئة النظام&#x27;,by:&#x27;admin&#x27;,time:new Date().toLocaleString(&#x27;ar-IQ&#x27;),details:&#x27;تم تشغيل نسخة لوحة الإدارة الوظيفية.&#x27;}],orders:[{id:1,branch:&#x27;فرع المنصور&#x27;,total:0,status:&#x27;new&#x27;},{id:2,branch:&#x27;فرع الكرادة&#x27;,total:0,status:&#x27;new&#x27;}]}}
+function officialProducts(){
+ let rows=[];
+ try{
+  const api=parent.__linkoStage6ProductAvailabilityAPI;
+  if(api&amp;&amp;typeof api.list===&#x27;function&#x27;) rows=api.list();
+ }catch(e){}
+ if(!Array.isArray(rows)||!rows.length){
+  try{
+   const parentProducts=Array.isArray(parent.products)?parent.products:[];
+   const parentBranches=Array.isArray(parent.branches)?parent.branches:[];
+   const branchNames=new Map(parentBranches.map(b=&gt;[String(b.id),String(b.name||&#x27;&#x27;)]));
+   rows=parentProducts.map(p=&gt;({
+    id:String(p.id||&#x27;&#x27;),
+    name:String(p.name||&#x27;&#x27;),
+    branchId:String(p.branch||&#x27;&#x27;),
+    branchName:String(branchNames.get(String(p.branch||&#x27;&#x27;))||&#x27;&#x27;),
+    status:(p.status===&#x27;unavailable&#x27;||p.status===&#x27;غير متوفر&#x27;)?&#x27;unavailable&#x27;:&#x27;available&#x27;,
+    image:String(p.image||&#x27;&#x27;),
+    badge:String(p.badge||&#x27;&#x27;),
+    group:String(p.group||&#x27;&#x27;)
+   }));
+  }catch(e){ rows=[]; }
+ }
+ return rows.map((p,i)=&gt;({
+  id:String(p.id||&#x27;&#x27;),
+  name:String(p.name||&#x27;&#x27;),
+  cat:String(p.cat||p.group||&#x27;&#x27;),
+  branch:String(p.branchName||p.branch||p.branchId||&#x27;&#x27;),
+  branchName:String(p.branchName||&#x27;&#x27;),
+  status:(p.status===&#x27;unavailable&#x27;||p.status===&#x27;غير متوفر&#x27;)?&#x27;unavailable&#x27;:&#x27;available&#x27;,
+  img:String(p.image||p.img||&#x27;&#x27;),
+  badge:String(p.badge||&#x27;&#x27;),
+  order:i+1
+ })).filter(p=&gt;p.id&amp;&amp;p.name);
+}
+function productJsId(value){
+ return JSON.stringify(String(value)).replace(/&lt;/g,&#x27;\\u003c&#x27;);
+}
+function seed(){return{settings:{market:&#x27;سوق المدينة الكبير&#x27;,whatsapp:&#x27;9647887624967&#x27;,currency:&#x27;د.ع&#x27;},requests:[],members:[{id:101,name:&#x27;محمد كريم&#x27;,phone:&#x27;07711111111&#x27;,area:&#x27;زيونة&#x27;,code:&#x27;4455&#x27;,balance:25000,status:&#x27;active&#x27;,img:&#x27;&#x27;},{id:102,name:&#x27;زينب أحمد&#x27;,phone:&#x27;07822222222&#x27;,area:&#x27;الأعظمية&#x27;,code:&#x27;7788&#x27;,balance:0,status:&#x27;stopped&#x27;,img:&#x27;&#x27;}],products:officialProducts(),branches:officialBranches(),notifications:[],logs:[{id:1,type:&#x27;تهيئة النظام&#x27;,by:&#x27;admin&#x27;,time:new Date().toLocaleString(&#x27;ar-IQ&#x27;),details:&#x27;تم تشغيل نسخة لوحة الإدارة الوظيفية.&#x27;}],orders:[{id:1,branch:&#x27;فرع المنصور&#x27;,total:0,status:&#x27;new&#x27;},{id:2,branch:&#x27;فرع الكرادة&#x27;,total:0,status:&#x27;new&#x27;}]}}
 function normalizeState(data){
  const base=seed();
 data=data||base;
 data.settings=data.settings||base.settings;
 data.requests=[];
 data.members=(data.members||[]).map(m=&gt;({...m,username:m.username||m.name||&#x27;&#x27;,password:m.password||m.code||&#x27;&#x27;,img:m.img||&#x27;&#x27;}));
-data.products=(data.products||[]).map(p=&gt;({...p,img:p.img||&#x27;&#x27;}));
+data.products=officialProducts();
 data.branches=officialBranches();
 data.notifications=data.notifications||[];
 data.trash=data.trash||[];
@@ -3225,12 +3263,12 @@ data.adminMessages=[
 function loadState(){
  try{
   const saved=JSON.parse(localStorage.getItem(LS))||seed();
-  if(saved&amp;&amp;typeof saved===&#x27;object&#x27;) delete saved.branches;
+  if(saved&amp;&amp;typeof saved===&#x27;object&#x27;){ delete saved.branches; delete saved.products; }
   const normalized=normalizeState(saved);
   try{
    localStorage.setItem(
     LS,
-    JSON.stringify({...normalized,requests:[],branches:[]})
+    JSON.stringify({...normalized,requests:[],branches:[],products:[]})
    );
   }catch(_e){}
   return normalized;
@@ -3239,7 +3277,7 @@ function loadState(){
  }
 }
 function save(){
- const cleanState={...state,requests:[],branches:[]};
+ const cleanState={...state,requests:[],branches:[],products:[]};
  localStorage.setItem(LS,JSON.stringify(cleanState));
 }
 function log(type,details){state.logs.unshift({id:Date.now(),type,by:&#x27;admin&#x27;,time:new Date().toLocaleString(&#x27;ar-IQ&#x27;),details});save()}
@@ -3343,33 +3381,70 @@ save();closeModal();toast(&#x27;تم تعديل بيانات العضو&#x27;);s
 }
 function toggleMember(id){let m=state.members.find(x=&gt;x.id===id);m.status=m.status===&#x27;active&#x27;?&#x27;stopped&#x27;:&#x27;active&#x27;;log(&#x27;تغيير حالة عضو&#x27;,&#x27;تم تغيير حالة &#x27;+m.name);save();render()}
 function deleteMember(id){if(confirm(&#x27;تأكيد حذف العضو ونقله إلى سلة المحذوفات؟&#x27;)){let m=state.members.find(x=&gt;x.id===id);if(m){state.trash=state.trash||[];state.trash.unshift({id:Date.now(),kind:&#x27;عضو&#x27;,name:m.name,data:m,time:new Date().toLocaleString(&#x27;ar-IQ&#x27;)});}state.members=state.members.filter(x=&gt;x.id!==id);log(&#x27;حذف عضو&#x27;,&#x27;تم نقل &#x27;+(m?.name||&#x27;&#x27;)+&#x27; إلى سلة المحذوفات&#x27;);save();toast(&#x27;تم نقل العضو إلى السلة&#x27;);render()}}
-function products(){let q=($(&#x27;prodSearch&#x27;)?.value||&#x27;&#x27;);let list=state.products.filter(p=&gt;!q||[p.name,p.cat,p.branch,p.status].join(&#x27; &#x27;).includes(q));return `&lt;div class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;إدارة المنتجات&lt;/h2&gt;&lt;p&gt;تعديل اسم المنتج وحالته فقط لتسهيل الربط لاحقاً.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;tools&quot;&gt;&lt;input class=&quot;input&quot; id=&quot;prodSearch&quot; oninput=&quot;render()&quot; value=&quot;${q}&quot; placeholder=&quot;بحث عن منتج&quot;&gt;&lt;select&gt;&lt;option&gt;كل الأقسام&lt;/option&gt;&lt;option&gt;المواد الغذائية&lt;/option&gt;&lt;option&gt;المشروبات&lt;/option&gt;&lt;/select&gt;&lt;select&gt;&lt;option&gt;متوفر وغير متوفر&lt;/option&gt;&lt;/select&gt;&lt;button class=&quot;btn secondary&quot; onclick=&quot;render()&quot;&gt;فلترة&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;cards&quot;&gt;${list.map(productCard).join(&#x27;&#x27;)}&lt;/div&gt;&lt;/div&gt;`}
+function products(){
+ state.products=officialProducts();
+ const q=String($(&#x27;prodSearch&#x27;)?.value||&#x27;&#x27;);
+ const list=state.products.filter(p=&gt;{
+  if(!q) return true;
+  return [p.name,p.cat,p.branch,p.branchName,p.status].join(&#x27; &#x27;).includes(q);
+ });
+ return `&lt;div class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;
+  &lt;h2&gt;إدارة المنتجات&lt;/h2&gt;
+  &lt;p&gt;المنتجات الحقيقية مرتبة بنفس ترتيب الموقع.&lt;/p&gt;
+ &lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;tools&quot;&gt;
+  &lt;input class=&quot;input&quot; id=&quot;prodSearch&quot; oninput=&quot;render()&quot; value=&quot;${q}&quot; placeholder=&quot;بحث عن منتج أو فرع&quot;&gt;
+ &lt;/div&gt;&lt;div class=&quot;cards&quot;&gt;${list.map(productCard).join(&#x27;&#x27;)||&#x27;&lt;div class=&quot;empty&quot;&gt;لا توجد منتجات&lt;/div&gt;&#x27;}&lt;/div&gt;&lt;/div&gt;`;
+}
 function productCard(p){
  const iw=p.imgW||100, ih=p.imgH||100;
- return `&lt;div class=&quot;product-card&quot;&gt;&lt;div class=&quot;product-img&quot;&gt;${p.img?`&lt;img src=&quot;${p.img}&quot; style=&quot;width:${iw}%;height:${ih}%;object-fit:contain;object-position:center;background:#fff;&quot;&gt;`:'&lt;span class=&quot;material-symbols-rounded&quot;&gt;shopping_cart&lt;/span&gt;'}&lt;/div&gt;&lt;div&gt;&lt;h3&gt;${p.name} ${p.badge?`&lt;span class=&quot;status info&quot;&gt;${p.badge}&lt;/span&gt;`:''}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${p.cat||'-'} • ${p.branch||'كل الفروع'}&lt;/p&gt;&lt;span class=&quot;status ${cls(p.status)}&quot;&gt;${statusText(p.status)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;actions-row&quot;&gt;&lt;button class=&quot;btn secondary mini&quot; onclick=&quot;openProduct(${p.id})&quot;&gt;تعديل&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;`
+ const branch=p.branchName||p.branch||&#x27;-&#x27;;
+ return `&lt;div class=&quot;product-card&quot;&gt;&lt;div class=&quot;product-img&quot;&gt;${p.img?`&lt;img src=&quot;${p.img}&quot; style=&quot;width:${iw}%;height:${ih}%;object-fit:contain;object-position:center;background:#fff;&quot;&gt;`:&#x27;&lt;span class=&quot;material-symbols-rounded&quot;&gt;shopping_cart&lt;/span&gt;&#x27;}&lt;/div&gt;&lt;div&gt;&lt;h3&gt;${p.name} ${p.badge?`&lt;span class=&quot;status info&quot;&gt;${p.badge}&lt;/span&gt;`:&#x27;&#x27;}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${branch}&lt;/p&gt;&lt;span class=&quot;status ${cls(p.status)}&quot;&gt;${statusText(p.status)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;actions-row&quot;&gt;&lt;button class=&quot;btn secondary mini&quot; onclick=&quot;openProduct(${productJsId(p.id)})&quot;&gt;تعديل&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;`;
 }
 function openProduct(id){
- const p=state.products.find(x=&gt;x.id===id);
- if(!p){toast('اختر منتج للتعديل');return}
-openModal('تعديل منتج',`&lt;div class=&quot;form-grid&quot;&gt;
-&lt;div class=&quot;field&quot;&gt;&lt;label&gt;اسم المنتج&lt;/label&gt;&lt;input class=&quot;input&quot; id=&quot;pName&quot; value=&quot;${p.name||''}&quot;&gt;&lt;/div&gt;
-&lt;div class=&quot;field&quot;&gt;&lt;label&gt;حالة المنتج&lt;/label&gt;&lt;select id=&quot;pStatus&quot;&gt;&lt;option value=&quot;available&quot; ${p.status==='available'?'selected':''}&gt;متوفر&lt;/option&gt;&lt;option value=&quot;unavailable&quot; ${p.status==='unavailable'?'selected':''}&gt;غير متوفر&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
-&lt;div class=&quot;branch-admin-preview-note&quot;&gt;تم تبسيط إدارة المنتجات: تعديل الاسم والحالة فقط، بدون إضافة أو حذف أو تحكم صور حتى يكون ربط النظام أسهل وأكثر استقراراً.&lt;/div&gt;
-&lt;button class=&quot;btn wide&quot; onclick=&quot;saveProduct(${id})&quot;&gt;حفظ التعديل&lt;/button&gt;
-&lt;/div&gt;`)
+ state.products=officialProducts();
+ const p=state.products.find(x=&gt;String(x.id)===String(id));
+ if(!p){toast(&#x27;المنتج غير موجود&#x27;);return;}
+ openModal(&#x27;تعديل منتج&#x27;,`&lt;div class=&quot;form-grid&quot;&gt;
+  &lt;div class=&quot;field&quot;&gt;&lt;label&gt;اسم المنتج&lt;/label&gt;&lt;input class=&quot;input&quot; id=&quot;pName&quot; value=&quot;${p.name||&#x27;&#x27;}&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;field&quot;&gt;&lt;label&gt;حالة المنتج&lt;/label&gt;&lt;select id=&quot;pStatus&quot;&gt;&lt;option value=&quot;available&quot; ${p.status===&#x27;available&#x27;?&#x27;selected&#x27;:&#x27;&#x27;}&gt;متوفر&lt;/option&gt;&lt;option value=&quot;unavailable&quot; ${p.status===&#x27;unavailable&#x27;?&#x27;selected&#x27;:&#x27;&#x27;}&gt;غير متوفر&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+  &lt;button class=&quot;btn wide&quot; onclick=&quot;saveProduct(${productJsId(p.id)})&quot;&gt;حفظ التعديل&lt;/button&gt;
+ &lt;/div&gt;`);
 }
-function saveProduct(id){
- const p=state.products.find(x=&gt;x.id===id);
- if(!p){toast('المنتج غير موجود');return}
+async function saveProduct(id){
+ state.products=officialProducts();
+ const p=state.products.find(x=&gt;String(x.id)===String(id));
+ if(!p){toast(&#x27;المنتج غير موجود&#x27;);return;}
  const name=pName.value.trim();
- if(!name){toast('اكتب اسم المنتج');return}
-p.name=name;
-p.status=pStatus.value;
-log('تعديل منتج','تم تعديل '+name);
-save();closeModal();toast('تم حفظ تعديل المنتج');render()
+ if(!name){toast(&#x27;اكتب اسم المنتج&#x27;);return;}
+ try{
+  const api=parent.__linkoStage6ProductAvailabilityAPI;
+  if(!api||typeof api.setName!==&#x27;function&#x27;||typeof api.setStatus!==&#x27;function&#x27;) throw new Error(&#x27;PRODUCT_API_NOT_READY&#x27;);
+  if(name!==p.name) await api.setName(String(id),name);
+  await api.setStatus(String(id),pStatus.value===&#x27;unavailable&#x27;?&#x27;unavailable&#x27;:&#x27;available&#x27;);
+  state.products=officialProducts();
+  closeModal();
+  toast(&#x27;تم حفظ تعديل المنتج&#x27;);
+  render();
+ }catch(error){
+  console.error(&#x27;product save failed&#x27;,error);
+  toast(&#x27;تعذر حفظ المنتج، حاول مرة ثانية&#x27;);
+ }
 }
-function toggleProduct(id){let p=state.products.find(x=&gt;x.id===id);p.status=p.status===&#x27;available&#x27;?&#x27;unavailable&#x27;:&#x27;available&#x27;;log(&#x27;تغيير حالة منتج&#x27;,&#x27;تم تغيير حالة &#x27;+p.name);save();render()}
-function deleteProduct(id){if(confirm(&#x27;تأكيد حذف المنتج؟&#x27;)){let p=state.products.find(x=&gt;x.id===id);if(p){state.trash=state.trash||[];state.trash.unshift({id:Date.now(),kind:&#x27;منتج&#x27;,name:p.name,data:p,time:new Date().toLocaleString(&#x27;ar-IQ&#x27;)});}state.products=state.products.filter(x=&gt;x.id!==id);log(&#x27;حذف منتج&#x27;,&#x27;تم نقل &#x27;+(p?.name||&#x27;&#x27;)+&#x27; إلى سلة المحذوفات&#x27;);save();render()}}
+async function toggleProduct(id){
+ state.products=officialProducts();
+ const p=state.products.find(x=&gt;String(x.id)===String(id));
+ if(!p){toast(&#x27;المنتج غير موجود&#x27;);return;}
+ try{
+  const api=parent.__linkoStage6ProductAvailabilityAPI;
+  if(!api||typeof api.setStatus!==&#x27;function&#x27;) throw new Error(&#x27;PRODUCT_API_NOT_READY&#x27;);
+  await api.setStatus(String(id),p.status===&#x27;unavailable&#x27;?&#x27;available&#x27;:&#x27;unavailable&#x27;);
+  state.products=officialProducts();
+  render();
+ }catch(error){ toast(&#x27;تعذر حفظ حالة المنتج&#x27;); }
+}
+function deleteProduct(){
+ toast(&#x27;حذف المنتجات غير متاح من هذه الصفحة&#x27;);
+}
 function branches(){
  state.branches=officialBranches();
  const sorted=[...state.branches].sort(
