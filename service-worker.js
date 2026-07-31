@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v55";
+const CACHE_NAME = "medina-bazaar-v56";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -73,9 +73,7 @@ self.addEventListener("activate", (event) => {
         }
       }
 
-      /*
-        نتأكد أن الكاش الجديد لا يحتوي index.html قديماً.
-      */
+      /* نتأكد أن الكاش الجديد لا يحتوي index.html قديماً. */
       const cache = await caches.open(CACHE_NAME);
       await cache.delete(INDEX_URL);
 
@@ -117,10 +115,16 @@ self.addEventListener("fetch", (event) => {
 
   /*
     الصفحة الرئيسية:
-    طلب شبكة صريح بدون Navigation Preload وبدون كاش Safari.
+    نعيد الاستجابة فور وصولها، ونحفظ نسخة الأوفلاين بالتوازي.
   */
   if (request.mode === "navigate") {
-    event.respondWith(handleNavigation(request));
+    const networkPromise = fetch(request, {
+      cache: "reload",
+      redirect: "follow"
+    });
+
+    event.waitUntil(updateNavigationCache(networkPromise));
+    event.respondWith(serveNavigation(networkPromise));
     return;
   }
 
@@ -138,31 +142,32 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(handleSameOriginAsset(request));
 });
 
-/* فتح الصفحة الرئيسية */
-async function handleNavigation(request) {
-  const cache = await caches.open(CACHE_NAME);
-
+/* حفظ آخر نسخة ناجحة دون تأخير فتح الصفحة */
+async function updateNavigationCache(networkPromise) {
   try {
-    /*
-      cache: reload يجبر Safari والتطبيق على مراجعة الخادم،
-      ولا يسمح لهما بإعادة HTML قديم من كاش المتصفح.
-    */
-    const networkResponse = await fetch(request, {
-      cache: "reload",
-      redirect: "follow"
-    });
+    const networkResponse = await networkPromise;
+
+    if (networkResponse && networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(INDEX_URL, networkResponse.clone());
+    }
+  } catch (error) {
+    // فشل الشبكة لا يمنع محاولة فتح النسخة المحفوظة.
+  }
+}
+
+/* فتح الصفحة الرئيسية فور وصول استجابة الشبكة */
+async function serveNavigation(networkPromise) {
+  try {
+    const networkResponse = await networkPromise;
 
     if (!networkResponse || !networkResponse.ok) {
       throw new Error("Navigation network response failed");
     }
 
-    /*
-      نحفظ آخر نسخة ناجحة للاستخدام فقط عند انقطاع الإنترنت.
-    */
-    await cache.put(INDEX_URL, networkResponse.clone());
-
     return networkResponse;
   } catch (error) {
+    const cache = await caches.open(CACHE_NAME);
     const cachedIndex = await cache.match(INDEX_URL);
 
     if (cachedIndex) {
