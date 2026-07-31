@@ -9766,11 +9766,25 @@ body:not(.linko-dark) .info-box{
     if(patchFrame()) return;
     if(attempt < 60) setTimeout(function(){ retry(attempt+1); },300);
   }
-  const frame = document.getElementById('linkoAdminFrame');
-  if(frame) frame.addEventListener('load',function(){ retry(0); });
-  document.addEventListener('DOMContentLoaded',function(){ retry(0); });
-  window.addEventListener('load',function(){ retry(0); });
-  retry(0);
+  function bindCurrentFrame(){
+    const frame = document.getElementById('linkoAdminFrame');
+    if(frame && !frame.__linkoStage84LoadBound){
+      frame.__linkoStage84LoadBound = true;
+      frame.addEventListener('load',function(){ retry(0); });
+    }
+    retry(0);
+  }
+  const previousOpenAdmin84 = window.linkoOpenAdmin;
+  window.linkoOpenAdmin = function(){
+    const result = typeof previousOpenAdmin84 === 'function'
+      ? previousOpenAdmin84.apply(this, arguments)
+      : undefined;
+    bindCurrentFrame();
+    return result;
+  };
+  document.addEventListener('DOMContentLoaded',bindCurrentFrame);
+  window.addEventListener('load',bindCurrentFrame);
+  bindCurrentFrame();
 })();
 
 </script><!-- LINKO PHASE 9.3A-3 MEMBER DATA UID LINKING + SELF VERIFY --><!-- LINKO PHASE 9.3A-4 + 9.3B PRODUCTION SECURITY BRIDGE --><script id="linkoPhase93A4BProductionSecurityBridge">
@@ -11576,29 +11590,39 @@ transform-origin:center center!important;
       }
     }catch(e){ console.warn('admin final patch waiting', e); }
   }
-  function start(){ patchAdminFrame(); setTimeout(patchAdminFrame,250); setTimeout(patchAdminFrame,900); setTimeout(patchAdminFrame,1800); }
-
-  // V48: whenever Safari reloads/rebuilds the admin iframe, inject the single
-  // authoritative requests system again immediately instead of leaving the base old UI.
-  const linkoFinalAdminFrame = document.getElementById('linkoAdminFrame');
-  if(linkoFinalAdminFrame && !linkoFinalAdminFrame.__linkoV48LoadBound){
-    linkoFinalAdminFrame.__linkoV48LoadBound = true;
-    linkoFinalAdminFrame.addEventListener('load', start);
+  function start(){
+    patchAdminFrame();
+    setTimeout(patchAdminFrame,120);
+    setTimeout(patchAdminFrame,500);
+    setTimeout(patchAdminFrame,1200);
+    setTimeout(patchAdminFrame,2600);
   }
 
-  // V48: every admin opening must refresh from Firebase, including the second/third entry.
+  // Safari قد يعيد إنشاء iframe الإدارة عند كل فتح، لذلك نربط الحدث
+  // بالعنصر الحالي في كل مرة بدل الاعتماد على أول عنصر فقط.
+  function bindCurrentAdminFrame(){
+    const frame = document.getElementById('linkoAdminFrame');
+    if(frame && !frame.__linkoV48LoadBound){
+      frame.__linkoV48LoadBound = true;
+      frame.addEventListener('load', start);
+    }
+    start();
+  }
+
+  // كل فتح للإدارة يعيد تثبيت نظام طلبات الاشتراك على iframe الحالي.
   const linkoV48PreviousOpenAdmin = window.linkoOpenAdmin;
   window.linkoOpenAdmin = function(){
     const result = typeof linkoV48PreviousOpenAdmin === 'function'
       ? linkoV48PreviousOpenAdmin.apply(this, arguments)
       : undefined;
-    start();
+    bindCurrentAdminFrame();
     return result;
   };
 
-  document.addEventListener('DOMContentLoaded', start);
-  window.addEventListener('load', start);
-  // V50: no continuous admin-frame polling; load/open hooks handle refresh.
+  document.addEventListener('DOMContentLoaded', bindCurrentAdminFrame);
+  window.addEventListener('load', bindCurrentAdminFrame);
+  bindCurrentAdminFrame();
+  // لا يوجد polling مستمر؛ ربط load وفتح الإدارة فقط.
 })();
 </script><!-- ===== LINKO FINAL PATCH: MENU + MEMBERS SMOOTH ONLY ===== --><script id="linkoMenuMembersSmoothOnlyFinal">
 (function(){
@@ -13787,11 +13811,25 @@ transform-origin:center center!important;
     if(patchFrame()) return;
     if(attempt < 40) setTimeout(function(){ retry(attempt+1); },300);
   }
-  const frame = document.getElementById('linkoAdminFrame');
-  if(frame) frame.addEventListener('load',function(){ retry(0); });
-  document.addEventListener('DOMContentLoaded',function(){ retry(0); });
-  window.addEventListener('load',function(){ retry(0); });
-  retry(0);
+  function bindCurrentFrame(){
+    const frame = document.getElementById('linkoAdminFrame');
+    if(frame && !frame.__linkoStage74LoadBound){
+      frame.__linkoStage74LoadBound = true;
+      frame.addEventListener('load',function(){ retry(0); });
+    }
+    retry(0);
+  }
+  const previousOpenAdmin74 = window.linkoOpenAdmin;
+  window.linkoOpenAdmin = function(){
+    const result = typeof previousOpenAdmin74 === 'function'
+      ? previousOpenAdmin74.apply(this, arguments)
+      : undefined;
+    bindCurrentFrame();
+    return result;
+  };
+  document.addEventListener('DOMContentLoaded',bindCurrentFrame);
+  window.addEventListener('load',bindCurrentFrame);
+  bindCurrentFrame();
 })();
 </script><!-- ===== LINKO STAGE 7.4: MEMBER LAST-5 + GLOWING POPUP ONLY ===== --><style id="linkoStage74Latest5GlowingPopupStyle">
 #linkoStage74MemberNotificationPopup{
