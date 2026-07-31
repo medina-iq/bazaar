@@ -13,16 +13,31 @@ const STATIC_ASSETS = [
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
 
-/* تثبيت النسخة الجديدة */
+/*
+  تثبيت النسخة الجديدة:
+  نخزن index.html حتى يكون جاهزاً للفتح المباشر،
+  ونخزن الأيقونات بدون أن يفشل التثبيت إذا كان ملف مفقوداً.
+*/
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
-      /*
-        نخزن الأيقونات والـ manifest فقط.
-        ممنوع تخزين index.html هنا.
-      */
+      try {
+        const indexResponse = await fetch(INDEX_URL, {
+          cache: "reload"
+        });
+
+        if (indexResponse && indexResponse.ok) {
+          await cache.put(INDEX_URL, indexResponse.clone());
+        }
+      } catch (error) {
+        /*
+          إذا فشل الإنترنت وقت التثبيت، لا نوقف تثبيت
+          Service Worker بالكامل.
+        */
+      }
+
       await Promise.allSettled(
         STATIC_ASSETS.map(async (assetUrl) => {
           try {
@@ -34,17 +49,22 @@ self.addEventListener("install", (event) => {
               await cache.put(assetUrl, response.clone());
             }
           } catch (error) {
-            // عدم وجود أحد ملفات الأيقونات لا يوقف تثبيت التطبيق.
+            /*
+              عدم وجود أحد ملفات الأيقونات
+              لا يوقف تثبيت التطبيق.
+            */
           }
         })
       );
+
+      await self.skipWaiting();
     })()
   );
-
-  self.skipWaiting();
 });
 
-/* تفعيل النسخة ومسح جميع كاشات سوق المدينة القديمة */
+/*
+  تفعيل النسخة الجديدة ومسح كاشات سوق المدينة القديمة فقط.
+*/
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -62,34 +82,34 @@ self.addEventListener("activate", (event) => {
       );
 
       /*
-        نوقف Navigation Preload نهائياً.
-        هذا يمنع Safari والتطبيق من إعادة index.html قديم.
+        نوقف Navigation Preload حتى لا يحدث طلبان
+        لنفس الصفحة داخل Safari أو التطبيق.
       */
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
         } catch (error) {
-          // بعض الأجهزة لا تدعم Navigation Preload.
+          // بعض الأجهزة لا تدعم هذه الخاصية.
         }
       }
-
-      /* نتأكد أن الكاش الجديد لا يحتوي index.html قديماً. */
-      const cache = await caches.open(CACHE_NAME);
-      await cache.delete(INDEX_URL);
 
       await self.clients.claim();
     })()
   );
 });
 
-/* تفعيل النسخة الجديدة مباشرة */
+/*
+  يسمح بتفعيل النسخة الجديدة مباشرة عند إرسال الرسالة.
+*/
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-/* استقبال طلبات الموقع */
+/*
+  استقبال طلبات الموقع.
+*/
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -99,7 +119,9 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  /* خطوط Google فقط تستخدم كاش مستقل */
+  /*
+    خطوط Google فقط تستخدم كاشاً منفصلاً.
+  */
   if (
     url.hostname === "fonts.googleapis.com" ||
     url.hostname === "fonts.gstatic.com"
@@ -108,27 +130,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /* لا نتدخل بطلبات Firebase أو أي موقع خارجي */
+  /*
+    لا نتدخل نهائياً بطلبات Firebase
+    أو بأي طلب خارجي.
+  */
   if (url.origin !== self.location.origin) {
     return;
   }
 
   /*
-    الصفحة الرئيسية:
-    نعيد الاستجابة فور وصولها، ونحفظ نسخة الأوفلاين بالتوازي.
+    لا نخزن Service Worker داخل نفسه.
   */
-  if (request.mode === "navigate") {
-    const networkPromise = fetch(request, {
-      cache: "reload",
-      redirect: "follow"
-    });
-
-    event.waitUntil(updateNavigationCache(networkPromise));
-    event.respondWith(serveNavigation(networkPromise));
-    return;
-  }
-
-  /* لا نخزن ملف Service Worker داخل نفسه */
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
@@ -138,53 +150,96 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /* بقية ملفات الموقع: الإنترنت أولاً */
+  /*
+    فتح الصفحة:
+    نعرض النسخة الجاهزة فوراً،
+    ونطلب أحدث نسخة من الموقع بالخلفية.
+  */
+  if (request.mode === "navigate") {
+    event.respondWith(handleNavigation(event));
+    return;
+  }
+
+  /*
+    بقية ملفات الموقع:
+    الإنترنت أولاً، والكاش عند انقطاع الإنترنت.
+  */
   event.respondWith(handleSameOriginAsset(request));
 });
 
-/* حفظ آخر نسخة ناجحة دون تأخير فتح الصفحة */
-async function updateNavigationCache(networkPromise) {
-  try {
-    const networkResponse = await networkPromise;
+/*
+  فتح index.html مباشرة من النسخة الجاهزة،
+  مع تحديثها من الإنترنت بالخلفية.
+*/
+function handleNavigation(event) {
+  const networkPromise = fetch(event.request, {
+    cache: "no-store",
+    redirect: "follow"
+  }).then((response) => {
+    return {
+      response,
+      cacheCopy:
+        response && response.ok
+          ? response.clone()
+          : null
+    };
+  });
 
-    if (networkResponse && networkResponse.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      await cache.put(INDEX_URL, networkResponse.clone());
-    }
-  } catch (error) {
-    // فشل الشبكة لا يمنع محاولة فتح النسخة المحفوظة.
-  }
-}
+  /*
+    تحديث النسخة المحفوظة بالخلفية.
+    هذا لا يؤخر ظهور الصفحة للمستخدم.
+  */
+  event.waitUntil(
+    networkPromise
+      .then(async ({ cacheCopy }) => {
+        if (!cacheCopy) {
+          return;
+        }
 
-/* فتح الصفحة الرئيسية فور وصول استجابة الشبكة */
-async function serveNavigation(networkPromise) {
-  try {
-    const networkResponse = await networkPromise;
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(INDEX_URL, cacheCopy);
+      })
+      .catch(() => undefined)
+  );
 
-    if (!networkResponse || !networkResponse.ok) {
-      throw new Error("Navigation network response failed");
-    }
-
-    return networkResponse;
-  } catch (error) {
+  return (async () => {
     const cache = await caches.open(CACHE_NAME);
     const cachedIndex = await cache.match(INDEX_URL);
 
+    /*
+      إذا كانت النسخة الجاهزة موجودة،
+      نعرضها مباشرة بدون انتظار الإنترنت.
+    */
     if (cachedIndex) {
       return cachedIndex;
     }
 
-    return createOfflinePage();
-  }
+    /*
+      إذا لم توجد نسخة محفوظة، نستخدم الإنترنت.
+    */
+    try {
+      const { response } = await networkPromise;
+
+      if (!response || !response.ok) {
+        throw new Error("Navigation request failed");
+      }
+
+      return response;
+    } catch (error) {
+      return createOfflinePage();
+    }
+  })();
 }
 
-/* تحميل ملفات الموقع */
+/*
+  تحميل بقية ملفات الموقع.
+*/
 async function handleSameOriginAsset(request) {
   const cache = await caches.open(CACHE_NAME);
 
   try {
     const networkResponse = await fetch(request, {
-      cache: "reload"
+      cache: "no-store"
     });
 
     if (networkResponse && networkResponse.ok) {
@@ -206,7 +261,9 @@ async function handleSameOriginAsset(request) {
   }
 }
 
-/* تحميل خطوط Google */
+/*
+  تحميل خطوط Google.
+*/
 async function handleFontRequest(request) {
   const cache = await caches.open(FONT_CACHE);
   const cachedResponse = await cache.match(request);
@@ -231,14 +288,20 @@ async function handleFontRequest(request) {
   }
 }
 
-/* صفحة تظهر فقط إذا كان أول تشغيل بدون إنترنت */
+/*
+  تظهر فقط إذا لم توجد نسخة محفوظة
+  وكان الجهاز بدون إنترنت.
+*/
 function createOfflinePage() {
   return new Response(
     `<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
   <meta name="theme-color" content="#f8fafc">
   <title>سوق المدينة</title>
 
