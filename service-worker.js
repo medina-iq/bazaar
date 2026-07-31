@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v56";
+const CACHE_NAME = "medina-bazaar-v57";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -12,6 +12,32 @@ const STATIC_ASSETS = [
   new URL("icon-512.png", SCOPE_URL).href,
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
+
+/*
+  حالة تحديث الصفحة الرئيسية.
+  تُستخدم فقط لإظهار رسالة ضعف الإنترنت داخل index.html.
+*/
+let navigationNetworkState = "idle";
+
+async function broadcastNetworkState(state) {
+  navigationNetworkState = state;
+
+  try {
+    const clientList = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    });
+
+    clientList.forEach((client) => {
+      client.postMessage({
+        type: "LINKO_NETWORK_STATE",
+        state
+      });
+    });
+  } catch (error) {
+    // فشل إرسال الحالة لا يؤثر في فتح الموقع أو تحديث الكاش.
+  }
+}
 
 /*
   تثبيت النسخة الجديدة:
@@ -32,10 +58,7 @@ self.addEventListener("install", (event) => {
           await cache.put(INDEX_URL, indexResponse.clone());
         }
       } catch (error) {
-        /*
-          إذا فشل الإنترنت وقت التثبيت، لا نوقف تثبيت
-          Service Worker بالكامل.
-        */
+        // فشل الإنترنت وقت التثبيت لا يوقف التثبيت.
       }
 
       await Promise.allSettled(
@@ -49,10 +72,7 @@ self.addEventListener("install", (event) => {
               await cache.put(assetUrl, response.clone());
             }
           } catch (error) {
-            /*
-              عدم وجود أحد ملفات الأيقونات
-              لا يوقف تثبيت التطبيق.
-            */
+            // الملف المفقود لا يوقف تثبيت التطبيق.
           }
         })
       );
@@ -81,10 +101,6 @@ self.addEventListener("activate", (event) => {
           .map((cacheKey) => caches.delete(cacheKey))
       );
 
-      /*
-        نوقف Navigation Preload حتى لا يحدث طلبان
-        لنفس الصفحة داخل Safari أو التطبيق.
-      */
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
@@ -99,11 +115,28 @@ self.addEventListener("activate", (event) => {
 });
 
 /*
-  يسمح بتفعيل النسخة الجديدة مباشرة عند إرسال الرسالة.
+  تفعيل النسخة الجديدة مباشرة، وإرجاع حالة التحميل للصفحة.
 */
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
+    return;
+  }
+
+  if (event.data && event.data.type === "LINKO_GET_NETWORK_STATE") {
+    const reply = {
+      type: "LINKO_NETWORK_STATE",
+      state: navigationNetworkState
+    };
+
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage(reply);
+      return;
+    }
+
+    if (event.source && typeof event.source.postMessage === "function") {
+      event.source.postMessage(reply);
+    }
   }
 });
 
@@ -131,8 +164,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   /*
-    لا نتدخل نهائياً بطلبات Firebase
-    أو بأي طلب خارجي.
+    لا نتدخل نهائياً بطلبات Firebase أو أي طلب خارجي.
   */
   if (url.origin !== self.location.origin) {
     return;
@@ -172,6 +204,9 @@ self.addEventListener("fetch", (event) => {
   مع تحديثها من الإنترنت بالخلفية.
 */
 function handleNavigation(event) {
+  navigationNetworkState = "loading";
+  broadcastNetworkState("loading");
+
   const networkPromise = fetch(event.request, {
     cache: "no-store",
     redirect: "follow"
@@ -189,18 +224,22 @@ function handleNavigation(event) {
     تحديث النسخة المحفوظة بالخلفية.
     هذا لا يؤخر ظهور الصفحة للمستخدم.
   */
-  event.waitUntil(
-    networkPromise
-      .then(async ({ cacheCopy }) => {
-        if (!cacheCopy) {
-          return;
-        }
+  const updatePromise = networkPromise
+    .then(async ({ cacheCopy }) => {
+      if (!cacheCopy) {
+        await broadcastNetworkState("failed");
+        return;
+      }
 
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put(INDEX_URL, cacheCopy);
-      })
-      .catch(() => undefined)
-  );
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(INDEX_URL, cacheCopy);
+      await broadcastNetworkState("ready");
+    })
+    .catch(async () => {
+      await broadcastNetworkState("failed");
+    });
+
+  event.waitUntil(updatePromise);
 
   return (async () => {
     const cache = await caches.open(CACHE_NAME);
