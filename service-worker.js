@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v57";
+const CACHE_NAME = "medina-bazaar-v56";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -13,37 +13,6 @@ const STATIC_ASSETS = [
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
 
-/*
-  حالة تحديث الصفحة الرئيسية.
-  تُستخدم فقط لإظهار رسالة ضعف الإنترنت داخل index.html.
-*/
-let navigationNetworkState = "idle";
-
-async function broadcastNetworkState(state) {
-  navigationNetworkState = state;
-
-  try {
-    const clientList = await self.clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    });
-
-    clientList.forEach((client) => {
-      client.postMessage({
-        type: "LINKO_NETWORK_STATE",
-        state
-      });
-    });
-  } catch (error) {
-    // فشل إرسال الحالة لا يؤثر في فتح الموقع أو تحديث الكاش.
-  }
-}
-
-/*
-  تثبيت النسخة الجديدة:
-  نخزن index.html حتى يكون جاهزاً للفتح المباشر،
-  ونخزن الأيقونات بدون أن يفشل التثبيت إذا كان ملف مفقوداً.
-*/
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -82,9 +51,6 @@ self.addEventListener("install", (event) => {
   );
 });
 
-/*
-  تفعيل النسخة الجديدة ومسح كاشات سوق المدينة القديمة فقط.
-*/
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -114,35 +80,12 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-/*
-  تفعيل النسخة الجديدة مباشرة، وإرجاع حالة التحميل للصفحة.
-*/
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
-    return;
-  }
-
-  if (event.data && event.data.type === "LINKO_GET_NETWORK_STATE") {
-    const reply = {
-      type: "LINKO_NETWORK_STATE",
-      state: navigationNetworkState
-    };
-
-    if (event.ports && event.ports[0]) {
-      event.ports[0].postMessage(reply);
-      return;
-    }
-
-    if (event.source && typeof event.source.postMessage === "function") {
-      event.source.postMessage(reply);
-    }
   }
 });
 
-/*
-  استقبال طلبات الموقع.
-*/
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -152,9 +95,6 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  /*
-    خطوط Google فقط تستخدم كاشاً منفصلاً.
-  */
   if (
     url.hostname === "fonts.googleapis.com" ||
     url.hostname === "fonts.gstatic.com"
@@ -163,16 +103,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /*
-    لا نتدخل نهائياً بطلبات Firebase أو أي طلب خارجي.
-  */
+  // لا نتدخل بطلبات Firebase أو الطلبات الخارجية.
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  /*
-    لا نخزن Service Worker داخل نفسه.
-  */
+  // لا نخزن ملف Service Worker داخل الكاش.
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
@@ -182,31 +118,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /*
-    فتح الصفحة:
-    نعرض النسخة الجاهزة فوراً،
-    ونطلب أحدث نسخة من الموقع بالخلفية.
-  */
   if (request.mode === "navigate") {
     event.respondWith(handleNavigation(event));
     return;
   }
 
-  /*
-    بقية ملفات الموقع:
-    الإنترنت أولاً، والكاش عند انقطاع الإنترنت.
-  */
   event.respondWith(handleSameOriginAsset(request));
 });
 
-/*
-  فتح index.html مباشرة من النسخة الجاهزة،
-  مع تحديثها من الإنترنت بالخلفية.
-*/
 function handleNavigation(event) {
-  navigationNetworkState = "loading";
-  broadcastNetworkState("loading");
-
   const networkPromise = fetch(event.request, {
     cache: "no-store",
     redirect: "follow"
@@ -220,42 +140,30 @@ function handleNavigation(event) {
     };
   });
 
-  /*
-    تحديث النسخة المحفوظة بالخلفية.
-    هذا لا يؤخر ظهور الصفحة للمستخدم.
-  */
-  const updatePromise = networkPromise
-    .then(async ({ cacheCopy }) => {
-      if (!cacheCopy) {
-        await broadcastNetworkState("failed");
-        return;
-      }
+  // تحديث index.html بالخلفية بدون تأخير ظهور الصفحة.
+  event.waitUntil(
+    networkPromise
+      .then(async ({ cacheCopy }) => {
+        if (!cacheCopy) {
+          return;
+        }
 
-      const cache = await caches.open(CACHE_NAME);
-      await cache.put(INDEX_URL, cacheCopy);
-      await broadcastNetworkState("ready");
-    })
-    .catch(async () => {
-      await broadcastNetworkState("failed");
-    });
-
-  event.waitUntil(updatePromise);
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(INDEX_URL, cacheCopy);
+      })
+      .catch(() => undefined)
+  );
 
   return (async () => {
     const cache = await caches.open(CACHE_NAME);
     const cachedIndex = await cache.match(INDEX_URL);
 
-    /*
-      إذا كانت النسخة الجاهزة موجودة،
-      نعرضها مباشرة بدون انتظار الإنترنت.
-    */
+    // عرض النسخة المحفوظة فورًا.
     if (cachedIndex) {
       return cachedIndex;
     }
 
-    /*
-      إذا لم توجد نسخة محفوظة، نستخدم الإنترنت.
-    */
+    // أول فتح فقط، إذا لم توجد نسخة محفوظة.
     try {
       const { response } = await networkPromise;
 
@@ -270,9 +178,6 @@ function handleNavigation(event) {
   })();
 }
 
-/*
-  تحميل بقية ملفات الموقع.
-*/
 async function handleSameOriginAsset(request) {
   const cache = await caches.open(CACHE_NAME);
 
@@ -300,9 +205,6 @@ async function handleSameOriginAsset(request) {
   }
 }
 
-/*
-  تحميل خطوط Google.
-*/
 async function handleFontRequest(request) {
   const cache = await caches.open(FONT_CACHE);
   const cachedResponse = await cache.match(request);
@@ -327,10 +229,6 @@ async function handleFontRequest(request) {
   }
 }
 
-/*
-  تظهر فقط إذا لم توجد نسخة محفوظة
-  وكان الجهاز بدون إنترنت.
-*/
 function createOfflinePage() {
   return new Response(
     `<!doctype html>
