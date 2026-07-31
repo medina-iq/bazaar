@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v58";
+const CACHE_NAME = "medina-bazaar-v59";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -27,7 +27,7 @@ self.addEventListener("install", (event) => {
           await cache.put(INDEX_URL, response.clone());
         }
       } catch (error) {
-        // لا نوقف التثبيت إذا كان الإنترنت ضعيفاً.
+        // ضعف الإنترنت لا يوقف تثبيت النسخة الجديدة.
       }
 
       await Promise.allSettled(
@@ -41,7 +41,7 @@ self.addEventListener("install", (event) => {
               await cache.put(assetUrl, response.clone());
             }
           } catch (error) {
-            // الملف المفقود لا يوقف التثبيت.
+            // الملف المفقود لا يوقف تثبيت التطبيق.
           }
         })
       );
@@ -70,7 +70,9 @@ self.addEventListener("activate", (event) => {
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
-        } catch (error) {}
+        } catch (error) {
+          // بعض الأجهزة لا تدعم هذه الخاصية.
+        }
       }
 
       await self.clients.claim();
@@ -101,7 +103,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // لا نتدخل بطلبات Firebase أو الطلبات الخارجية.
+  // لا نتدخل بطلبات Firebase أو أي طلب خارجي.
   if (url.origin !== self.location.origin) {
     return;
   }
@@ -116,21 +118,47 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // الصفحة الرئيسية: أحدث نسخة من الإنترنت أولاً.
+  // الصفحة الرئيسية: النسخة الجاهزة فوراً، والتحديث بالخلفية.
   if (request.mode === "navigate") {
-    event.respondWith(handleNavigation(request));
+    event.respondWith(handleNavigation(event));
     return;
   }
 
-  // بقية ملفات الموقع.
+  // بقية ملفات الموقع: الإنترنت أولاً والكاش عند الانقطاع.
   event.respondWith(handleSameOriginAsset(request));
 });
 
-async function handleNavigation(request) {
-  const cache = await caches.open(CACHE_NAME);
-
+async function updateIndexInBackground(request) {
   try {
-    const networkResponse = await fetch(request, {
+    const response = await fetch(request, {
+      cache: "no-store",
+      redirect: "follow"
+    });
+
+    if (!response || !response.ok) {
+      return;
+    }
+
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(INDEX_URL, response.clone());
+  } catch (error) {
+    // تبقى النسخة الجاهزة ظاهرة إذا كان الإنترنت ضعيفاً.
+  }
+}
+
+async function handleNavigation(event) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedIndex = await cache.match(INDEX_URL);
+
+  if (cachedIndex) {
+    // لا ننتظر الإنترنت؛ نحدّث النسخة بالخلفية فقط.
+    event.waitUntil(updateIndexInBackground(event.request));
+    return cachedIndex;
+  }
+
+  // أول تشغيل فقط إذا لم تكن هناك نسخة جاهزة.
+  try {
+    const networkResponse = await fetch(event.request, {
       cache: "no-store",
       redirect: "follow"
     });
@@ -140,15 +168,8 @@ async function handleNavigation(request) {
     }
 
     await cache.put(INDEX_URL, networkResponse.clone());
-
     return networkResponse;
   } catch (error) {
-    const cachedIndex = await cache.match(INDEX_URL);
-
-    if (cachedIndex) {
-      return cachedIndex;
-    }
-
     return createOfflinePage();
   }
 }
@@ -216,34 +237,37 @@ function createOfflinePage() {
   >
   <meta name="theme-color" content="#f8fafc">
   <title>سوق المدينة</title>
+
   <style>
-    html,body{
-      margin:0;
-      min-height:100%;
-      background:#f8fafc;
-      color:#111827;
-      font-family:Arial,sans-serif;
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #f8fafc;
+      color: #111827;
+      font-family: Arial, sans-serif;
     }
 
-    body{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
-      box-sizing:border-box;
-      text-align:center;
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+      text-align: center;
     }
 
-    .offline-box{
-      width:min(100%,420px);
-      padding:24px;
-      box-sizing:border-box;
-      background:#ffffff;
-      border:1px solid #e5e7eb;
-      border-radius:24px;
+    .offline-box {
+      width: min(100%, 420px);
+      padding: 24px;
+      box-sizing: border-box;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 24px;
     }
   </style>
 </head>
+
 <body>
   <div class="offline-box">
     <h2>لا يوجد اتصال بالإنترنت</h2>
