@@ -1,4 +1,4 @@
-const CACHE_NAME = "medina-bazaar-v57";
+const CACHE_NAME = "medina-bazaar-v58";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 
@@ -19,29 +19,29 @@ self.addEventListener("install", (event) => {
       const cache = await caches.open(CACHE_NAME);
 
       try {
-        const indexResponse = await fetch(INDEX_URL, {
-          cache: "reload"
+        const response = await fetch(INDEX_URL, {
+          cache: "no-store"
         });
 
-        if (indexResponse && indexResponse.ok) {
-          await cache.put(INDEX_URL, indexResponse.clone());
+        if (response && response.ok) {
+          await cache.put(INDEX_URL, response.clone());
         }
       } catch (error) {
-        // فشل الإنترنت وقت التثبيت لا يوقف التثبيت.
+        // لا نوقف التثبيت إذا كان الإنترنت ضعيفاً.
       }
 
       await Promise.allSettled(
         STATIC_ASSETS.map(async (assetUrl) => {
           try {
             const response = await fetch(assetUrl, {
-              cache: "reload"
+              cache: "no-store"
             });
 
             if (response && response.ok) {
               await cache.put(assetUrl, response.clone());
             }
           } catch (error) {
-            // الملف المفقود لا يوقف تثبيت التطبيق.
+            // الملف المفقود لا يوقف التثبيت.
           }
         })
       );
@@ -54,25 +54,23 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const cacheKeys = await caches.keys();
+      const cacheNames = await caches.keys();
 
       await Promise.all(
-        cacheKeys
+        cacheNames
           .filter(
-            (cacheKey) =>
-              cacheKey.startsWith(CACHE_PREFIX) &&
-              cacheKey !== CACHE_NAME &&
-              cacheKey !== FONT_CACHE
+            (name) =>
+              name.startsWith(CACHE_PREFIX) &&
+              name !== CACHE_NAME &&
+              name !== FONT_CACHE
           )
-          .map((cacheKey) => caches.delete(cacheKey))
+          .map((name) => caches.delete(name))
       );
 
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
-        } catch (error) {
-          // بعض الأجهزة لا تدعم هذه الخاصية.
-        }
+        } catch (error) {}
       }
 
       await self.clients.claim();
@@ -108,7 +106,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // لا نخزن ملف Service Worker داخل الكاش.
+  // ملف Service Worker يؤخذ دائماً من الإنترنت.
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
@@ -118,64 +116,41 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // الصفحة الرئيسية: أحدث نسخة من الإنترنت أولاً.
   if (request.mode === "navigate") {
-    event.respondWith(handleNavigation(event));
+    event.respondWith(handleNavigation(request));
     return;
   }
 
+  // بقية ملفات الموقع.
   event.respondWith(handleSameOriginAsset(request));
 });
 
-function handleNavigation(event) {
-  const networkPromise = fetch(event.request, {
-    cache: "no-store",
-    redirect: "follow"
-  }).then((response) => {
-    return {
-      response,
-      cacheCopy:
-        response && response.ok
-          ? response.clone()
-          : null
-    };
-  });
+async function handleNavigation(request) {
+  const cache = await caches.open(CACHE_NAME);
 
-  // تحديث index.html بالخلفية بدون تأخير ظهور الصفحة.
-  event.waitUntil(
-    networkPromise
-      .then(async ({ cacheCopy }) => {
-        if (!cacheCopy) {
-          return;
-        }
+  try {
+    const networkResponse = await fetch(request, {
+      cache: "no-store",
+      redirect: "follow"
+    });
 
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put(INDEX_URL, cacheCopy);
-      })
-      .catch(() => undefined)
-  );
+    if (!networkResponse || !networkResponse.ok) {
+      throw new Error("Navigation failed");
+    }
 
-  return (async () => {
-    const cache = await caches.open(CACHE_NAME);
+    await cache.put(INDEX_URL, networkResponse.clone());
+
+    return networkResponse;
+  } catch (error) {
     const cachedIndex = await cache.match(INDEX_URL);
 
-    // عرض النسخة المحفوظة فورًا.
     if (cachedIndex) {
       return cachedIndex;
     }
 
-    // أول فتح فقط، إذا لم توجد نسخة محفوظة.
-    try {
-      const { response } = await networkPromise;
-
-      if (!response || !response.ok) {
-        throw new Error("Navigation request failed");
-      }
-
-      return response;
-    } catch (error) {
-      return createOfflinePage();
-    }
-  })();
+    return createOfflinePage();
+  }
 }
 
 async function handleSameOriginAsset(request) {
@@ -241,38 +216,34 @@ function createOfflinePage() {
   >
   <meta name="theme-color" content="#f8fafc">
   <title>سوق المدينة</title>
-
   <style>
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      min-height: 100%;
-      background: #f8fafc;
-      color: #111827;
-      font-family: Arial, sans-serif;
+    html,body{
+      margin:0;
+      min-height:100%;
+      background:#f8fafc;
+      color:#111827;
+      font-family:Arial,sans-serif;
     }
 
-    body {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      box-sizing: border-box;
-      text-align: center;
+    body{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      box-sizing:border-box;
+      text-align:center;
     }
 
-    .offline-box {
-      width: min(100%, 420px);
-      padding: 24px;
-      box-sizing: border-box;
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 24px;
+    .offline-box{
+      width:min(100%,420px);
+      padding:24px;
+      box-sizing:border-box;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
+      border-radius:24px;
     }
   </style>
 </head>
-
 <body>
   <div class="offline-box">
     <h2>لا يوجد اتصال بالإنترنت</h2>
