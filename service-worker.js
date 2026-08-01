@@ -1,7 +1,7 @@
-const CACHE_NAME = "medina-bazaar-v62";
+const CACHE_NAME = "medina-bazaar-v63";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
-const BUILD_MARKER = "MEDINA_BUILD_V62";
+const EXACT_BUILD_MARKER = "MEDINA_BUILD_V63_LOCK_20260801_0355";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -14,9 +14,10 @@ const STATIC_ASSETS = [
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
 
-async function fetchVerifiedIndex() {
+async function fetchExactIndex() {
   const requestUrl = new URL(INDEX_URL);
-  requestUrl.searchParams.set("build", "v62");
+
+  requestUrl.searchParams.set("build", "v63");
   requestUrl.searchParams.set("time", String(Date.now()));
 
   const response = await fetch(requestUrl.href, {
@@ -28,19 +29,21 @@ async function fetchVerifiedIndex() {
     throw new Error("Index download failed");
   }
 
-  const checkText = await response.clone().text();
+  const text = await response.clone().text();
 
-  if (!checkText.includes(BUILD_MARKER)) {
-    throw new Error("The received index is not build v62");
+  if (!text.includes(EXACT_BUILD_MARKER)) {
+    throw new Error("Wrong index build received");
   }
 
   return response;
 }
 
-async function saveVerifiedIndex() {
-  const response = await fetchVerifiedIndex();
+async function cacheExactIndex() {
+  const response = await fetchExactIndex();
   const cache = await caches.open(CACHE_NAME);
+
   await cache.put(INDEX_URL, response.clone());
+
   return response;
 }
 
@@ -48,10 +51,10 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       /*
-        لا يتم تفعيل v62 إلا بعد التأكد أن index.html
-        هو نفس إصدار v62.
+        لا ينجح تثبيت v63 إلا إذا وصل index.html
+        الذي يحمل علامة هذا الإصدار بالضبط.
       */
-      await saveVerifiedIndex();
+      await cacheExactIndex();
 
       const cache = await caches.open(CACHE_NAME);
 
@@ -128,52 +131,45 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // لا نتدخل بطلبات Firebase أو المواقع الخارجية.
+  // Firebase وأي طلب خارجي خارج Service Worker.
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // ملف Service Worker يؤخذ دائماً من الإنترنت.
+  // Service Worker نفسه يؤخذ دائمًا من الإنترنت.
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
         cache: "no-store"
       })
     );
+
     return;
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(handleNavigation(event));
+    event.respondWith(handleNavigation());
     return;
   }
 
   event.respondWith(handleSameOriginAsset(request));
 });
 
-async function updateVerifiedIndexInBackground() {
-  try {
-    await saveVerifiedIndex();
-  } catch (error) {
-    /*
-      إذا وصل ملف قديم أو كان الإنترنت ضعيفاً،
-      لا نستبدل النسخة الصحيحة.
-    */
-  }
-}
-
-async function handleNavigation(event) {
+async function handleNavigation() {
   const cache = await caches.open(CACHE_NAME);
   const cachedIndex = await cache.match(INDEX_URL);
 
+  /*
+    بعد نجاح تثبيت v63 نعرض نفس النسخة المقفلة دائمًا.
+    لا يوجد تحديث خلفي لـ index.html حتى لا يستبدل Safari
+    النسخة الصحيحة برد قديم.
+  */
   if (cachedIndex) {
-    // تظهر الواجهة الصحيحة فوراً.
-    event.waitUntil(updateVerifiedIndexInBackground());
     return cachedIndex;
   }
 
   try {
-    return await saveVerifiedIndex();
+    return await cacheExactIndex();
   } catch (error) {
     return createOfflinePage();
   }
@@ -236,11 +232,14 @@ function createOfflinePage() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1"
   >
+
   <meta name="theme-color" content="#dcefe5">
+
   <title>سوق المدينة</title>
 
   <style>
