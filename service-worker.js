@@ -1,8 +1,7 @@
-const CACHE_NAME = "medina-bazaar-v67";
+const CACHE_NAME = "medina-bazaar-v68";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
-const EXACT_BUILD_MARKER =
-  "MEDINA_BUILD_V67_DIRECT_ADMIN_20260801";
+const EXACT_BUILD_MARKER = "MEDINA_BUILD_V68_MEMBERS_UNIFIED_20260801";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -18,7 +17,7 @@ const STATIC_ASSETS = [
 async function fetchExactIndex() {
   const requestUrl = new URL(INDEX_URL);
 
-  requestUrl.searchParams.set("build", "v67");
+  requestUrl.searchParams.set("build", "v68");
   requestUrl.searchParams.set("time", String(Date.now()));
 
   const response = await fetch(requestUrl.href, {
@@ -51,6 +50,10 @@ async function cacheExactIndex() {
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
+      /*
+        لا ينجح تثبيت v68 إلا إذا وصل index.html
+        الذي يحمل علامة هذا الإصدار بالضبط.
+      */
       await cacheExactIndex();
 
       const cache = await caches.open(CACHE_NAME);
@@ -65,7 +68,9 @@ self.addEventListener("install", (event) => {
             if (response && response.ok) {
               await cache.put(assetUrl, response.clone());
             }
-          } catch (error) {}
+          } catch (error) {
+            // الملف المفقود لا يمنع تثبيت النسخة الصحيحة.
+          }
         })
       );
 
@@ -93,7 +98,9 @@ self.addEventListener("activate", (event) => {
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
-        } catch (error) {}
+        } catch (error) {
+          // بعض الأجهزة لا تدعمها.
+        }
       }
 
       await self.clients.claim();
@@ -124,16 +131,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Firebase وأي طلب خارجي يبقيان خارج Service Worker.
   if (url.origin !== self.location.origin) {
     return;
   }
 
+  // Service Worker نفسه يؤخذ دائمًا من الإنترنت.
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
         cache: "no-store"
       })
     );
+
     return;
   }
 
@@ -149,6 +159,10 @@ async function handleNavigation() {
   const cache = await caches.open(CACHE_NAME);
   const cachedIndex = await cache.match(INDEX_URL);
 
+  /*
+    بعد نجاح تثبيت v68 نعرض نفس النسخة المقفلة دائمًا.
+    لا يوجد تحديث خلفي لـ index.html.
+  */
   if (cachedIndex) {
     return cachedIndex;
   }
@@ -217,11 +231,14 @@ function createOfflinePage() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1"
   >
+
   <meta name="theme-color" content="#dcefe5">
+
   <title>سوق المدينة</title>
 
   <style>
