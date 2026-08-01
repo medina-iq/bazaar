@@ -2,7 +2,7 @@ const CACHE_NAME = "medina-bazaar-v65";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 const EXACT_BUILD_MARKER =
-  "MEDINA_BUILD_V65_ADMIN_IFRAME_PERSIST_20260801";
+  "MEDINA_BUILD_V65_ADMIN_OPEN_STABLE_20260801";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -51,10 +51,6 @@ async function cacheExactIndex() {
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      /*
-        لا ينجح تثبيت v65 إلا إذا وصل index.html
-        الذي يحمل علامة هذا الإصدار بالضبط.
-      */
       await cacheExactIndex();
 
       const cache = await caches.open(CACHE_NAME);
@@ -69,9 +65,7 @@ self.addEventListener("install", (event) => {
             if (response && response.ok) {
               await cache.put(assetUrl, response.clone());
             }
-          } catch (error) {
-            // الملف المفقود لا يمنع تثبيت النسخة الصحيحة.
-          }
+          } catch (error) {}
         })
       );
 
@@ -99,9 +93,7 @@ self.addEventListener("activate", (event) => {
       if (self.registration.navigationPreload) {
         try {
           await self.registration.navigationPreload.disable();
-        } catch (error) {
-          // بعض الأجهزة لا تدعمها.
-        }
+        } catch (error) {}
       }
 
       await self.clients.claim();
@@ -132,19 +124,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Firebase وأي طلب خارجي يبقيان خارج Service Worker.
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Service Worker نفسه يؤخذ دائمًا من الإنترنت.
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(
       fetch(request, {
         cache: "no-store"
       })
     );
-
     return;
   }
 
@@ -158,25 +147,15 @@ self.addEventListener("fetch", (event) => {
 
 async function handleNavigation() {
   const cache = await caches.open(CACHE_NAME);
+  const cachedIndex = await cache.match(INDEX_URL);
 
-  /*
-    عند وجود الإنترنت نأخذ index.html الصحيح من الشبكة أولًا،
-    نتحقق من علامة v65، ثم نحدث النسخة المحفوظة.
-    عند انقطاع الإنترنت فقط نرجع إلى آخر نسخة صحيحة مخزنة.
-  */
+  if (cachedIndex) {
+    return cachedIndex;
+  }
+
   try {
-    const networkIndex = await fetchExactIndex();
-
-    await cache.put(INDEX_URL, networkIndex.clone());
-
-    return networkIndex;
+    return await cacheExactIndex();
   } catch (error) {
-    const cachedIndex = await cache.match(INDEX_URL);
-
-    if (cachedIndex) {
-      return cachedIndex;
-    }
-
     return createOfflinePage();
   }
 }
@@ -238,14 +217,11 @@ function createOfflinePage() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1"
   >
-
   <meta name="theme-color" content="#dcefe5">
-
   <title>سوق المدينة</title>
 
   <style>
