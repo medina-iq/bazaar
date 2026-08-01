@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MEDINA_BUILD_V65_ADMIN_OPEN_STABLE_20260801 -->
+<!-- MEDINA_BUILD_V66_ONE_ADMIN_PATH_20260801 -->
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
 html{color-scheme:light!important;background:#dcefe5!important;}
@@ -3747,8 +3747,18 @@ style.textContent='.linko-admin-login-back{width:100%;min-height:46px;margin-top
 doc.head.appendChild(style);
 }catch(e){}
 }
-  const oldOpen=window.linkoOpenAdmin;
-window.linkoOpenAdmin=function(){ if(typeof oldOpen==='function') oldOpen(); setTimeout(injectAdminBackButton,150); setTimeout(injectAdminBackButton,700); };
+  function bindAdminBackButton(){
+    const frame=document.getElementById('linkoAdminFrame');
+    if(frame && !frame.__medinaAdminBackLoadBound){
+      frame.__medinaAdminBackLoadBound=true;
+      frame.addEventListener('load',function(){
+        setTimeout(injectAdminBackButton,150);
+        setTimeout(injectAdminBackButton,700);
+      });
+    }
+    setTimeout(injectAdminBackButton,150);
+    setTimeout(injectAdminBackButton,700);
+  }
 /* دخول الإدارة السري: 3 ضغطات عادية وسريعة على الشعار بدون ضغط مطول */
   let linkoSecretLogoClicks=0;
   let linkoSecretLogoTimer=null;
@@ -3767,8 +3777,15 @@ clearTimeout(linkoSecretLogoTimer);
       if(typeof window.linkoOpenAdmin==='function') window.linkoOpenAdmin();
 }
 },true);
-window.addEventListener('load',()=>{syncAdminEntry();setTimeout(syncAdminEntry,500);setInterval(()=>{syncAdminEntry();injectAdminBackButton();},1000)});
-document.addEventListener('DOMContentLoaded',syncAdminEntry);
+window.addEventListener('load',function(){
+  syncAdminEntry();
+  setTimeout(syncAdminEntry,500);
+  bindAdminBackButton();
+},{once:true});
+document.addEventListener('DOMContentLoaded',function(){
+  syncAdminEntry();
+  bindAdminBackButton();
+},{once:true});
 })();
 </script><style id="linkoSafeMemberBranchSecretFix">
 html,body{scroll-behavior:auto!important}
@@ -4317,8 +4334,7 @@ injectIntoAdmin();
 }
 document.addEventListener('DOMContentLoaded',boot);
 setTimeout(boot,300); setTimeout(boot,1000); setTimeout(boot,2000);
-  var oldOpen=window.linkoOpenAdmin;
-window.linkoOpenAdmin=function(){ if(typeof oldOpen==='function') oldOpen(); setTimeout(boot,80); setTimeout(boot,400); };
+  /* MEDINA V66: boot يعمل عند تحميل الصفحة وiframe فقط. */
 })();
 </script><style id="linkoProductImageContainFix">
 /* إصلاح جراحي فقط لبطاقات منتجات واجهة الأعضاء: الصورة تبقى داخل مربعها ولا تغطي الاسم أو الزر */
@@ -9776,14 +9792,7 @@ body:not(.linko-dark) .info-box{
     }
     retry(0);
   }
-  const previousOpenAdmin84 = window.linkoOpenAdmin;
-  window.linkoOpenAdmin = function(){
-    const result = typeof previousOpenAdmin84 === 'function'
-      ? previousOpenAdmin84.apply(this, arguments)
-      : undefined;
-    bindCurrentFrame();
-    return result;
-  };
+  /* MEDINA V66: الإصلاح يثبت عند تحميل iframe فقط. */
   document.addEventListener('DOMContentLoaded',bindCurrentFrame);
   window.addEventListener('load',bindCurrentFrame);
   bindCurrentFrame();
@@ -11605,8 +11614,7 @@ transform-origin:center center!important;
     setTimeout(patchAdminFrame,2600);
   }
 
-  // Safari قد يعيد إنشاء iframe الإدارة عند كل فتح، لذلك نربط الحدث
-  // بالعنصر الحالي في كل مرة بدل الاعتماد على أول عنصر فقط.
+  // ربط الإصلاح بحدث تحميل iframe نفسه، لجميع المتصفحات بنفس المسار.
   function bindCurrentAdminFrame(){
     const frame = document.getElementById('linkoAdminFrame');
     if(frame && !frame.__linkoV48LoadBound){
@@ -11616,15 +11624,11 @@ transform-origin:center center!important;
     start();
   }
 
-  // كل فتح للإدارة يعيد تثبيت نظام طلبات الاشتراك على iframe الحالي.
-  const linkoV48PreviousOpenAdmin = window.linkoOpenAdmin;
-  window.linkoOpenAdmin = function(){
-    const result = typeof linkoV48PreviousOpenAdmin === 'function'
-      ? linkoV48PreviousOpenAdmin.apply(this, arguments)
-      : undefined;
-    bindCurrentAdminFrame();
-    return result;
-  };
+  /*
+    MEDINA V66:
+    نظام طلبات الاشتراك يثبت مرة عند تحميل iframe.
+    فتح الإدارة وإغلاقها لا يعيدان الحقن أو الرسم.
+  */
 
   document.addEventListener('DOMContentLoaded', bindCurrentAdminFrame);
   window.addEventListener('load', bindCurrentAdminFrame);
@@ -13826,14 +13830,7 @@ transform-origin:center center!important;
     }
     retry(0);
   }
-  const previousOpenAdmin74 = window.linkoOpenAdmin;
-  window.linkoOpenAdmin = function(){
-    const result = typeof previousOpenAdmin74 === 'function'
-      ? previousOpenAdmin74.apply(this, arguments)
-      : undefined;
-    bindCurrentFrame();
-    return result;
-  };
+  /* MEDINA V66: إصلاح الإشعارات يثبت عند تحميل iframe فقط. */
   document.addEventListener('DOMContentLoaded',bindCurrentFrame);
   window.addEventListener('load',bindCurrentFrame);
   bindCurrentFrame();
