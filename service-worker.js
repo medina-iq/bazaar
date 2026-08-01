@@ -1,8 +1,8 @@
-const CACHE_NAME = "medina-bazaar-v66";
+const CACHE_NAME = "medina-bazaar-v67";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
 const EXACT_BUILD_MARKER =
-  "MEDINA_BUILD_V66_ONE_ADMIN_PATH_20260801";
+  "MEDINA_BUILD_V67_DIRECT_ADMIN_20260801";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -18,7 +18,7 @@ const STATIC_ASSETS = [
 async function fetchExactIndex() {
   const requestUrl = new URL(INDEX_URL);
 
-  requestUrl.searchParams.set("build", "v66");
+  requestUrl.searchParams.set("build", "v67");
   requestUrl.searchParams.set("time", String(Date.now()));
 
   const response = await fetch(requestUrl.href, {
@@ -217,14 +217,11 @@ function createOfflinePage() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1"
   >
-
   <meta name="theme-color" content="#dcefe5">
-
   <title>سوق المدينة</title>
 
   <style>
