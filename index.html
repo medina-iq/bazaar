@@ -16874,206 +16874,106 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
 })();
 </script>
 
-<script id="linkoSafariAdminRecoveryAfterResumeV62">
+<script id="linkoSafariAdminStableRefreshNoRebuildV63">
 (function(){
   'use strict';
 
-  if(window.__linkoSafariAdminRecoveryAfterResumeV62) return;
-  window.__linkoSafariAdminRecoveryAfterResumeV62 = true;
+  if(window.__linkoSafariAdminStableRefreshNoRebuildV63) return;
+  window.__linkoSafariAdminStableRefreshNoRebuildV63 = true;
 
-  const FRAME_ID = 'linkoAdminFrame';
-  const SHELL_ID = 'linkoAdminShell';
-
-  let originalSrcdoc = '';
-  let needsRecovery = false;
-  let recovering = false;
   let hiddenAt = 0;
-  let recoveryCallbacks = [];
+  let refreshTimerA = 0;
+  let refreshTimerB = 0;
 
-  function getFrame(){
-    const frame = document.getElementById(FRAME_ID);
-
-    if(frame && !originalSrcdoc){
-      originalSrcdoc = frame.getAttribute('srcdoc') || frame.srcdoc || '';
-    }
-
-    return frame;
+  function adminFrame(){
+    return document.getElementById('linkoAdminFrame');
   }
 
   function adminIsOpen(){
-    const shell = document.getElementById(SHELL_ID);
+    const shell = document.getElementById('linkoAdminShell');
     return !!(shell && shell.classList.contains('show'));
   }
 
-  function finishRecovery(frame){
-    recovering = false;
-    needsRecovery = false;
+  function runFrameRefresh(){
+    const frame = adminFrame();
+    if(!frame || !frame.contentWindow || !frame.contentDocument) return;
 
-    /*
-      بعد اكتمال إعادة إنشاء iframe، نعطي جميع إصلاحات الإدارة
-      المرتبطة بحدث load وقتاً قصيراً حتى تُحقن من جديد.
-    */
-    setTimeout(function(){
-      try{
-        const frameWindow = frame && frame.contentWindow;
+    try{
+      const win = frame.contentWindow;
 
-        if(
-          frameWindow &&
-          typeof frameWindow.linkoFinalMembersRefresh === 'function'
-        ){
-          frameWindow.linkoFinalMembersRefresh();
-        }
-      }catch(error){}
+      /*
+        لا نعيد إنشاء iframe ولا نغير srcdoc.
+        نشغل فقط دوال التحديث الموجودة أصلًا داخل النسخة الناجحة.
+      */
+      const refreshers = [
+        'linkoFinalMembersRefresh',
+        'linkoPhase5Refresh',
+        'linkoMembersLiveRefresh',
+        'linkoWalletMembersRefresh'
+      ];
 
-      const callbacks = recoveryCallbacks.slice();
-      recoveryCallbacks = [];
-
-      callbacks.forEach(function(callback){
-        try{ callback(); }catch(error){ console.warn(error); }
-      });
-    }, 180);
-  }
-
-  function rebuildAdminFrame(callback){
-    const frame = getFrame();
-
-    if(typeof callback === 'function'){
-      recoveryCallbacks.push(callback);
-    }
-
-    if(recovering) return;
-
-    if(!frame || !originalSrcdoc){
-      const callbacks = recoveryCallbacks.slice();
-      recoveryCallbacks = [];
-
-      callbacks.forEach(function(item){
-        try{ item(); }catch(error){ console.warn(error); }
-      });
-      return;
-    }
-
-    if(navigator.onLine === false){
-      needsRecovery = true;
-      return;
-    }
-
-    recovering = true;
-
-    const completed = function(){
-      finishRecovery(frame);
-    };
-
-    frame.addEventListener('load', completed, {once:true});
-
-    /*
-      نعيد تحميل نفس عنصر iframe ولا نستبدله.
-      بهذا تبقى جميع load listeners الموجودة أصلًا مرتبطة به،
-      وتُعاد إضافات Safari والإشعارات والطلبات من البداية.
-    */
-    frame.srcdoc = originalSrcdoc;
-
-    /*
-      حماية فقط في حال لم يرسل Safari حدث load لأي سبب.
-      لا يعيد التحميل ولا يعمل بشكل متكرر.
-    */
-    setTimeout(function(){
-      if(recovering){
+      refreshers.forEach(function(name){
         try{
-          frame.removeEventListener('load', completed);
-        }catch(error){}
-        finishRecovery(frame);
-      }
-    }, 8000);
-  }
-
-  function markForRecovery(){
-    needsRecovery = true;
-
-    /*
-      إذا كانت الإدارة مفتوحة لحظة عودة التطبيق أو الإنترنت،
-      نصلح iframe مباشرة. وإذا كانت مغلقة، ننتظر فتح الإدارة.
-    */
-    if(adminIsOpen() && navigator.onLine !== false){
-      setTimeout(function(){
-        if(needsRecovery) rebuildAdminFrame();
-      }, 500);
+          if(typeof win[name] === 'function'){
+            win[name]();
+          }
+        }catch(error){
+          console.warn('LINKO admin refresh waiting:', name, error);
+        }
+      });
+    }catch(error){
+      console.warn('LINKO Safari admin stable refresh waiting', error);
     }
   }
 
-  window.addEventListener('offline', function(){
-    needsRecovery = true;
-  });
+  function scheduleRefresh(){
+    clearTimeout(refreshTimerA);
+    clearTimeout(refreshTimerB);
+
+    /*
+      الاستدعاء الأول مباشر بعد اكتمال فتح الإدارة،
+      والثاني احتياطي قصير لانتظار Firebase أو إعادة الرسم.
+      لا يوجد polling ولا setInterval.
+    */
+    refreshTimerA = setTimeout(runFrameRefresh, 120);
+    refreshTimerB = setTimeout(runFrameRefresh, 700);
+  }
+
+  /*
+    نحافظ على سلسلة فتح الإدارة الأصلية بكل إصلاحاتها،
+    ثم نطلب تحديثًا فقط. لا نؤخر الفتح ولا نستبدل iframe.
+  */
+  const previousOpenAdmin = window.linkoOpenAdmin;
+  window.linkoOpenAdmin = function(){
+    const result = typeof previousOpenAdmin === 'function'
+      ? previousOpenAdmin.apply(this, arguments)
+      : undefined;
+
+    scheduleRefresh();
+    return result;
+  };
 
   window.addEventListener('online', function(){
-    markForRecovery();
-  });
-
-  window.addEventListener('pagehide', function(){
-    hiddenAt = Date.now();
-
-    if(navigator.onLine === false){
-      needsRecovery = true;
-    }
+    if(adminIsOpen()) scheduleRefresh();
   });
 
   window.addEventListener('pageshow', function(event){
-    const awayTime = hiddenAt ? Date.now() - hiddenAt : 0;
-
-    /*
-      Safari قد يعيد الصفحة من الذاكرة من دون تشغيلها من الصفر.
-      أي رجوع محفوظ أو غياب لثوانٍ يعلّم iframe لإعادة البناء
-      عند فتح الإدارة، من دون إعادة تحميل الموقع كله.
-    */
-    if(event.persisted || awayTime > 2500){
-      markForRecovery();
+    if(event.persisted && adminIsOpen()){
+      scheduleRefresh();
     }
   });
 
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){
       hiddenAt = Date.now();
-
-      if(navigator.onLine === false){
-        needsRecovery = true;
-      }
-
       return;
     }
 
     const awayTime = hiddenAt ? Date.now() - hiddenAt : 0;
-
-    if(awayTime > 2500){
-      markForRecovery();
+    if(awayTime > 2500 && adminIsOpen()){
+      scheduleRefresh();
     }
   });
-
-  /*
-    نغلف آخر دالة فتح إدارة موجودة في الملف.
-    إذا رجع التطبيق من الخلفية أو انقطع النت، نعيد iframe أولًا
-    ثم نفتح الإدارة؛ أما الفتح الطبيعي فلا يتغير نهائيًا.
-  */
-  const previousOpenAdmin = window.linkoOpenAdmin;
-
-  window.linkoOpenAdmin = function(){
-    const context = this;
-    const args = arguments;
-
-    if(needsRecovery && navigator.onLine !== false){
-      rebuildAdminFrame(function(){
-        if(typeof previousOpenAdmin === 'function'){
-          previousOpenAdmin.apply(context, args);
-        }
-      });
-      return;
-    }
-
-    if(typeof previousOpenAdmin === 'function'){
-      return previousOpenAdmin.apply(context, args);
-    }
-  };
-
-  getFrame();
 })();
 </script>
 
