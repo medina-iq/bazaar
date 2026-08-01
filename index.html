@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MEDINA_BUILD_V68_MEMBERS_UNIFIED_20260801 -->
+<!-- MEDINA_BUILD_V69_PENDING_ONLY_20260801 -->
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
 html{color-scheme:light!important;background:#dcefe5!important;}
@@ -6462,6 +6462,178 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
   function linkoToast(msg){ try{ if(typeof toast === 'function') toast(msg); else alert(msg); }catch(e){ try{alert(msg)}catch(_){} } }
   function nowText(){ try{return new Date().toLocaleString('ar-IQ')}catch(e){return new Date().toISOString()} }
   function clean(v){ return String(v || '').trim(); }
+
+  function medinaNormalizePendingName(value){
+    return clean(value)
+      .toLocaleLowerCase('ar')
+      .replace(/[\u064B-\u065F\u0670\u0640]/g,'')
+      .replace(/[أإآ]/g,'ا')
+      .replace(/ى/g,'ي')
+      .replace(/\s+/g,' ');
+  }
+
+  function medinaPendingDigitsOnly(value){
+    const digits = {
+      '٠':'0','١':'1','٢':'2','٣':'3','٤':'4',
+      '٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
+      '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4',
+      '۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'
+    };
+
+    return clean(value)
+      .replace(/[٠-٩۰-۹]/g,function(character){
+        return digits[character] || character;
+      })
+      .replace(/\D+/g,'');
+  }
+
+  function medinaNormalizePendingPhone(value){
+    let phone = medinaPendingDigitsOnly(value);
+
+    if(phone.indexOf('00964') === 0){
+      phone = '0' + phone.slice(5);
+    }else if(phone.indexOf('964') === 0){
+      phone = '0' + phone.slice(3);
+    }else if(phone.length === 10 && phone.indexOf('7') === 0){
+      phone = '0' + phone;
+    }
+
+    return phone;
+  }
+
+  function medinaPendingPhoneCandidates(value){
+    const rawPhone = clean(value);
+    const digitsOnly = medinaPendingDigitsOnly(value);
+    const normalizedPhone = medinaNormalizePendingPhone(value);
+
+    return Array.from(
+      new Set(
+        [rawPhone,digitsOnly,normalizedPhone].filter(Boolean)
+      )
+    );
+  }
+
+  function medinaIsPendingRequest(row){
+    row = row || {};
+
+    if(row.deleted === true) return false;
+
+    const status = clean(row.status).toLowerCase();
+
+    return (
+      !status ||
+      status === 'pending' ||
+      status === 'new' ||
+      status === 'قيد الانتظار' ||
+      status === 'بانتظار'
+    );
+  }
+
+  function medinaSamePendingIdentity(row,name,phone){
+    row = row || {};
+
+    const rowName = medinaNormalizePendingName(
+      row.name || row.fullName || row.username
+    );
+
+    const rowPhone = medinaNormalizePendingPhone(
+      row.phone || row.mobile
+    );
+
+    return (
+      medinaIsPendingRequest(row) &&
+      !!rowName &&
+      !!rowPhone &&
+      rowName === medinaNormalizePendingName(name) &&
+      rowPhone === medinaNormalizePendingPhone(phone)
+    );
+  }
+
+  function medinaPendingIdentityId(name,phone){
+    const identity =
+      medinaNormalizePendingName(name)
+      + '|'
+      + medinaNormalizePendingPhone(phone);
+
+    const bytes = new TextEncoder().encode(identity);
+    let binary = '';
+
+    bytes.forEach(function(byte){
+      binary += String.fromCharCode(byte);
+    });
+
+    return 'pending_'
+      + btoa(binary)
+        .replace(/\+/g,'-')
+        .replace(/\//g,'_')
+        .replace(/=+$/g,'');
+  }
+
+  function medinaPendingRequestError(){
+    const error = new Error('MEDINA_PENDING_REQUEST_EXISTS');
+    error.code = 'MEDINA_PENDING_REQUEST_EXISTS';
+    return error;
+  }
+
+  async function medinaHasPendingRequest(db,fs,name,phone){
+    const normalizedPhone =
+      medinaNormalizePendingPhone(phone);
+
+    const checks = [];
+
+    if(normalizedPhone){
+      checks.push({
+        field:'normalizedPhone',
+        value:normalizedPhone
+      });
+    }
+
+    medinaPendingPhoneCandidates(phone).forEach(function(value){
+      checks.push({
+        field:'phone',
+        value:value
+      });
+    });
+
+    const seen = new Set();
+
+    for(const check of checks){
+      const key = check.field + '|' + check.value;
+
+      if(seen.has(key)) continue;
+      seen.add(key);
+
+      const query = fs.query(
+        fs.collection(db,SUB_COLLECTION),
+        fs.where(check.field,'==',check.value)
+      );
+
+      const snapshot = fs.getDocsFromServer
+        ? await fs.getDocsFromServer(query)
+        : await fs.getDocs(query);
+
+      let found = false;
+
+      snapshot.forEach(function(documentSnapshot){
+        if(found) return;
+
+        if(
+          medinaSamePendingIdentity(
+            documentSnapshot.data() || {},
+            name,
+            phone
+          )
+        ){
+          found = true;
+        }
+      });
+
+      if(found) return true;
+    }
+
+    return false;
+  }
+
   async function linkoFirebase(){
     if(linkoFbPromise) return linkoFbPromise;
     linkoFbPromise = Promise.all([
@@ -6477,19 +6649,67 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
 
   async function saveSubscriptionToFirestore(data){
     const {db, fs} = await linkoFirebase();
+
+    const name = clean(data.name);
+    const phone = clean(data.phone);
+    const normalizedName =
+      medinaNormalizePendingName(name);
+    const normalizedPhone =
+      medinaNormalizePendingPhone(phone);
+
+    if(
+      await medinaHasPendingRequest(
+        db,
+        fs,
+        name,
+        phone
+      )
+    ){
+      throw medinaPendingRequestError();
+    }
+
+    const pendingId =
+      medinaPendingIdentityId(name,phone);
+
+    const requestRef =
+      fs.doc(db,SUB_COLLECTION,pendingId);
+
     const payload = {
-      name: clean(data.name),
-      phone: clean(data.phone),
+      name: name,
+      phone: phone,
+      normalizedName: normalizedName,
+      normalizedPhone: normalizedPhone,
+      pendingIdentityKey: pendingId,
       area: clean(data.area),
       address: clean(data.area),
       code: clean(data.code),
       status: 'pending',
+      deleted: false,
       date: nowText(),
       source: 'member_signup',
       createdAt: fs.serverTimestamp()
     };
-    const ref = await fs.addDoc(fs.collection(db, SUB_COLLECTION), payload);
-    return Object.assign({}, payload, {firebaseId: ref.id});
+
+    await fs.runTransaction(db,async function(transaction){
+      const existing = await transaction.get(requestRef);
+
+      if(
+        existing.exists() &&
+        medinaSamePendingIdentity(
+          existing.data() || {},
+          name,
+          phone
+        )
+      ){
+        throw medinaPendingRequestError();
+      }
+
+      transaction.set(requestRef,payload);
+    });
+
+    return Object.assign({},payload,{
+      firebaseId:pendingId
+    });
   }
 
   function patchMemberRegister(){
@@ -6518,8 +6738,18 @@ if(form) form.reset();
         try{ if(typeof switchAuth === 'function') switchAuth('login'); }catch(_){ }
         linkoToast('تم إرسال طلب الاشتراك إلى الإدارة بنجاح');
       }catch(err){
-        console.error('LINKO Firestore subscription send error', err);
-        linkoToast('تعذر إرسال الطلب إلى Firebase، تحقق من الإنترنت وقواعد Firestore');
+        if(
+          err &&
+          (
+            err.code === 'MEDINA_PENDING_REQUEST_EXISTS' ||
+            err.message === 'MEDINA_PENDING_REQUEST_EXISTS'
+          )
+        ){
+          linkoToast('طلبك السابق موجود، يرجى الانتظار لحين موافقة الإدارة وعدم تكرار الطلب');
+        }else{
+          console.error('MEDINA Firestore subscription send error',err);
+          linkoToast('تعذر إرسال الطلب إلى Firebase، تحقق من الإنترنت وقواعد Firestore');
+        }
       }finally{
         if(btn){ btn.disabled = false; btn.innerHTML = oldHtml; }
       }
