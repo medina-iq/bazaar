@@ -1,7 +1,8 @@
-const CACHE_NAME = "medina-bazaar-v63";
+const CACHE_NAME = "medina-bazaar-v64";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
-const EXACT_BUILD_MARKER = "MEDINA_BUILD_V63_LOCK_20260801_0355";
+const EXACT_BUILD_MARKER =
+  "MEDINA_BUILD_V64_ADMIN_IFRAME_PERSIST_20260801";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -17,7 +18,7 @@ const STATIC_ASSETS = [
 async function fetchExactIndex() {
   const requestUrl = new URL(INDEX_URL);
 
-  requestUrl.searchParams.set("build", "v63");
+  requestUrl.searchParams.set("build", "v64");
   requestUrl.searchParams.set("time", String(Date.now()));
 
   const response = await fetch(requestUrl.href, {
@@ -51,7 +52,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       /*
-        لا ينجح تثبيت v63 إلا إذا وصل index.html
+        لا ينجح تثبيت v64 إلا إذا وصل index.html
         الذي يحمل علامة هذا الإصدار بالضبط.
       */
       await cacheExactIndex();
@@ -131,7 +132,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Firebase وأي طلب خارجي خارج Service Worker.
+  // Firebase وأي طلب خارجي يبقيان خارج Service Worker.
   if (url.origin !== self.location.origin) {
     return;
   }
@@ -160,9 +161,9 @@ async function handleNavigation() {
   const cachedIndex = await cache.match(INDEX_URL);
 
   /*
-    بعد نجاح تثبيت v63 نعرض نفس النسخة المقفلة دائمًا.
+    بعد نجاح تثبيت v64 نعرض نفس النسخة المقفلة دائمًا.
     لا يوجد تحديث خلفي لـ index.html حتى لا يستبدل Safari
-    النسخة الصحيحة برد قديم.
+    النسخة الصحيحة برد قديم من الشبكة.
   */
   if (cachedIndex) {
     return cachedIndex;
