@@ -1,6 +1,7 @@
-const CACHE_NAME = "medina-bazaar-v61";
+const CACHE_NAME = "medina-bazaar-v62";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
+const BUILD_MARKER = "MEDINA_BUILD_V62";
 
 const SCOPE_URL = new URL("./", self.registration.scope);
 const INDEX_URL = new URL("index.html", SCOPE_URL).href;
@@ -13,22 +14,46 @@ const STATIC_ASSETS = [
   new URL("icon-maskable-512.png", SCOPE_URL).href
 ];
 
+async function fetchVerifiedIndex() {
+  const requestUrl = new URL(INDEX_URL);
+  requestUrl.searchParams.set("build", "v62");
+  requestUrl.searchParams.set("time", String(Date.now()));
+
+  const response = await fetch(requestUrl.href, {
+    cache: "no-store",
+    redirect: "follow"
+  });
+
+  if (!response || !response.ok) {
+    throw new Error("Index download failed");
+  }
+
+  const checkText = await response.clone().text();
+
+  if (!checkText.includes(BUILD_MARKER)) {
+    throw new Error("The received index is not build v62");
+  }
+
+  return response;
+}
+
+async function saveVerifiedIndex() {
+  const response = await fetchVerifiedIndex();
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(INDEX_URL, response.clone());
+  return response;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
+      /*
+        لا يتم تفعيل v62 إلا بعد التأكد أن index.html
+        هو نفس إصدار v62.
+      */
+      await saveVerifiedIndex();
+
       const cache = await caches.open(CACHE_NAME);
-
-      try {
-        const response = await fetch(INDEX_URL, {
-          cache: "no-store"
-        });
-
-        if (response && response.ok) {
-          await cache.put(INDEX_URL, response.clone());
-        }
-      } catch (error) {
-        // ضعف الإنترنت لا يوقف تثبيت النسخة الجديدة.
-      }
 
       await Promise.allSettled(
         STATIC_ASSETS.map(async (assetUrl) => {
@@ -41,7 +66,7 @@ self.addEventListener("install", (event) => {
               await cache.put(assetUrl, response.clone());
             }
           } catch (error) {
-            // الملف المفقود لا يوقف تثبيت التطبيق.
+            // الملف المفقود لا يمنع تثبيت النسخة الصحيحة.
           }
         })
       );
@@ -71,7 +96,7 @@ self.addEventListener("activate", (event) => {
         try {
           await self.registration.navigationPreload.disable();
         } catch (error) {
-          // بعض الأجهزة لا تدعم هذه الخاصية.
+          // بعض الأجهزة لا تدعمها.
         }
       }
 
@@ -103,7 +128,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // لا نتدخل بطلبات Firebase أو أي طلب خارجي.
+  // لا نتدخل بطلبات Firebase أو المواقع الخارجية.
   if (url.origin !== self.location.origin) {
     return;
   }
@@ -118,31 +143,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // الصفحة الرئيسية: النسخة الجاهزة فوراً، والتحديث بالخلفية.
   if (request.mode === "navigate") {
     event.respondWith(handleNavigation(event));
     return;
   }
 
-  // بقية ملفات الموقع: الإنترنت أولاً والكاش عند الانقطاع.
   event.respondWith(handleSameOriginAsset(request));
 });
 
-async function updateIndexInBackground(request) {
+async function updateVerifiedIndexInBackground() {
   try {
-    const response = await fetch(request, {
-      cache: "no-store",
-      redirect: "follow"
-    });
-
-    if (!response || !response.ok) {
-      return;
-    }
-
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(INDEX_URL, response.clone());
+    await saveVerifiedIndex();
   } catch (error) {
-    // تبقى النسخة الجاهزة ظاهرة إذا كان الإنترنت ضعيفاً.
+    /*
+      إذا وصل ملف قديم أو كان الإنترنت ضعيفاً،
+      لا نستبدل النسخة الصحيحة.
+    */
   }
 }
 
@@ -151,24 +167,13 @@ async function handleNavigation(event) {
   const cachedIndex = await cache.match(INDEX_URL);
 
   if (cachedIndex) {
-    // لا ننتظر الإنترنت؛ نحدّث النسخة بالخلفية فقط.
-    event.waitUntil(updateIndexInBackground(event.request));
+    // تظهر الواجهة الصحيحة فوراً.
+    event.waitUntil(updateVerifiedIndexInBackground());
     return cachedIndex;
   }
 
-  // أول تشغيل فقط إذا لم تكن هناك نسخة جاهزة.
   try {
-    const networkResponse = await fetch(event.request, {
-      cache: "no-store",
-      redirect: "follow"
-    });
-
-    if (!networkResponse || !networkResponse.ok) {
-      throw new Error("Navigation failed");
-    }
-
-    await cache.put(INDEX_URL, networkResponse.clone());
-    return networkResponse;
+    return await saveVerifiedIndex();
   } catch (error) {
     return createOfflinePage();
   }
@@ -235,7 +240,7 @@ function createOfflinePage() {
     name="viewport"
     content="width=device-width,initial-scale=1"
   >
-  <meta name="theme-color" content="#f8fafc">
+  <meta name="theme-color" content="#dcefe5">
   <title>سوق المدينة</title>
 
   <style>
@@ -243,7 +248,7 @@ function createOfflinePage() {
     body {
       margin: 0;
       min-height: 100%;
-      background: #f8fafc;
+      background: #dcefe5;
       color: #111827;
       font-family: Arial, sans-serif;
     }
@@ -262,7 +267,7 @@ function createOfflinePage() {
       padding: 24px;
       box-sizing: border-box;
       background: #ffffff;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #cbd5e1;
       border-radius: 24px;
     }
   </style>
