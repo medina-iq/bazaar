@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MEDINA_BUILD_V67_DIRECT_ADMIN_20260801 -->
+<!-- MEDINA_BUILD_V68_MEMBERS_UNIFIED_20260801 -->
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
 html{color-scheme:light!important;background:#dcefe5!important;}
@@ -4091,7 +4091,10 @@ initTheme();buildNav();render();
       window.notifications = function(){
         const type = activeType();
         return &#x27;&lt;div class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;&lt;h2&gt;إرسال الإشعارات&lt;/h2&gt;&#x27;
-          + &#x27;&lt;p&gt;اختر جهة الإرسال ثم اكتب رسالة تظهر بشكل أنيق لمدة أربع ثوانٍ.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&#x27;
+          + &#x27;&lt;p&gt;اختر جهة الإرسال ثم اكتب رسالة تظهر بشكل أنيق لمدة أربع ثوانٍ.&lt;/p&gt;&lt;/div&gt;&#x27;
+          + &#x27;&lt;div class=&quot;admin-clean-toolbar&quot; style=&quot;margin:12px 0&quot;&gt;&#x27;
+          + &#x27;&lt;button class=&quot;btn danger mini&quot; type=&quot;button&quot; onclick=&quot;medinaV68DeleteAllNotifications(this)&quot;&gt;حذف جميع الإشعارات&lt;/button&gt;&#x27;
+          + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;
           + &#x27;&lt;div class=&quot;form-grid&quot;&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;جهة الإرسال&lt;/label&gt;&#x27;
           + &#x27;&lt;select id=&quot;linkoStage74Type&quot; class=&quot;input&quot; onchange=&quot;linkoStage74TargetChanged(this.value)&quot;&gt;&#x27;
           + &#x27;&lt;option value=&quot;all_members&quot; &#x27;+(type===&#x27;all_members&#x27;?&#x27;selected&#x27;:&#x27;&#x27;)+&#x27;&gt;كل الأعضاء&lt;/option&gt;&#x27;
@@ -4175,6 +4178,86 @@ initTheme();buildNav();render();
         }finally{
           sending = false;
           if(button){ button.disabled = false; button.innerHTML = oldText; }
+        }
+      };
+
+
+      window.medinaV68DeleteAllNotifications = async function(button){
+        if(window.__medinaV68DeletingNotifications) return;
+
+        if(!confirm(&#x27;تأكيد حذف جميع الإشعارات من جميع الأعضاء؟&#x27;)){
+          return;
+        }
+
+        window.__medinaV68DeletingNotifications = true;
+        const oldText = button ? button.textContent : &#x27;&#x27;;
+
+        if(button){
+          button.disabled = true;
+          button.textContent = &#x27;جاري الحذف...&#x27;;
+        }
+
+        try{
+          const f = await firebase();
+          const snapshot = await f.fs.getDocs(
+            f.fs.collection(f.db,NOTIFICATIONS_COLLECTION)
+          );
+
+          const documents = snapshot.docs.slice();
+
+          for(let start=0; start&lt;documents.length; start+=400){
+            const batch = f.fs.writeBatch(f.db);
+
+            documents
+              .slice(start,start+400)
+              .forEach(function(docSnap){
+                batch.delete(docSnap.ref);
+              });
+
+            await batch.commit();
+          }
+
+          notificationRows = [];
+
+          try{
+            const keys = [];
+
+            for(let index=0; index&lt;localStorage.length; index+=1){
+              keys.push(localStorage.key(index));
+            }
+
+            keys.forEach(function(key){
+              if(!key) return;
+
+              if(
+                key.indexOf(&#x27;linko_stage74_read_&#x27;) === 0 ||
+                key.indexOf(&#x27;linko_stage74_shown_&#x27;) === 0 ||
+                key.indexOf(&#x27;linko_notification_&#x27;) === 0
+              ){
+                localStorage.removeItem(key);
+              }
+            });
+          }catch(error){}
+
+          message(&#x27;تم حذف جميع الإشعارات&#x27;);
+
+          try{
+            if(typeof active !== &#x27;undefined&#x27; &amp;&amp;
+               active === &#x27;notifications&#x27; &amp;&amp;
+               typeof render === &#x27;function&#x27;){
+              render();
+            }
+          }catch(error){}
+        }catch(error){
+          console.error(&#x27;MEDINA delete notifications failed&#x27;,error);
+          message(&#x27;تعذر حذف الإشعارات، حاول مرة ثانية&#x27;);
+        }finally{
+          window.__medinaV68DeletingNotifications = false;
+
+          if(button &amp;&amp; document.body.contains(button)){
+            button.disabled = false;
+            button.textContent = oldText || &#x27;حذف جميع الإشعارات&#x27;;
+          }
         }
       };
 
@@ -4382,6 +4465,708 @@ initTheme();buildNav();render();
   },true);
 })();
 
+&lt;/script&gt;
+
+&lt;script id=&quot;medinaV68DirectMembers&quot;&gt;
+(function(){
+  &#x27;use strict&#x27;;
+
+  if(window.__medinaV68DirectMembers) return;
+  window.__medinaV68DirectMembers = true;
+
+  const FIREBASE_CONFIG = {
+    apiKey: &quot;AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA&quot;,
+    authDomain: &quot;medina-bazaar-e2c18.firebaseapp.com&quot;,
+    projectId: &quot;medina-bazaar-e2c18&quot;,
+    storageBucket: &quot;medina-bazaar-e2c18.firebasestorage.app&quot;,
+    messagingSenderId: &quot;375693456199&quot;,
+    appId: &quot;1:375693456199:web:2b36e0368ed898a7a11262&quot;
+  };
+
+  const MEMBERS_COLLECTION = &#x27;members&#x27;;
+  let firebasePromise = null;
+  let liveRows = [];
+  let unsubscribe = null;
+  let saving = false;
+
+  function clean(value){
+    return String(value == null ? &#x27;&#x27; : value).trim();
+  }
+
+  function esc(value){
+    return String(value == null ? &#x27;&#x27; : value).replace(/[&amp;&lt;&gt;&quot;&#x27;]/g,function(ch){
+      return {
+        &#x27;&amp;&#x27;:&#x27;&amp;amp;&#x27;,
+        &#x27;&lt;&#x27;:&#x27;&amp;lt;&#x27;,
+        &#x27;&gt;&#x27;:&#x27;&amp;gt;&#x27;,
+        &#x27;&quot;&#x27;:&#x27;&amp;quot;&#x27;,
+        &quot;&#x27;&quot;:&#x27;&amp;#39;&#x27;
+      }[ch];
+    });
+  }
+
+  function numberValue(value){
+    if(typeof value === &#x27;number&#x27; &amp;&amp; Number.isFinite(value)) return value;
+
+    const normalized = clean(value)
+      .replace(/[٠-٩]/g,function(d){
+        return &#x27;٠١٢٣٤٥٦٧٨٩&#x27;.indexOf(d);
+      })
+      .replace(/[۰-۹]/g,function(d){
+        return &#x27;۰۱۲۳۴۵۶۷۸۹&#x27;.indexOf(d);
+      })
+      .replace(/[^0-9.-]/g,&#x27;&#x27;);
+
+    const result = Number(normalized);
+    return Number.isFinite(result) ? result : 0;
+  }
+
+  function message(text){
+    try{
+      if(typeof toast === &#x27;function&#x27;) toast(text);
+      else alert(text);
+    }catch(error){
+      try{ alert(text); }catch(ignore){}
+    }
+  }
+
+  function moneyText(value){
+    try{
+      if(typeof money === &#x27;function&#x27;) return money(numberValue(value));
+    }catch(error){}
+
+    return numberValue(value).toLocaleString(&#x27;ar-IQ&#x27;) + &#x27; د.ع&#x27;;
+  }
+
+  function statusClass(status){
+    try{
+      if(typeof cls === &#x27;function&#x27;) return cls(status);
+    }catch(error){}
+
+    return status === &#x27;active&#x27; ? &#x27;ok&#x27; : &#x27;bad&#x27;;
+  }
+
+  function statusLabel(status){
+    try{
+      if(typeof statusText === &#x27;function&#x27;) return statusText(status);
+    }catch(error){}
+
+    return status === &#x27;active&#x27; ? &#x27;مفعل&#x27; : &#x27;موقوف&#x27;;
+  }
+
+  function initial(name){
+    return esc((clean(name).slice(0,1) || &#x27;ع&#x27;).toUpperCase());
+  }
+
+  function normalizeMember(doc){
+    const data = doc.data() || {};
+    const status = clean(data.status || &#x27;active&#x27;) || &#x27;active&#x27;;
+
+    return {
+      id: doc.id,
+      firebaseId: doc.id,
+      name: clean(data.name || data.fullName || data.username),
+      username: clean(data.username || data.name || data.fullName),
+      phone: clean(data.phone || data.mobile),
+      area: clean(data.area || data.address || data.location),
+      address: clean(data.address || data.area || data.location),
+      code: clean(data.code || data.password || data.pin),
+      password: clean(data.password || data.code || data.pin),
+      balance: numberValue(data.balance),
+      status: status,
+      img: clean(data.img || data.avatar || data.photo),
+      deleted:
+        data.deleted === true ||
+        status === &#x27;deleted&#x27; ||
+        status === &#x27;removed&#x27;,
+      raw: data
+    };
+  }
+
+  function uniqueRows(rows){
+    const map = new Map();
+
+    (rows || []).forEach(function(member){
+      if(!member || member.deleted) return;
+
+      const key = clean(
+        member.firebaseId ||
+        member.id ||
+        [
+          member.name || member.username,
+          member.phone,
+          member.code || member.password
+        ].join(&#x27;::&#x27;)
+      );
+
+      if(key) map.set(key,member);
+    });
+
+    return Array.from(map.values());
+  }
+
+  function currentRows(){
+    const stateRows =
+      window.state &amp;&amp; Array.isArray(window.state.members)
+        ? window.state.members
+        : [];
+
+    return uniqueRows(
+      liveRows.length
+        ? liveRows
+        : stateRows
+    );
+  }
+
+  function publish(renderNow){
+    if(!window.state) window.state = {};
+    window.state.members = currentRows();
+
+    if(
+      renderNow ||
+      (typeof active !== &#x27;undefined&#x27; &amp;&amp; active === &#x27;members&#x27;)
+    ){
+      try{
+        if(typeof render === &#x27;function&#x27;) render();
+      }catch(error){}
+    }
+  }
+
+  function findMember(id){
+    const target = clean(id);
+
+    return currentRows().find(function(member){
+      return (
+        clean(member.firebaseId) === target ||
+        clean(member.id) === target ||
+        clean(member.memberId) === target
+      );
+    }) || null;
+  }
+
+  async function firebase(){
+    if(firebasePromise) return firebasePromise;
+
+    firebasePromise = Promise.all([
+      import(&#x27;https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js&#x27;),
+      import(&#x27;https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js&#x27;)
+    ]).then(function(modules){
+      const appModule = modules[0];
+      const firestore = modules[1];
+
+      const app = appModule.getApps().length
+        ? appModule.getApps()[0]
+        : appModule.initializeApp(FIREBASE_CONFIG);
+
+      return {
+        db: firestore.getFirestore(app),
+        fs: firestore
+      };
+    });
+
+    return firebasePromise;
+  }
+
+  async function resolveDocId(member){
+    const direct = clean(
+      member &amp;&amp; (
+        member.firebaseId ||
+        member.firestoreId ||
+        member.docId
+      )
+    );
+
+    if(direct) return direct;
+
+    const fallbackId = clean(member &amp;&amp; member.id);
+
+    if(fallbackId &amp;&amp; !/^\d+$/.test(fallbackId)){
+      return fallbackId;
+    }
+
+    const name = clean(member &amp;&amp; (member.name || member.username));
+    const code = clean(member &amp;&amp; (member.code || member.password));
+
+    if(!name) return &#x27;&#x27;;
+
+    const f = await firebase();
+    const query = f.fs.query(
+      f.fs.collection(f.db,MEMBERS_COLLECTION),
+      f.fs.where(&#x27;name&#x27;,&#x27;==&#x27;,name),
+      f.fs.limit(30)
+    );
+    const snapshot = await f.fs.getDocs(query);
+    let found = &#x27;&#x27;;
+
+    snapshot.forEach(function(docSnap){
+      if(found) return;
+
+      const data = docSnap.data() || {};
+      const docCode = clean(data.code || data.password || data.pin);
+
+      if(!code || docCode === code){
+        found = docSnap.id;
+      }
+    });
+
+    return found;
+  }
+
+  async function updateMember(member,payload){
+    const docId = await resolveDocId(member);
+
+    if(!docId){
+      throw new Error(&#x27;MEMBER_DOCUMENT_NOT_FOUND&#x27;);
+    }
+
+    const f = await firebase();
+
+    await f.fs.updateDoc(
+      f.fs.doc(f.db,MEMBERS_COLLECTION,docId),
+      Object.assign({},payload,{
+        updatedAt: f.fs.serverTimestamp()
+      })
+    );
+
+    return docId;
+  }
+
+  window.members = function(){
+    const query = clean(
+      document.getElementById(&#x27;memSearch&#x27;) &amp;&amp;
+      document.getElementById(&#x27;memSearch&#x27;).value
+    );
+
+    const list = currentRows().filter(function(member){
+      if(!query) return true;
+
+      return [
+        member.name,
+        member.username,
+        member.phone,
+        member.area,
+        member.address,
+        member.code,
+        member.password
+      ].join(&#x27; &#x27;).includes(query);
+    });
+
+    return &#x27;&lt;div class=&quot;panel&quot;&gt;&#x27;
+      + &#x27;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;&#x27;
+      + &#x27;&lt;h2&gt;إدارة الأعضاء&lt;/h2&gt;&#x27;
+      + &#x27;&lt;p&gt;كل عضو ببطاقة مرتبة مع أزرار تعديل وحذف.&lt;/p&gt;&#x27;
+      + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;
+      + &#x27;&lt;div class=&quot;tools&quot;&gt;&#x27;
+      + &#x27;&lt;input class=&quot;input&quot; id=&quot;memSearch&quot; autocomplete=&quot;off&quot; &#x27;
+      + &#x27;oninput=&quot;medinaV68FilterMembers(this.value)&quot; &#x27;
+      + &#x27;value=&quot;&#x27;+esc(query)+&#x27;&quot; &#x27;
+      + &#x27;placeholder=&quot;بحث بالاسم أو الهاتف أو الرمز&quot;&gt;&#x27;
+      + &#x27;&lt;select&gt;&lt;option&gt;كل الحالات&lt;/option&gt;&lt;/select&gt;&#x27;
+      + &#x27;&lt;button class=&quot;btn secondary&quot; type=&quot;button&quot; &#x27;
+      + &#x27;onclick=&quot;medinaV68FilterMembers(document.getElementById(\&#x27;memSearch\&#x27;).value)&quot;&gt;بحث&lt;/button&gt;&#x27;
+      + &#x27;&lt;/div&gt;&#x27;
+      + &#x27;&lt;div class=&quot;members-admin-grid&quot;&gt;&#x27;
+      + (
+        list.length
+          ? list.map(function(member){
+              const id = esc(
+                member.firebaseId ||
+                member.id ||
+                member.memberId ||
+                &#x27;&#x27;
+              );
+              const name = esc(
+                member.name ||
+                member.username ||
+                &#x27;-&#x27;
+              );
+              const image = clean(
+                member.img ||
+                member.avatar ||
+                member.photo
+              );
+
+              return &#x27;&lt;div class=&quot;admin-member-box&quot;&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-head&quot;&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-avatar&quot;&gt;&#x27;
+                + (
+                  image
+                    ? &#x27;&lt;img src=&quot;&#x27;+esc(image)+&#x27;&quot; alt=&quot;&#x27;+name+&#x27;&quot; loading=&quot;lazy&quot; decoding=&quot;async&quot;&gt;&#x27;
+                    : initial(name)
+                )
+                + &#x27;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-info&quot;&gt;&#x27;
+                + &#x27;&lt;h3&gt;&#x27;+name+&#x27; &lt;span class=&quot;status &#x27;+statusClass(member.status)+&#x27;&quot;&gt;&#x27;
+                + statusLabel(member.status)
+                + &#x27;&lt;/span&gt;&lt;/h3&gt;&#x27;
+                + &#x27;&lt;p&gt;الهاتف: &#x27;+esc(member.phone || &#x27;-&#x27;)
+                + &#x27;&lt;br&gt;العنوان: &#x27;+esc(member.area || member.address || &#x27;-&#x27;)
+                + &#x27;&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-meta&quot;&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-pill&quot;&gt;&lt;small&gt;اسم المستخدم&lt;/small&gt;&#x27;
+                + esc(member.username || member.name || &#x27;-&#x27;)
+                + &#x27;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-pill&quot;&gt;&lt;small&gt;كلمة السر&lt;/small&gt;&#x27;
+                + esc(member.password || member.code || &#x27;-&#x27;)
+                + &#x27;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-pill&quot;&gt;&lt;small&gt;الرمز&lt;/small&gt;&#x27;
+                + esc(member.code || &#x27;-&#x27;)
+                + &#x27;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;member-admin-pill&quot;&gt;&lt;small&gt;الرصيد&lt;/small&gt;&#x27;
+                + moneyText(member.balance)
+                + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;
+                + &#x27;&lt;div class=&quot;actions-row&quot;&gt;&#x27;
+                + &#x27;&lt;button class=&quot;btn secondary mini&quot; type=&quot;button&quot; &#x27;
+                + &#x27;onclick=&quot;medinaV68OpenMember(\&#x27;&#x27;+id+&#x27;\&#x27;)&quot;&gt;تعديل&lt;/button&gt;&#x27;
+                + &#x27;&lt;button class=&quot;btn danger mini&quot; type=&quot;button&quot; &#x27;
+                + &#x27;onclick=&quot;medinaV68DeleteMember(\&#x27;&#x27;+id+&#x27;\&#x27;)&quot;&gt;حذف العضو&lt;/button&gt;&#x27;
+                + &#x27;&lt;button class=&quot;btn mini&quot; type=&quot;button&quot; &#x27;
+                + &#x27;onclick=&quot;medinaV68OpenWallet(\&#x27;&#x27;+id+&#x27;\&#x27;)&quot;&gt;إضافة رصيد&lt;/button&gt;&#x27;
+                + &#x27;&lt;button class=&quot;btn warn mini&quot; type=&quot;button&quot; &#x27;
+                + &#x27;onclick=&quot;medinaV68ToggleMember(\&#x27;&#x27;+id+&#x27;\&#x27;)&quot;&gt;&#x27;
+                + (member.status === &#x27;active&#x27; ? &#x27;إيقاف&#x27; : &#x27;تفعيل&#x27;)
+                + &#x27;&lt;/button&gt;&#x27;
+                + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+            }).join(&#x27;&#x27;)
+          : &#x27;&lt;div class=&quot;empty&quot;&gt;لا يوجد أعضاء&lt;/div&gt;&#x27;
+      )
+      + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+  };
+
+  window.medinaV68FilterMembers = function(value){
+    const query = clean(value).toLocaleLowerCase(&#x27;ar&#x27;)
+      .replace(/[أإآ]/g,&#x27;ا&#x27;)
+      .replace(/\s+/g,&#x27; &#x27;);
+
+    document.querySelectorAll(&#x27;.members-admin-grid .admin-member-box&#x27;)
+      .forEach(function(card){
+        const text = clean(card.textContent)
+          .toLocaleLowerCase(&#x27;ar&#x27;)
+          .replace(/[أإآ]/g,&#x27;ا&#x27;)
+          .replace(/\s+/g,&#x27; &#x27;);
+
+        card.style.display =
+          !query || text.includes(query)
+            ? &#x27;&#x27;
+            : &#x27;none&#x27;;
+      });
+  };
+
+  window.medinaV68OpenMember = function(id){
+    const member = findMember(id);
+
+    if(!member){
+      message(&#x27;العضو غير متوفر&#x27;);
+      return;
+    }
+
+    if(typeof openModal !== &#x27;function&#x27;){
+      message(&#x27;تعذر فتح تعديل العضو&#x27;);
+      return;
+    }
+
+    openModal(
+      &#x27;تعديل العضو&#x27;,
+      &#x27;&lt;div class=&quot;form-grid&quot;&gt;&#x27;
+      + &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;الاسم&lt;/label&gt;&#x27;
+      + &#x27;&lt;input class=&quot;input&quot; id=&quot;medinaV68MemberName&quot; value=&quot;&#x27;+esc(member.name)+&#x27;&quot;&gt;&lt;/div&gt;&#x27;
+      + &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;الهاتف&lt;/label&gt;&#x27;
+      + &#x27;&lt;input class=&quot;input&quot; id=&quot;medinaV68MemberPhone&quot; value=&quot;&#x27;+esc(member.phone)+&#x27;&quot;&gt;&lt;/div&gt;&#x27;
+      + &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;العنوان&lt;/label&gt;&#x27;
+      + &#x27;&lt;input class=&quot;input&quot; id=&quot;medinaV68MemberArea&quot; value=&quot;&#x27;+esc(member.area || member.address)+&#x27;&quot;&gt;&lt;/div&gt;&#x27;
+      + &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;الرمز&lt;/label&gt;&#x27;
+      + &#x27;&lt;input class=&quot;input&quot; id=&quot;medinaV68MemberCode&quot; value=&quot;&#x27;+esc(member.code || member.password)+&#x27;&quot;&gt;&lt;/div&gt;&#x27;
+      + &#x27;&lt;button class=&quot;btn wide&quot; type=&quot;button&quot; &#x27;
+      + &#x27;onclick=&quot;medinaV68SaveMember(\&#x27;&#x27;+esc(id)+&#x27;\&#x27;,this)&quot;&gt;حفظ التعديل&lt;/button&gt;&#x27;
+      + &#x27;&lt;/div&gt;&#x27;
+    );
+  };
+
+  window.medinaV68SaveMember = async function(id,button){
+    if(saving) return;
+
+    const member = findMember(id);
+
+    if(!member){
+      message(&#x27;العضو غير متوفر&#x27;);
+      return;
+    }
+
+    const name = clean(
+      document.getElementById(&#x27;medinaV68MemberName&#x27;) &amp;&amp;
+      document.getElementById(&#x27;medinaV68MemberName&#x27;).value
+    );
+    const phone = clean(
+      document.getElementById(&#x27;medinaV68MemberPhone&#x27;) &amp;&amp;
+      document.getElementById(&#x27;medinaV68MemberPhone&#x27;).value
+    );
+    const area = clean(
+      document.getElementById(&#x27;medinaV68MemberArea&#x27;) &amp;&amp;
+      document.getElementById(&#x27;medinaV68MemberArea&#x27;).value
+    );
+    const code = clean(
+      document.getElementById(&#x27;medinaV68MemberCode&#x27;) &amp;&amp;
+      document.getElementById(&#x27;medinaV68MemberCode&#x27;).value
+    );
+
+    if(!name || !phone){
+      message(&#x27;أكمل الاسم والهاتف&#x27;);
+      return;
+    }
+
+    saving = true;
+    const oldText = button ? button.textContent : &#x27;&#x27;;
+
+    if(button){
+      button.disabled = true;
+      button.textContent = &#x27;جاري الحفظ...&#x27;;
+    }
+
+    try{
+      await updateMember(member,{
+        name: name,
+        username: name,
+        fullName: name,
+        phone: phone,
+        area: area,
+        address: area,
+        code: code,
+        password: code
+      });
+
+      Object.assign(member,{
+        name: name,
+        username: name,
+        phone: phone,
+        area: area,
+        address: area,
+        code: code,
+        password: code
+      });
+
+      if(typeof closeModal === &#x27;function&#x27;) closeModal();
+      publish(true);
+      message(&#x27;تم حفظ بيانات العضو&#x27;);
+    }catch(error){
+      console.error(&#x27;MEDINA member save failed&#x27;,error);
+      message(&#x27;تعذر حفظ العضو&#x27;);
+    }finally{
+      saving = false;
+
+      if(button &amp;&amp; document.body.contains(button)){
+        button.disabled = false;
+        button.textContent = oldText || &#x27;حفظ التعديل&#x27;;
+      }
+    }
+  };
+
+  window.medinaV68OpenWallet = function(id){
+    const member = findMember(id);
+
+    if(!member){
+      message(&#x27;العضو غير متوفر&#x27;);
+      return;
+    }
+
+    const oldOverlay =
+      document.getElementById(&#x27;medinaV68WalletOverlay&#x27;);
+
+    if(oldOverlay) oldOverlay.remove();
+
+    const overlay = document.createElement(&#x27;div&#x27;);
+    overlay.id = &#x27;medinaV68WalletOverlay&#x27;;
+    overlay.setAttribute(&#x27;dir&#x27;,&#x27;rtl&#x27;);
+    overlay.style.cssText =
+      &#x27;position:fixed;inset:0;z-index:2147483647;&#x27;
+      + &#x27;background:rgba(15,23,42,.58);display:flex;&#x27;
+      + &#x27;align-items:center;justify-content:center;padding:16px;&#x27;;
+
+    overlay.innerHTML =
+      &#x27;&lt;div role=&quot;dialog&quot; aria-modal=&quot;true&quot; &#x27;
+      + &#x27;style=&quot;width:min(420px,96vw);background:#fff;color:#111827;&#x27;
+      + &#x27;border-radius:24px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.35);&#x27;
+      + &#x27;text-align:right&quot;&gt;&#x27;
+      + &#x27;&lt;h3 style=&quot;margin:0 0 8px;font-size:21px;font-weight:900&quot;&gt;&#x27;
+      + &#x27;تعديل رصيد العضو&lt;/h3&gt;&#x27;
+      + &#x27;&lt;p style=&quot;margin:0 0 12px;color:#667085;font-weight:800&quot;&gt;&#x27;
+      + &#x27;الرصيد الحالي ظاهر داخل الخانة. عدّل الرقم ثم اضغط حفظ.&lt;/p&gt;&#x27;
+      + &#x27;&lt;input id=&quot;medinaV68WalletInput&quot; inputmode=&quot;numeric&quot; type=&quot;text&quot; &#x27;
+      + &#x27;value=&quot;&#x27;+esc(String(numberValue(member.balance)))+&#x27;&quot; &#x27;
+      + &#x27;style=&quot;box-sizing:border-box;width:100%;height:54px;&#x27;
+      + &#x27;border:1px solid #cbd5e1;border-radius:16px;padding:0 14px;&#x27;
+      + &#x27;font-size:20px;font-weight:900;direction:ltr;text-align:center;&#x27;
+      + &#x27;background:#fff;color:#020617;outline:0&quot;&gt;&#x27;
+      + &#x27;&lt;div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px&quot;&gt;&#x27;
+      + &#x27;&lt;button type=&quot;button&quot; id=&quot;medinaV68WalletCancel&quot; &#x27;
+      + &#x27;style=&quot;height:50px;border:0;border-radius:16px;font-weight:900;&#x27;
+      + &#x27;font-size:17px;background:#f1f5f9;color:#111827&quot;&gt;إلغاء&lt;/button&gt;&#x27;
+      + &#x27;&lt;button type=&quot;button&quot; id=&quot;medinaV68WalletSave&quot; &#x27;
+      + &#x27;style=&quot;height:50px;border:0;border-radius:16px;font-weight:900;&#x27;
+      + &#x27;font-size:17px;background:#059669;color:#fff&quot;&gt;حفظ الرصيد&lt;/button&gt;&#x27;
+      + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector(&#x27;#medinaV68WalletInput&#x27;);
+    const cancel = overlay.querySelector(&#x27;#medinaV68WalletCancel&#x27;);
+    const saveButton = overlay.querySelector(&#x27;#medinaV68WalletSave&#x27;);
+
+    function close(){
+      overlay.remove();
+    }
+
+    cancel.onclick = close;
+
+    overlay.addEventListener(&#x27;click&#x27;,function(event){
+      if(event.target === overlay) close();
+    });
+
+    input.addEventListener(&#x27;keydown&#x27;,function(event){
+      if(event.key === &#x27;Enter&#x27;) saveButton.click();
+    });
+
+    saveButton.onclick = async function(){
+      const balance = numberValue(input.value);
+
+      if(!Number.isFinite(balance) || balance &lt; 0){
+        message(&#x27;المبلغ غير صحيح&#x27;);
+        return;
+      }
+
+      saveButton.disabled = true;
+      const oldText = saveButton.textContent;
+      saveButton.textContent = &#x27;جاري الحفظ...&#x27;;
+
+      try{
+        await updateMember(member,{
+          balance: balance,
+          wallet: balance,
+          credit: balance
+        });
+
+        member.balance = balance;
+        close();
+        publish(true);
+        message(&#x27;تم تحديث الرصيد&#x27;);
+      }catch(error){
+        console.error(&#x27;MEDINA wallet save failed&#x27;,error);
+        saveButton.disabled = false;
+        saveButton.textContent = oldText;
+        message(&#x27;تعذر تحديث الرصيد&#x27;);
+      }
+    };
+
+    setTimeout(function(){
+      try{
+        input.focus();
+        input.select();
+      }catch(error){}
+    },30);
+  };
+
+  window.medinaV68ToggleMember = async function(id){
+    const member = findMember(id);
+
+    if(!member){
+      message(&#x27;العضو غير متوفر&#x27;);
+      return;
+    }
+
+    const nextStatus =
+      member.status === &#x27;active&#x27;
+        ? &#x27;stopped&#x27;
+        : &#x27;active&#x27;;
+
+    try{
+      await updateMember(member,{
+        status: nextStatus
+      });
+
+      member.status = nextStatus;
+      publish(true);
+
+      message(
+        nextStatus === &#x27;active&#x27;
+          ? &#x27;تم تفعيل العضو&#x27;
+          : &#x27;تم إيقاف العضو&#x27;
+      );
+    }catch(error){
+      console.error(&#x27;MEDINA member status failed&#x27;,error);
+      message(&#x27;تعذر تحديث الحالة&#x27;);
+    }
+  };
+
+  window.medinaV68DeleteMember = async function(id){
+    const member = findMember(id);
+
+    if(!member){
+      message(&#x27;العضو غير متوفر&#x27;);
+      return;
+    }
+
+    if(!confirm(&#x27;تأكيد حذف العضو؟&#x27;)) return;
+
+    try{
+      await updateMember(member,{
+        deleted: true,
+        status: &#x27;deleted&#x27;
+      });
+
+      liveRows = currentRows().filter(function(row){
+        return row !== member &amp;&amp;
+          clean(row.firebaseId || row.id) !==
+          clean(member.firebaseId || member.id);
+      });
+
+      if(window.state &amp;&amp; Array.isArray(window.state.members)){
+        window.state.members = window.state.members.filter(function(row){
+          return clean(row.firebaseId || row.id) !==
+            clean(member.firebaseId || member.id);
+        });
+      }
+
+      publish(true);
+      message(&#x27;تم حذف العضو&#x27;);
+    }catch(error){
+      console.error(&#x27;MEDINA member delete failed&#x27;,error);
+      message(&#x27;تعذر حذف العضو&#x27;);
+    }
+  };
+
+  // جميع الأسماء القديمة تمر من نفس النظام المباشر.
+  window.openMember = window.medinaV68OpenMember;
+  window.quickWallet = window.medinaV68OpenWallet;
+  window.toggleMember = window.medinaV68ToggleMember;
+  window.deleteMember = window.medinaV68DeleteMember;
+
+  async function start(){
+    if(unsubscribe) return;
+
+    try{
+      const f = await firebase();
+
+      unsubscribe = f.fs.onSnapshot(
+        f.fs.collection(f.db,MEMBERS_COLLECTION),
+        function(snapshot){
+          liveRows = snapshot.docs
+            .map(normalizeMember)
+            .filter(function(member){
+              return !member.deleted;
+            });
+
+          publish(false);
+        },
+        function(error){
+          console.warn(&#x27;MEDINA members listener failed&#x27;,error);
+        }
+      );
+    }catch(error){
+      console.warn(&#x27;MEDINA members start failed&#x27;,error);
+    }
+  }
+
+  start();
+})();
 &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
@@ -7015,9 +7800,7 @@ if(form) form.reset();
     const fr=document.getElementById('linkoAdminFrame'); if(!fr||!fr.contentDocument||!fr.contentDocument.body)return;
     try{const w=fr.contentWindow,doc=fr.contentDocument; if(!w.__linkoPhase5AdminMembersLiveRootFix){const sc=doc.createElement('script'); sc.textContent=adminPatchCode(); doc.body.appendChild(sc);}else if(typeof w.linkoMembersLiveRefresh==='function')w.linkoMembersLiveRefresh();}catch(e){}
   }
-  document.addEventListener('DOMContentLoaded',function(){patchAdminFrame(); setTimeout(patchAdminFrame,400); setTimeout(patchAdminFrame,1200);});
-  window.addEventListener('load',function(){patchAdminFrame(); setTimeout(patchAdminFrame,700);});
-  setInterval(patchAdminFrame,1500);
+  /* MEDINA V68: إدارة الأعضاء أصبحت مباشرة داخل iframe؛ لا حقن خارجي. */
 })();
 </script><!-- ===== LINKO FINAL ROOT PATCH: orders counter, stable created date, wallet editor ===== --><!-- ===== LINKO FINAL STABLE FIX: orders count + balance + created date without blinking ===== --><script id="linkoFinalStableOrdersBalanceCreatedNoBlink">
 (function(){
@@ -7419,9 +8202,7 @@ if(form) form.reset();
     try{const w=fr.contentWindow,doc=fr.contentDocument; if(!w.__linkoAdminWalletReportsFinalFix){const sc=doc.createElement('script'); sc.textContent=adminPatchCode(); doc.body.appendChild(sc);}}
     catch(e){}
   }
-  document.addEventListener('DOMContentLoaded',function(){patchAdmin(); setTimeout(patchAdmin,350); setTimeout(patchAdmin,1200);});
-  window.addEventListener('load',function(){patchAdmin(); setTimeout(patchAdmin,600);});
-  setInterval(patchAdmin,1500);
+  /* MEDINA V68: تقارير العضو تبقى، لكن حقن إدارة الأعضاء متوقف. */
 })();
 </script><script id="linkoFinalPreStage6WalletBranchSearchPatch">
 (function(){
@@ -7637,10 +8418,7 @@ if(form) form.reset();
       }
     }catch(e){ console.warn('admin wallet patch wait', e); }
   }
-  function start(){ patchAdminFrame(); setTimeout(patchAdminFrame,250); setTimeout(patchAdminFrame,900); setTimeout(patchAdminFrame,1800); }
-  document.addEventListener('DOMContentLoaded', start);
-  window.addEventListener('load', start);
-  setInterval(patchAdminFrame, 1500);
+  /* MEDINA V68: بحث الفروع يبقى، وحقن إدارة الأعضاء متوقف. */
 })();
 
 </script><!-- ===== LINKO STRICT FIX: ONLY WALLET CURRENT VALUE + HOME BRANCH SEARCH ===== --><script id="linkoStrictWalletCurrentAndBranchSearchOnly">
@@ -7793,9 +8571,7 @@ if(form) form.reset();
       }
     }catch(e){console.warn('wallet patch wait',e);}
   }
-  document.addEventListener('DOMContentLoaded',function(){patchAdmin();setTimeout(patchAdmin,300);setTimeout(patchAdmin,1200);});
-  window.addEventListener('load',function(){patchAdmin();setTimeout(patchAdmin,500);setTimeout(patchAdmin,1600);});
-  setInterval(patchAdmin,1500);
+  /* MEDINA V68: بحث الفروع يبقى، وحقن الرصيد القديم متوقف. */
 })();
 </script><!-- ===== LINKO STRICT FIX ONLY: prevent duplicated members in admin list after approval ===== --><script>
 (function(){
@@ -8145,11 +8921,7 @@ if(form) form.reset();
     }catch(e){ console.warn('wallet field patch waiting',e); }
   }
 
-  const frame=document.getElementById('linkoAdminFrame');
-  if(frame) frame.addEventListener('load',function(){ setTimeout(patchAdminFrame,50); setTimeout(patchAdminFrame,500); });
-  document.addEventListener('DOMContentLoaded',function(){ patchAdminFrame(); setTimeout(patchAdminFrame,300); setTimeout(patchAdminFrame,1200); setTimeout(patchAdminFrame,2500); });
-  window.addEventListener('load',function(){ patchAdminFrame(); setTimeout(patchAdminFrame,700); setTimeout(patchAdminFrame,1800); });
-  setTimeout(patchAdminFrame,3500);
+  /* MEDINA V68: نافذة الرصيد أصبحت مباشرة داخل iframe؛ لا إعادة حقن. */
 })();
 </script><!-- ===== LINKO STAGE 6.2: SMOOTH PRODUCT STATUS + NAME EDIT ONLY ===== --><script id="linkoStage62ProductSmoothNameOnly">
 (function(){
