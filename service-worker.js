@@ -1,3 +1,4 @@
+// V71 NAV FIX REFRESH 20260808
 const CACHE_NAME = "medina-bazaar-v71";
 const BACKUP_CACHE = "medina-bazaar-v71-backup";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
