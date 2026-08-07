@@ -820,6 +820,57 @@ html.medina-v71-startup-recovery #floatCart{
   }
 
   function showCurrentLoginInterface(){
+    var bottomNav = document.getElementById('bottomNav');
+
+    /*
+      إذا كان شريط الأعضاء ظاهرًا فنحن داخل حساب عضو.
+      حماية بداية التشغيل ممنوع ترجع العضو إلى صفحة التسجيل.
+    */
+    if(bottomNav){
+      var navStyle = window.getComputedStyle(bottomNav);
+
+      if(
+        navStyle.display !== 'none' &&
+        navStyle.visibility !== 'hidden'
+      ){
+        var buttons = bottomNav.querySelectorAll('.nav-btn');
+        var pageIds = [
+          'homePage',
+          'cartPage',
+          'ordersPage',
+          'notificationsPage',
+          'profilePage'
+        ];
+        var activeIndex = -1;
+
+        for(var i = 0; i < buttons.length; i++){
+          if(buttons[i].classList.contains('active')){
+            activeIndex = i;
+            break;
+          }
+        }
+
+        var targetId = pageIds[activeIndex] || 'homePage';
+        var target = document.getElementById(targetId);
+
+        if(target){
+          document.querySelectorAll('.app-page')
+            .forEach(function(page){
+              page.classList.remove('active');
+            });
+
+          target.classList.add('active');
+          bottomNav.style.display = 'grid';
+
+          document.documentElement.classList.remove(
+            'medina-v71-startup-recovery'
+          );
+
+          return true;
+        }
+      }
+    }
+
     var authPage = document.getElementById('authPage');
 
     if(!authPage || !document.body) return false;
@@ -836,8 +887,6 @@ html.medina-v71-startup-recovery #floatCart{
     authPage.classList.add('active');
     authPage.removeAttribute('hidden');
 
-    var bottomNav =
-      document.getElementById('bottomNav');
     var floatCart =
       document.getElementById('floatCart');
 
@@ -906,21 +955,6 @@ html.medina-v71-startup-recovery #floatCart{
       if(document.visibilityState === 'visible'){
         runChecks();
       }
-    }
-  );
-
-  window.addEventListener(
-    'error',
-    function(){
-      setTimeout(ensureVisibleInterface,0);
-    },
-    true
-  );
-
-  window.addEventListener(
-    'unhandledrejection',
-    function(){
-      setTimeout(ensureVisibleInterface,0);
     }
   );
 
