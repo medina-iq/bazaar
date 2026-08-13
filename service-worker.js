@@ -1,9 +1,9 @@
-// V71 NAV FIX REFRESH 20260808
-const CACHE_NAME = "medina-bazaar-v71";
-const BACKUP_CACHE = "medina-bazaar-v71-backup";
+// V72 NAV FIX REFRESH 20260808
+const CACHE_NAME = "medina-bazaar-v72";
+const BACKUP_CACHE = "medina-bazaar-v72-backup";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
-const BUILD_ID = "v71";
+const BUILD_ID = "v72";
 const BUILD_MARKER = "MEDINA_BUILD_V71_STARTUP_GUARD_20260804";
 const MIN_INDEX_LENGTH = 1000000;
 
