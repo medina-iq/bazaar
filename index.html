@@ -3234,7 +3234,7 @@ window.toggleOrderDetails=function(orderId){
 };
 window.renderOrders=function(){
     const list=document.getElementById('ordersList');if(!list)return;
-list.innerHTML=Array.isArray(orders)&&orders.length?orders.slice().sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0)).map((o,idx)=>{
+list.innerHTML=Array.isArray(orders)&&orders.length?orders.map((o,idx)=>{
       const orderNo=o.orderNumber||('ORD-OLD-'+(o.id||idx+1));
       const status=o.status||'جديد';
       const branch=o.branch||uniqueBranches((o.items||o.products||[]).map(x=>({...x,branch:x.branch||itemBranchName(x)})));
@@ -3972,6 +3972,27 @@ initTheme();buildNav();render();
       }
       function nowText(){ try{return new Date().toLocaleString(&#x27;ar-IQ&#x27;);}catch(e){return new Date().toISOString();} }
       function dateText(v){ try{ if(v &amp;&amp; typeof v.toDate === &#x27;function&#x27;) return v.toDate().toLocaleString(&#x27;ar-IQ&#x27;); }catch(e){} return &#x27;&#x27;; }
+
+      // LINKO: ترتيب طلبات الاشتراك حسب وقت الإنشاء الحقيقي في Firebase.
+      function subscriptionRequestTimeMs(v){
+        try{
+          if(!v) return 0;
+          if(typeof v.toMillis === &#x27;function&#x27;) return Number(v.toMillis()) || 0;
+          if(typeof v.seconds === &#x27;number&#x27;){
+            return (Number(v.seconds) * 1000) + Math.floor(Number(v.nanoseconds || 0) / 1000000);
+          }
+          if(typeof v._seconds === &#x27;number&#x27;){
+            return (Number(v._seconds) * 1000) + Math.floor(Number(v._nanoseconds || 0) / 1000000);
+          }
+          if(v instanceof Date) return Number(v.getTime()) || 0;
+          if(typeof v === &#x27;number&#x27;) return Number(v) || 0;
+          const parsed = Date.parse(String(v));
+          return Number.isFinite(parsed) ? parsed : 0;
+        }catch(e){
+          return 0;
+        }
+      }
+
       async function fb(){
         if(fbPromise) return fbPromise;
         fbPromise = Promise.all([
@@ -3996,6 +4017,11 @@ initTheme();buildNav();render();
           password: d.password || d.code || d.pin || &#x27;&#x27;,
           status: clean(d.status || &#x27;pending&#x27;) || &#x27;pending&#x27;,
           date: d.date || d.time || dateText(d.createdAt) || dateText(d.updatedAt) || &#x27;&#x27;,
+          createdAtMs:
+            subscriptionRequestTimeMs(d.createdAt) ||
+            subscriptionRequestTimeMs(d.time) ||
+            subscriptionRequestTimeMs(d.date) ||
+            subscriptionRequestTimeMs(d.updatedAt),
           img: d.img || d.avatar || &#x27;&#x27;, avatar: d.avatar || d.img || &#x27;&#x27;, raw: d
         };
       }
@@ -4025,7 +4051,12 @@ initTheme();buildNav();render();
           if(seen.has(key)) return false; seen.add(key);
           return clean(r.status || &#x27;pending&#x27;) === &#x27;pending&#x27; &amp;&amp; (clean(r.name) || clean(r.phone) || clean(r.code));
         });
-        rows.sort(function(a,b){ return String(b.date||&#x27;&#x27;).localeCompare(String(a.date||&#x27;&#x27;)); });
+        // الأحدث يظهر أولاً دائماً؛ لا نعتمد على نص التاريخ لأنه قد يختلف بين Safari وChrome.
+        rows.sort(function(a,b){
+          const newestFirst = Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0);
+          if(newestFirst !== 0) return newestFirst;
+          return 0;
+        });
         st().requests = rows;
         if(renderNow || isActive(&#x27;subscriptions&#x27;) || isActive(&#x27;dashboard&#x27;)) forceRender(); else { try{ if(typeof buildNav===&#x27;function&#x27;) buildNav(); }catch(e){} }
       }
