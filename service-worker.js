@@ -1,799 +1,1042 @@
-// V71 NAV FIX REFRESH 20260808
-const CACHE_NAME = "medina-bazaar-v72";
-const BACKUP_CACHE = "medina-bazaar-v72-backup";
+// LINKO MEDINA V73 - NETWORK FIRST - 20260816
+
+const CACHE_NAME = "medina-bazaar-v73";
+const BACKUP_CACHE = "medina-bazaar-v73-backup";
 const FONT_CACHE = "medina-bazaar-fonts-v4";
 const CACHE_PREFIX = "medina-bazaar-";
-const BUILD_ID = "v72";
-const BUILD_MARKER = "MEDINA_BUILD_V71_STARTUP_GUARD_20260804";
+
+const BUILD_ID = "v73";
+
+/*
+  مهم:
+  لا نغير هذه العلامة حالياً لأن ملف index.html
+  المعتمد يحتوي عليها فعلياً.
+*/
+const BUILD_MARKER =
+  "MEDINA_BUILD_V71_STARTUP_GUARD_20260804";
+
 const MIN_INDEX_LENGTH = 1000000;
 
-const ROOT_URL = new URL("./", self.registration.scope);
-const INDEX_URL = new URL("index.html", ROOT_URL).href;
-const BACKUP_INDEX_URL = new URL(
-  "__backup__/index-v71.html",
-  ROOT_URL
-).href;
+const ROOT_URL =
+  new URL("./", self.registration.scope);
+
+const INDEX_URL =
+  new URL(
+    "index.html",
+    ROOT_URL
+  ).href;
+
+const BACKUP_INDEX_URL =
+  new URL(
+    "__backup__/index-v73.html",
+    ROOT_URL
+  ).href;
+
+
+/* =========================================
+   الملفات الأساسية
+   ========================================= */
 
 const STATIC_ASSETS = [
-  new URL("manifest.webmanifest", ROOT_URL).href,
-  new URL("apple-touch-icon.png", ROOT_URL).href,
-  new URL("icon-192.png", ROOT_URL).href,
-  new URL("icon-512.png", ROOT_URL).href,
-  new URL("icon-maskable-512.png", ROOT_URL).href
+
+  new URL(
+    "manifest.webmanifest",
+    ROOT_URL
+  ).href,
+
+  new URL(
+    "apple-touch-icon.png",
+    ROOT_URL
+  ).href,
+
+  new URL(
+    "icon-192.png",
+    ROOT_URL
+  ).href,
+
+  new URL(
+    "icon-512.png",
+    ROOT_URL
+  ).href,
+
+  new URL(
+    "icon-maskable-512.png",
+    ROOT_URL
+  ).href
+
 ];
 
-const STARTUP_SHELL_HTML = `<!doctype html>
-<html lang="ar" dir="rtl">
+
+/* =========================================
+   شاشة احتياطية فقط
+   إذا لم تتوفر نسخة الموقع نهائياً
+   ========================================= */
+
+const STARTUP_SHELL_HTML = `
+<!doctype html>
+
+<html
+  lang="ar"
+  dir="rtl"
+>
+
 <head>
-  <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
-  >
-
-  <meta
-    name="theme-color"
-    content="#eaf5ef"
-  >
-
-  <title>سوق المدينة الكبير</title>
-
-  <style>
-    :root {
-      --ink: #101828;
-      --muted: #667085;
-      --line: #e5e7eb;
-      --green: #0f8a55;
-      --green2: #16c784;
-      --gold: #f5b544;
-      --shadow: 0 24px 70px rgba(16, 24, 40, .12);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html,
-    body {
-      min-height: 100%;
-
-      background:
-        radial-gradient(
-          circle at 12% 8%,
-          rgba(245, 181, 68, .22),
-          transparent 34%
-        ),
-        radial-gradient(
-          circle at 88% 18%,
-          rgba(22, 199, 132, .18),
-          transparent 38%
-        ),
-        linear-gradient(
-          145deg,
-          #f8fbf9,
-          #eaf5ef
-        );
 
-      color: var(--ink);
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+>
+
+<meta
+  name="theme-color"
+  content="#eaf5ef"
+>
 
-      font-family:
-        Cairo,
-        Arial,
-        sans-serif;
-    }
+<title>
+سوق المدينة الكبير
+</title>
 
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
+<style>
 
-      display: grid;
-      place-items: center;
+:root{
+  --ink:#101828;
+  --muted:#667085;
+  --line:#e5e7eb;
+  --green:#0f8a55;
+  --green2:#16c784;
+  --gold:#f5b544;
+  --shadow:0 24px 70px rgba(16,24,40,.12);
+}
 
-      padding: 18px;
-    }
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
 
-    button,
-    input {
-      font: inherit;
-      font-size: 16px;
-    }
+html,
+body{
 
-    button {
-      border: 0;
-    }
+  min-height:100%;
 
-    #linkoStartupLoadingNotice {
-      position: fixed;
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(245,181,68,.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(22,199,132,.18),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #f8fbf9,
+      #eaf5ef
+    );
 
-      top:
-        calc(
-          env(safe-area-inset-top, 0px)
-          + 10px
-        );
+  color:var(--ink);
 
-      left: 12px;
-      right: 12px;
+  font-family:
+    Cairo,
+    Arial,
+    sans-serif;
+}
 
-      z-index: 20;
+body{
 
-      max-width: 560px;
+  min-height:100vh;
+  min-height:100dvh;
 
-      margin: auto;
+  display:grid;
+  place-items:center;
 
-      display: flex;
-      align-items: center;
+  padding:18px;
+}
 
-      gap: 11px;
+button,
+input{
+  font:inherit;
+  font-size:16px;
+}
 
-      padding: 12px 14px;
+button{
+  border:0;
+}
 
-      border-radius: 18px;
+#linkoStartupLoadingNotice{
 
-      background:
-        rgba(17, 24, 39, .96);
+  position:fixed;
 
-      color: #ffffff;
+  top:
+    calc(
+      env(safe-area-inset-top,0px)
+      + 10px
+    );
 
-      box-shadow:
-        0 16px 42px
-        rgba(15, 23, 42, .28);
+  left:12px;
+  right:12px;
 
-      border:
-        1px solid
-        rgba(255, 255, 255, .18);
+  z-index:20;
 
-      pointer-events: none;
-    }
+  max-width:560px;
 
-    #linkoStartupLoadingNotice .spinner {
-      width: 22px;
-      height: 22px;
+  margin:auto;
 
-      flex: 0 0 22px;
+  display:flex;
+  align-items:center;
 
-      border:
-        3px solid
-        rgba(255, 255, 255, .28);
+  gap:11px;
 
-      border-top-color:
-        var(--gold);
+  padding:12px 14px;
 
-      border-radius: 50%;
+  border-radius:18px;
 
-      animation:
-        spin .75s linear infinite;
-    }
+  background:
+    rgba(17,24,39,.96);
 
-    #linkoStartupLoadingNotice b {
-      display: block;
+  color:#fff;
 
-      font-size: 14px;
-      line-height: 1.35;
-    }
+  box-shadow:
+    0 16px 42px
+    rgba(15,23,42,.28);
 
-    #linkoStartupLoadingNotice small {
-      display: block;
+  border:
+    1px solid
+    rgba(255,255,255,.18);
 
-      margin-top: 2px;
+  pointer-events:none;
+}
 
-      font-size: 12px;
-      line-height: 1.45;
+.spinner{
 
-      color:
-        rgba(255, 255, 255, .82);
-    }
+  width:22px;
+  height:22px;
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+  flex:0 0 22px;
 
-    .auth-card {
-      width: min(520px, 100%);
+  border:
+    3px solid
+    rgba(255,255,255,.28);
 
-      padding: 24px;
+  border-top-color:
+    var(--gold);
 
-      border:
-        1px solid
-        rgba(255, 255, 255, .85);
+  border-radius:50%;
 
-      border-radius: 34px;
+  animation:
+    spin .75s linear infinite;
+}
 
-      background:
-        rgba(255, 255, 255, .82);
+#linkoStartupLoadingNotice b{
 
-      box-shadow:
-        var(--shadow);
+  display:block;
 
-      text-align: center;
+  font-size:14px;
 
-      -webkit-backdrop-filter:
-        blur(18px);
+  line-height:1.35;
+}
 
-      backdrop-filter:
-        blur(18px);
-    }
+#linkoStartupLoadingNotice small{
 
-    .logo-row {
-      display: grid;
+  display:block;
 
-      grid-template-columns:
-        64px 142px 64px;
+  margin-top:2px;
 
-      align-items: center;
-      justify-content: center;
+  font-size:12px;
 
-      gap: 10px;
+  color:
+    rgba(255,255,255,.82);
 
-      margin:
-        0 auto 16px;
-    }
+  line-height:1.45;
+}
 
-    .star {
-      font-size: 46px;
-      line-height: 1;
+@keyframes spin{
 
-      color: #6d5dfc;
+  to{
+    transform:rotate(360deg);
+  }
 
-      text-shadow:
-        0 0 14px
-        rgba(37, 99, 235, .5);
-    }
+}
 
-    .brand-logo {
-      width: 142px;
-      height: 142px;
+.auth-card{
 
-      border-radius: 34px;
+  width:min(520px,100%);
 
-      overflow: hidden;
+  padding:24px;
 
-      background: #111827;
+  border:
+    1px solid
+    rgba(255,255,255,.85);
 
-      box-shadow:
-        0 24px 50px
-        rgba(17, 24, 39, .2);
-    }
+  border-radius:34px;
 
-    .brand-logo img {
-      width: 100%;
-      height: 100%;
+  background:
+    rgba(255,255,255,.82);
 
-      object-fit: contain;
+  box-shadow:
+    var(--shadow);
 
-      display: block;
-    }
+  text-align:center;
 
-    h1 {
-      font-size: 34px;
-      font-weight: 900;
-      line-height: 1.15;
-    }
+  -webkit-backdrop-filter:
+    blur(18px);
 
-    .auth-tabs {
-      display: grid;
+  backdrop-filter:
+    blur(18px);
+}
 
-      grid-template-columns:
-        1fr 1fr;
+.logo-row{
 
-      gap: 8px;
+  display:grid;
 
-      background: #f2f4f7;
+  grid-template-columns:
+    64px 142px 64px;
 
-      border-radius: 20px;
+  align-items:center;
+  justify-content:center;
 
-      padding: 6px;
+  gap:10px;
 
-      margin:
-        18px 0;
-    }
+  margin:
+    0 auto 16px;
+}
 
-    .auth-tabs button {
-      min-height: 44px;
+.star{
 
-      border-radius: 16px;
+  font-size:46px;
 
-      background: transparent;
+  color:#6d5dfc;
 
-      font-weight: 900;
+  text-shadow:
+    0 0 14px
+    rgba(37,99,235,.5);
+}
 
-      color: #667085;
-    }
+.brand-logo{
 
-    .auth-tabs button.active {
-      background: #ffffff;
+  width:142px;
+  height:142px;
 
-      color: #111827;
+  border-radius:34px;
 
-      box-shadow:
-        0 8px 20px
-        rgba(16, 24, 40, .08);
-    }
+  overflow:hidden;
 
-    .form {
-      display: none;
+  background:#111827;
 
-      text-align: right;
-    }
+  box-shadow:
+    0 24px 50px
+    rgba(17,24,39,.2);
+}
 
-    .form.active {
-      display: block;
-    }
+.brand-logo img{
 
-    .field {
-      display: grid;
+  width:100%;
+  height:100%;
 
-      gap: 8px;
+  object-fit:contain;
 
-      margin-bottom: 12px;
-    }
+  display:block;
+}
 
-    label {
-      font-weight: 900;
+h1{
 
-      color: #344054;
-    }
+  font-size:34px;
 
-    input {
-      width: 100%;
-      min-height: 54px;
+  font-weight:900;
 
-      border:
-        1px solid
-        var(--line);
+  line-height:1.15;
+}
 
-      border-radius: 18px;
+.auth-tabs{
 
-      background: #ffffff;
+  display:grid;
 
-      padding:
-        0 14px;
+  grid-template-columns:
+    1fr 1fr;
 
-      outline: 0;
+  gap:8px;
 
-      font-weight: 800;
+  background:#f2f4f7;
 
-      color: var(--ink);
-    }
+  border-radius:20px;
 
-    input:focus {
-      border-color: #10b981;
+  padding:6px;
 
-      box-shadow:
-        0 0 0 4px
-        rgba(16, 185, 129, .12);
-    }
+  margin:
+    18px 0;
+}
 
-    .btn {
-      width: 100%;
-      min-height: 52px;
+.auth-tabs button{
 
-      border-radius: 18px;
+  min-height:44px;
 
-      padding:
-        11px 16px;
+  border-radius:16px;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+  background:transparent;
 
-      gap: 8px;
+  font-weight:900;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--green),
-          var(--green2)
-        );
+  color:#667085;
+}
 
-      color: #ffffff;
+.auth-tabs button.active{
 
-      font-weight: 900;
+  background:#fff;
 
-      box-shadow:
-        0 14px 28px
-        rgba(16, 185, 129, .2);
-    }
+  color:#111827;
 
-    @media (max-width: 430px) {
-      .logo-row {
-        grid-template-columns:
-          52px 124px 52px;
-      }
+  box-shadow:
+    0 8px 20px
+    rgba(16,24,40,.08);
+}
 
-      .brand-logo {
-        width: 124px;
-        height: 124px;
-      }
+.form{
 
-      .star {
-        font-size: 38px;
-      }
+  display:none;
 
-      h1 {
-        font-size: 30px;
-      }
-    }
-  </style>
+  text-align:right;
+}
+
+.form.active{
+  display:block;
+}
+
+.field{
+
+  display:grid;
+
+  gap:8px;
+
+  margin-bottom:12px;
+}
+
+label{
+
+  font-weight:900;
+
+  color:#344054;
+}
+
+input{
+
+  width:100%;
+
+  min-height:54px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius:18px;
+
+  background:#fff;
+
+  padding:
+    0 14px;
+
+  outline:0;
+
+  font-weight:800;
+
+  color:var(--ink);
+}
+
+input:focus{
+
+  border-color:#10b981;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(16,185,129,.12);
+}
+
+.btn{
+
+  width:100%;
+
+  min-height:52px;
+
+  border-radius:18px;
+
+  padding:
+    11px 16px;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:8px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--green2)
+    );
+
+  color:#fff;
+
+  font-weight:900;
+
+  box-shadow:
+    0 14px 28px
+    rgba(16,185,129,.2);
+}
+
+@media(max-width:430px){
+
+  .logo-row{
+
+    grid-template-columns:
+      52px 124px 52px;
+
+  }
+
+  .brand-logo{
+
+    width:124px;
+    height:124px;
+
+  }
+
+  .star{
+    font-size:38px;
+  }
+
+  h1{
+    font-size:30px;
+  }
+
+}
+
+</style>
+
 </head>
 
+
 <body>
-  <div
-    id="linkoStartupLoadingNotice"
-    role="status"
-    aria-live="polite"
-    aria-label="جاري تحميل الموقع"
-  >
-    <span
-      class="spinner"
-      aria-hidden="true"
-    ></span>
 
-    <span>
-      <b>جاري تحميل الموقع</b>
 
-      <small>
-        الاتصال بالإنترنت قد يكون ضعيفًا،
-        يرجى الانتظار لثوانٍ…
-      </small>
-    </span>
-  </div>
+<div
+  id="linkoStartupLoadingNotice"
+  role="status"
+  aria-live="polite"
+>
 
-  <main class="auth-card">
-    <div class="logo-row">
-      <span
-        class="star"
-        aria-hidden="true"
-      >
-        ✦
-      </span>
+<span
+  class="spinner"
+  aria-hidden="true"
+></span>
 
-      <div class="brand-logo">
-        <img
-          src="./apple-touch-icon.png"
-          alt="شعار سوق المدينة الكبير"
-        >
-      </div>
+<span>
 
-      <span
-        class="star"
-        aria-hidden="true"
-      >
-        ✦
-      </span>
-    </div>
+<b>
+جاري تحميل الموقع
+</b>
 
-    <h1>
-      سوق المدينة الكبير
-    </h1>
+<small>
+الاتصال بالإنترنت قد يكون ضعيفًا،
+يرجى الانتظار لثوانٍ…
+</small>
 
-    <div class="auth-tabs">
-      <button
-        id="loginTab"
-        class="active"
-        type="button"
-      >
-        دخول
-      </button>
+</span>
 
-      <button
-        id="registerTab"
-        type="button"
-      >
-        اشتراك جديد
-      </button>
-    </div>
+</div>
 
-    <form
-      id="loginForm"
-      class="form active"
-    >
-      <div class="field">
-        <label for="loginName">
-          الاسم الكامل
-        </label>
 
-        <input
-          id="loginName"
-          autocomplete="name"
-          placeholder="اكتب الاسم الكامل"
-        >
-      </div>
+<main class="auth-card">
 
-      <div class="field">
-        <label for="loginCode">
-          الرمز
-        </label>
 
-        <input
-          id="loginCode"
-          type="password"
-          autocomplete="current-password"
-          placeholder="اكتب الرمز"
-        >
-      </div>
+<div class="logo-row">
 
-      <button
-        class="btn"
-        type="submit"
-      >
-        دخول الأعضاء
-      </button>
-    </form>
+<span
+  class="star"
+  aria-hidden="true"
+>
+✦
+</span>
 
-    <form
-      id="registerForm"
-      class="form"
-    >
-      <div class="field">
-        <label for="regName">
-          الاسم الكامل
-        </label>
 
-        <input
-          id="regName"
-          placeholder="الاسم الكامل"
-        >
-      </div>
+<div class="brand-logo">
 
-      <div class="field">
-        <label for="regPhone">
-          رقم الهاتف
-        </label>
+<img
+  src="./apple-touch-icon.png"
+  alt="شعار سوق المدينة الكبير"
+>
 
-        <input
-          id="regPhone"
-          inputmode="tel"
-          placeholder="07xxxxxxxxx"
-        >
-      </div>
+</div>
 
-      <div class="field">
-        <label for="regAddress">
-          العنوان
-        </label>
 
-        <input
-          id="regAddress"
-          placeholder="المنطقة / أقرب نقطة دالة"
-        >
-      </div>
+<span
+  class="star"
+  aria-hidden="true"
+>
+✦
+</span>
 
-      <div class="field">
-        <label for="regCode">
-          الرمز
-        </label>
+</div>
 
-        <input
-          id="regCode"
-          type="password"
-          placeholder="رمز خاص بالحساب"
-        >
-      </div>
 
-      <button
-        class="btn"
-        type="submit"
-      >
-        إرسال طلب الاشتراك
-      </button>
-    </form>
-  </main>
+<h1>
+سوق المدينة الكبير
+</h1>
 
-  <script>
-    (function () {
-      "use strict";
 
-      var loginTab =
-        document.getElementById(
-          "loginTab"
-        );
+<div class="auth-tabs">
 
-      var registerTab =
-        document.getElementById(
-          "registerTab"
-        );
+<button
+  id="loginTab"
+  class="active"
+  type="button"
+>
+دخول
+</button>
 
-      var loginForm =
-        document.getElementById(
-          "loginForm"
-        );
+<button
+  id="registerTab"
+  type="button"
+>
+اشتراك جديد
+</button>
 
-      var registerForm =
-        document.getElementById(
-          "registerForm"
-        );
+</div>
 
-      var recovering = false;
 
-      function show(type) {
-        var login =
-          type === "login";
+<form
+  id="loginForm"
+  class="form active"
+>
 
-        loginTab.classList.toggle(
-          "active",
-          login
-        );
+<div class="field">
 
-        registerTab.classList.toggle(
-          "active",
-          !login
-        );
+<label for="loginName">
+الاسم الكامل
+</label>
 
-        loginForm.classList.toggle(
-          "active",
-          login
-        );
+<input
+  id="loginName"
+  autocomplete="name"
+  placeholder="اكتب الاسم الكامل"
+>
 
-        registerForm.classList.toggle(
-          "active",
-          !login
-        );
-      }
+</div>
 
-      loginTab.addEventListener(
-        "click",
-        function () {
-          show("login");
-        }
-      );
 
-      registerTab.addEventListener(
-        "click",
-        function () {
-          show("register");
-        }
-      );
+<div class="field">
 
-      loginForm.addEventListener(
-        "submit",
-        function (event) {
-          event.preventDefault();
-        }
-      );
+<label for="loginCode">
+الرمز
+</label>
 
-      registerForm.addEventListener(
-        "submit",
-        function (event) {
-          event.preventDefault();
-        }
-      );
+<input
+  id="loginCode"
+  type="password"
+  autocomplete="current-password"
+  placeholder="اكتب الرمز"
+>
 
-      function recover() {
-        if (
-          recovering ||
-          navigator.onLine === false ||
-          !(
-            "serviceWorker"
-            in navigator
-          )
-        ) {
-          return;
-        }
+</div>
 
-        recovering = true;
 
-        navigator.serviceWorker.ready
-          .then(
-            function (
-              registration
-            ) {
-              var worker =
-                navigator
-                  .serviceWorker
-                  .controller ||
-                registration.active;
+<button
+  class="btn"
+  type="submit"
+>
+دخول الأعضاء
+</button>
 
-              if (!worker) {
-                throw new Error(
-                  "No active worker"
-                );
-              }
+</form>
 
-              return new Promise(
-                function (
-                  resolve,
-                  reject
-                ) {
-                  var channel =
-                    new MessageChannel();
 
-                  var timer =
-                    setTimeout(
-                      function () {
-                        reject(
-                          new Error(
-                            "Recovery timeout"
-                          )
-                        );
-                      },
-                      12000
-                    );
+<form
+  id="registerForm"
+  class="form"
+>
 
-                  channel.port1
-                    .onmessage =
-                    function (
-                      event
-                    ) {
-                      clearTimeout(
-                        timer
-                      );
+<div class="field">
 
-                      resolve(
-                        event.data ||
-                        {}
-                      );
-                    };
+<label for="regName">
+الاسم الكامل
+</label>
 
-                  worker.postMessage(
-                    {
-                      type:
-                        "MEDINA_V71_RECOVER_INDEX"
-                    },
-                    [
-                      channel.port2
-                    ]
-                  );
-                }
-              );
-            }
-          )
-          .then(
-            function (
-              result
-            ) {
-              if (
-                !result ||
-                !result.ok
-              ) {
-                throw new Error(
-                  "Recovery failed"
-                );
-              }
+<input
+  id="regName"
+  placeholder="الاسم الكامل"
+>
 
-              location.reload();
-            }
-          )
-          .catch(
-            function () {
-              recovering = false;
-            }
+</div>
+
+
+<div class="field">
+
+<label for="regPhone">
+رقم الهاتف
+</label>
+
+<input
+  id="regPhone"
+  inputmode="tel"
+  placeholder="07xxxxxxxxx"
+>
+
+</div>
+
+
+<div class="field">
+
+<label for="regAddress">
+العنوان
+</label>
+
+<input
+  id="regAddress"
+  placeholder="المنطقة / أقرب نقطة دالة"
+>
+
+</div>
+
+
+<div class="field">
+
+<label for="regCode">
+الرمز
+</label>
+
+<input
+  id="regCode"
+  type="password"
+  placeholder="رمز خاص بالحساب"
+>
+
+</div>
+
+
+<button
+  class="btn"
+  type="submit"
+>
+إرسال طلب الاشتراك
+</button>
+
+</form>
+
+
+</main>
+
+
+<script>
+
+(function(){
+
+"use strict";
+
+
+var loginTab =
+  document.getElementById(
+    "loginTab"
+  );
+
+
+var registerTab =
+  document.getElementById(
+    "registerTab"
+  );
+
+
+var loginForm =
+  document.getElementById(
+    "loginForm"
+  );
+
+
+var registerForm =
+  document.getElementById(
+    "registerForm"
+  );
+
+
+var recovering = false;
+
+
+function show(type){
+
+  var login =
+    type === "login";
+
+
+  loginTab.classList.toggle(
+    "active",
+    login
+  );
+
+
+  registerTab.classList.toggle(
+    "active",
+    !login
+  );
+
+
+  loginForm.classList.toggle(
+    "active",
+    login
+  );
+
+
+  registerForm.classList.toggle(
+    "active",
+    !login
+  );
+
+}
+
+
+loginTab.addEventListener(
+  "click",
+  function(){
+
+    show("login");
+
+  }
+);
+
+
+registerTab.addEventListener(
+  "click",
+  function(){
+
+    show("register");
+
+  }
+);
+
+
+loginForm.addEventListener(
+  "submit",
+  function(event){
+
+    event.preventDefault();
+
+  }
+);
+
+
+registerForm.addEventListener(
+  "submit",
+  function(event){
+
+    event.preventDefault();
+
+  }
+);
+
+
+function recover(){
+
+  if(
+    recovering ||
+    navigator.onLine === false ||
+    !(
+      "serviceWorker"
+      in navigator
+    )
+  ){
+
+    return;
+
+  }
+
+
+  recovering = true;
+
+
+  navigator.serviceWorker.ready
+
+    .then(
+
+      function(
+        registration
+      ){
+
+        var worker =
+
+          navigator
+            .serviceWorker
+            .controller ||
+
+          registration.active;
+
+
+        if(!worker){
+
+          throw new Error(
+            "No active worker"
           );
+
+        }
+
+
+        return new Promise(
+
+          function(
+            resolve,
+            reject
+          ){
+
+            var channel =
+              new MessageChannel();
+
+
+            var timer =
+              setTimeout(
+
+                function(){
+
+                  reject(
+
+                    new Error(
+                      "Recovery timeout"
+                    )
+
+                  );
+
+                },
+
+                12000
+
+              );
+
+
+            channel.port1
+              .onmessage =
+
+              function(event){
+
+                clearTimeout(
+                  timer
+                );
+
+
+                resolve(
+                  event.data || {}
+                );
+
+              };
+
+
+            worker.postMessage(
+
+              {
+                type:
+                  "MEDINA_V71_RECOVER_INDEX"
+              },
+
+              [
+                channel.port2
+              ]
+
+            );
+
+          }
+
+        );
+
       }
 
-      window.addEventListener(
-        "online",
-        recover
-      );
+    )
 
-      setTimeout(
-        recover,
-        0
-      );
+    .then(
 
-      setTimeout(
-        recover,
-        5000
-      );
-    })();
-  </script>
+      function(result){
+
+        if(
+          !result ||
+          !result.ok
+        ){
+
+          throw new Error(
+            "Recovery failed"
+          );
+
+        }
+
+
+        location.reload();
+
+      }
+
+    )
+
+    .catch(
+
+      function(){
+
+        recovering = false;
+
+      }
+
+    );
+
+}
+
+
+window.addEventListener(
+  "online",
+  recover
+);
+
+
+setTimeout(
+  recover,
+  0
+);
+
+
+setTimeout(
+  recover,
+  5000
+);
+
+
+})();
+
+</script>
+
+
 </body>
-</html>`;
+
+</html>
+`;
+
+
+/* =========================================
+   متغير منع تكرار الاسترجاع
+   ========================================= */
 
 let recoveryPromise = null;
 
-function shellResponse() {
-  return new Response(
-    STARTUP_SHELL_HTML,
-    {
-      status: 200,
 
-      headers: {
+/* =========================================
+   شاشة البداية الاحتياطية
+   ========================================= */
+
+function shellResponse(){
+
+  return new Response(
+
+    STARTUP_SHELL_HTML,
+
+    {
+
+      status:200,
+
+      headers:{
+
         "Content-Type":
           "text/html; charset=UTF-8",
 
@@ -802,16 +1045,26 @@ function shellResponse() {
 
         "X-Medina-Startup-Shell":
           BUILD_ID
+
       }
+
     }
+
   );
+
 }
 
-function isTrusted(
-  response
-) {
+
+/* =========================================
+   التأكد من أن النسخة المخزنة موثوقة
+   ========================================= */
+
+function isTrusted(response){
+
   return Boolean(
+
     response &&
+
     response.ok &&
 
     response.headers.get(
@@ -821,47 +1074,85 @@ function isTrusted(
     response.headers.get(
       "X-Medina-Build"
     ) === BUILD_ID
+
   );
+
 }
 
-async function fetchValidatedIndex() {
+
+/* =========================================
+   تحميل index.html من الإنترنت
+   مع منع الكاش
+   ========================================= */
+
+async function fetchValidatedIndex(){
+
   const url =
     new URL(
       INDEX_URL
     );
+
+
+  /*
+    متغيرات تمنع Safari / Chrome
+    من إعادة نسخة HTTP قديمة
+  */
 
   url.searchParams.set(
     "build",
     BUILD_ID
   );
 
+
   url.searchParams.set(
     "time",
-    String(Date.now())
+    String(
+      Date.now()
+    )
   );
+
 
   const response =
     await fetch(
+
       url.href,
+
       {
-        cache: "no-store",
-        redirect: "follow"
+
+        cache:
+          "no-store",
+
+        redirect:
+          "follow"
+
       }
+
     );
 
-  if (
+
+  if(
     !response ||
     !response.ok
-  ) {
+  ){
+
     throw new Error(
       "Index download failed"
     );
+
   }
+
 
   const text =
     await response.text();
 
-  if (
+
+  /*
+    لا نقبل ملف ناقص
+    أو صفحة GitHub مؤقتة
+  */
+
+  if(
+
     text.length <
       MIN_INDEX_LENGTH ||
 
@@ -876,248 +1167,433 @@ async function fetchValidatedIndex() {
     !text.includes(
       'id="linkoStartupLoadingNotice"'
     )
-  ) {
+
+  ){
+
     throw new Error(
       "Invalid or incomplete index"
     );
+
   }
+
 
   const headers =
     new Headers(
       response.headers
     );
 
+
   headers.delete(
     "Content-Encoding"
   );
+
 
   headers.delete(
     "Content-Length"
   );
 
+
   headers.delete(
     "Transfer-Encoding"
   );
+
 
   headers.set(
     "Content-Type",
     "text/html; charset=UTF-8"
   );
 
+
   headers.set(
     "Cache-Control",
     "no-store"
   );
+
 
   headers.set(
     "X-Medina-Validated",
     "1"
   );
 
+
   headers.set(
     "X-Medina-Build",
     BUILD_ID
   );
 
+
   return new Response(
+
     text,
+
     {
-      status: 200,
+
+      status:200,
+
       headers
+
     }
+
   );
+
 }
+
+
+/* =========================================
+   تخزين نسخة صحيحة
+   رئيسية + احتياطية
+   ========================================= */
 
 async function storeValidatedIndex(
   response
-) {
-  if (
+){
+
+  if(
     !isTrusted(
       response
     )
-  ) {
+  ){
+
     throw new Error(
       "Refusing unvalidated index"
     );
+
   }
+
 
   const primaryCache =
     await caches.open(
       CACHE_NAME
     );
 
+
   const backupCache =
     await caches.open(
       BACKUP_CACHE
     );
 
+
   await Promise.all([
+
     primaryCache.put(
+
       INDEX_URL,
+
       response.clone()
+
     ),
 
+
     backupCache.put(
+
       BACKUP_INDEX_URL,
+
       response.clone()
+
     )
+
   ]);
+
 }
 
-async function recoverIndex() {
-  if (recoveryPromise) {
+
+/* =========================================
+   استرجاع أحدث نسخة من الإنترنت
+   ========================================= */
+
+async function recoverIndex(){
+
+  if(recoveryPromise){
+
     return recoveryPromise;
+
   }
 
+
   recoveryPromise =
+
     (
-      async function () {
+
+      async function(){
+
         const response =
           await fetchValidatedIndex();
+
 
         await storeValidatedIndex(
           response.clone()
         );
 
+
         return response;
+
       }
-    )().finally(
-      function () {
-        recoveryPromise = null;
+
+    )()
+
+    .finally(
+
+      function(){
+
+        recoveryPromise =
+          null;
+
       }
+
     );
 
+
   return recoveryPromise;
+
 }
 
-async function getPrimaryIndex() {
+
+/* =========================================
+   جلب النسخة الرئيسية المخزنة
+   ========================================= */
+
+async function getPrimaryIndex(){
+
   const cache =
     await caches.open(
       CACHE_NAME
     );
+
 
   const response =
     await cache.match(
       INDEX_URL
     );
 
+
   return isTrusted(
     response
   )
+
     ? response
+
     : null;
+
 }
 
-async function getBackupIndex() {
+
+/* =========================================
+   جلب النسخة الاحتياطية
+   ========================================= */
+
+async function getBackupIndex(){
+
   const cache =
     await caches.open(
       BACKUP_CACHE
     );
+
 
   const response =
     await cache.match(
       BACKUP_INDEX_URL
     );
 
+
   return isTrusted(
     response
   )
+
     ? response
+
     : null;
+
 }
+
+
+/* =========================================
+   إعادة النسخة الاحتياطية للرئيسية
+   ========================================= */
 
 async function restorePrimaryFromBackup(
   response
-) {
-  if (
+){
+
+  if(
     !isTrusted(
       response
     )
-  ) {
+  ){
+
     return;
+
   }
+
 
   const cache =
     await caches.open(
       CACHE_NAME
     );
 
+
   await cache.put(
+
     INDEX_URL,
+
     response.clone()
+
   );
+
 }
 
-self.addEventListener(
-  "install",
-  function (event) {
-    event.waitUntil(
-      (
-        async function () {
-          const response =
-            await fetchValidatedIndex();
 
-          await storeValidatedIndex(
-            response.clone()
-          );
+/* =========================================
+   INSTALL
+   ========================================= */
+
+self.addEventListener(
+
+  "install",
+
+  function(event){
+
+    event.waitUntil(
+
+      (
+
+        async function(){
+
+          /*
+            نحاول تخزين أحدث index
+          */
+
+          try{
+
+            const response =
+              await fetchValidatedIndex();
+
+
+            await storeValidatedIndex(
+              response.clone()
+            );
+
+          }catch(error){
+
+            /*
+              لا نكسر تثبيت الـ Worker
+              إذا GitHub كان لحظياً
+              ما زال ينشر index الجديد.
+            */
+
+            console.warn(
+              "Initial index cache skipped:",
+              error
+            );
+
+          }
+
 
           const cache =
             await caches.open(
               CACHE_NAME
             );
 
+
           await Promise.allSettled(
+
             STATIC_ASSETS.map(
-              async function (
+
+              async function(
                 assetUrl
-              ) {
-                try {
+              ){
+
+                try{
+
                   const assetResponse =
                     await fetch(
+
                       assetUrl,
+
                       {
                         cache:
                           "no-store"
                       }
+
                     );
 
-                  if (
+
+                  if(
                     assetResponse &&
                     assetResponse.ok
-                  ) {
+                  ){
+
                     await cache.put(
+
                       assetUrl,
+
                       assetResponse.clone()
+
                     );
+
                   }
-                } catch (error) {}
+
+                }catch(error){}
+
               }
+
             )
+
           );
 
+
+          /*
+            تفعيل v73 بسرعة
+          */
+
           await self.skipWaiting();
+
         }
+
       )()
+
     );
+
   }
+
 );
 
+
+/* =========================================
+   ACTIVATE
+   ========================================= */
+
 self.addEventListener(
+
   "activate",
-  function (event) {
+
+  function(event){
+
     event.waitUntil(
+
       (
-        async function () {
+
+        async function(){
+
           const names =
             await caches.keys();
 
+
+          /*
+            حذف كاشات سوق المدينة القديمة
+            والإبقاء فقط على v73
+            وكاش الخطوط.
+          */
+
           await Promise.all(
+
             names
+
               .filter(
-                function (
-                  name
-                ) {
+
+                function(name){
+
                   return (
+
                     name.startsWith(
                       CACHE_PREFIX
                     ) &&
@@ -1130,303 +1606,647 @@ self.addEventListener(
 
                     name !==
                       FONT_CACHE
+
                   );
+
                 }
+
               )
+
               .map(
-                function (
-                  name
-                ) {
+
+                function(name){
+
                   return caches.delete(
                     name
                   );
+
                 }
+
               )
+
           );
 
-          if (
+
+          /*
+            ما نحتاج Navigation Preload
+            لأننا نستخدم Network First مباشرة.
+          */
+
+          if(
             self.registration
               .navigationPreload
-          ) {
-            try {
+          ){
+
+            try{
+
               await self.registration
                 .navigationPreload
                 .disable();
-            } catch (error) {}
+
+            }catch(error){}
+
           }
 
+
+          /*
+            خلي Worker الجديد يمسك
+            الصفحات الحالية مباشرة.
+          */
+
           await self.clients.claim();
+
         }
+
       )()
+
     );
+
   }
+
 );
 
+
+/* =========================================
+   MESSAGES
+   ========================================= */
+
 self.addEventListener(
+
   "message",
-  function (event) {
+
+  function(event){
+
     const data =
       event.data || {};
 
-    if (
+
+    if(
+
       data ===
         "SKIP_WAITING" ||
 
       data.type ===
         "SKIP_WAITING"
-    ) {
+
+    ){
+
       self.skipWaiting();
 
       return;
+
     }
 
-    if (
+
+    /*
+      نخلي الاسم القديم V71
+      لأن شاشة الاسترجاع الحالية
+      ترسل هذا الاسم.
+    */
+
+    if(
+
       data.type ===
         "MEDINA_V71_RECOVER_INDEX"
-    ) {
+
+    ){
+
       const task =
+
         recoverIndex()
+
           .then(
-            function () {
-              if (
+
+            function(){
+
+              if(
                 event.ports &&
                 event.ports[0]
-              ) {
+              ){
+
                 event.ports[0]
                   .postMessage({
-                    ok: true
+
+                    ok:true,
+
+                    build:
+                      BUILD_ID
+
                   });
+
               }
+
             }
+
           )
+
           .catch(
-            function () {
-              if (
+
+            function(){
+
+              if(
                 event.ports &&
                 event.ports[0]
-              ) {
+              ){
+
                 event.ports[0]
                   .postMessage({
-                    ok: false
+
+                    ok:false,
+
+                    build:
+                      BUILD_ID
+
                   });
+
               }
+
             }
+
           );
+
 
       event.waitUntil(
         task
       );
+
     }
+
   }
+
 );
 
+
+/* =========================================
+   FETCH
+   ========================================= */
+
 self.addEventListener(
+
   "fetch",
-  function (event) {
+
+  function(event){
+
     const request =
       event.request;
 
-    if (
+
+    /*
+      لا نتدخل بطلبات POST
+      أو PATCH أو DELETE...
+    */
+
+    if(
       request.method !==
         "GET"
-    ) {
+    ){
+
       return;
+
     }
+
 
     const url =
       new URL(
         request.url
       );
 
-    if (
+
+    /* =====================================
+       GOOGLE FONTS
+       ===================================== */
+
+    if(
+
       url.hostname ===
         "fonts.googleapis.com" ||
 
       url.hostname ===
         "fonts.gstatic.com"
-    ) {
+
+    ){
+
       event.respondWith(
+
         handleFontRequest(
           request
         )
+
       );
 
+
       return;
+
     }
 
-    if (
+
+    /*
+      لا نتدخل بالمصادر الخارجية.
+      Firebase وغيره يبقى طبيعي.
+    */
+
+    if(
       url.origin !==
         self.location.origin
-    ) {
+    ){
+
       return;
+
     }
 
-    if (
+
+    /* =====================================
+       ملف Service Worker نفسه
+       ===================================== */
+
+    if(
+
       url.pathname.endsWith(
         "/service-worker.js"
       )
-    ) {
+
+    ){
+
       event.respondWith(
+
         fetch(
+
           request,
+
           {
             cache:
               "no-store"
           }
+
         )
+
       );
 
+
       return;
+
     }
 
-    if (
+
+    /* =====================================
+       الصفحة الرئيسية والتنقل
+       ===================================== */
+
+    if(
       request.mode ===
         "navigate"
-    ) {
+    ){
+
       event.respondWith(
+
         handleNavigation(
           event
         )
+
       );
 
+
       return;
+
     }
 
+
+    /* =====================================
+       الصور والملفات الأخرى
+       ===================================== */
+
     event.respondWith(
+
       handleSameOriginAsset(
         request
       )
+
     );
+
   }
+
 );
+
+
+/* =========================================
+   NAVIGATION
+   NETWORK FIRST
+
+   هذا هو الإصلاح الأساسي:
+   الإنترنت أولاً.
+   الكاش فقط عند فشل الإنترنت.
+   ========================================= */
 
 async function handleNavigation(
   event
-) {
+){
+
+  /*
+    1- نحاول دائماً تحميل أحدث
+       index.html من GitHub.
+  */
+
+  try{
+
+    const freshResponse =
+      await fetchValidatedIndex();
+
+
+    /*
+      نخزن النسخة الجديدة
+      رئيسية واحتياطية.
+    */
+
+    event.waitUntil(
+
+      storeValidatedIndex(
+        freshResponse.clone()
+      )
+
+      .catch(
+
+        function(error){
+
+          console.warn(
+            "Fresh index cache update failed:",
+            error
+          );
+
+        }
+
+      )
+
+    );
+
+
+    /*
+      ونرجعها للمستخدم مباشرة.
+    */
+
+    return freshResponse;
+
+
+  }catch(error){
+
+    console.warn(
+      "Fresh navigation failed, checking cached copy:",
+      error
+    );
+
+  }
+
+
+  /*
+    2- إذا الإنترنت فشل،
+       نستعمل آخر نسخة رئيسية صحيحة.
+  */
+
   const primary =
     await getPrimaryIndex();
 
-  if (primary) {
+
+  if(primary){
+
     return primary;
+
   }
+
+
+  /*
+    3- إذا الرئيسية غير موجودة،
+       نستخدم النسخة الاحتياطية.
+  */
 
   const backup =
     await getBackupIndex();
 
-  if (backup) {
+
+  if(backup){
+
     event.waitUntil(
+
       restorePrimaryFromBackup(
         backup.clone()
       )
+
+      .catch(
+        function(){}
+      )
+
     );
 
+
     return backup;
+
   }
 
+
+  /*
+    4- إذا ما عندنا نسخة،
+       نحاول الاسترجاع مرة إضافية
+       بالخلفية.
+  */
+
   event.waitUntil(
+
     recoverIndex()
+
       .catch(
-        function () {
+
+        function(){
+
           return null;
+
         }
+
       )
+
   );
 
+
+  /*
+    شاشة مؤقتة فقط
+    إذا لا شبكة ولا نسخة محفوظة.
+  */
+
   return shellResponse();
+
 }
+
+
+/* =========================================
+   ملفات الموقع
+   NETWORK FIRST
+   ========================================= */
 
 async function handleSameOriginAsset(
   request
-) {
+){
+
   const cache =
     await caches.open(
       CACHE_NAME
     );
 
-  try {
+
+  try{
+
+    /*
+      دائماً الإنترنت أولاً.
+    */
+
     const response =
       await fetch(
+
         request,
+
         {
           cache:
             "no-store"
         }
+
       );
 
-    if (
+
+    if(
       response &&
       response.ok
-    ) {
+    ){
+
       await cache.put(
+
         request,
+
         response.clone()
+
       );
+
     }
 
+
     return response;
-  } catch (error) {
+
+
+  }catch(error){
+
+
+    /*
+      فقط عند فشل الشبكة
+      نستخدم الملف المخزن.
+    */
+
     const cached =
       await cache.match(
         request
       );
 
-    if (cached) {
+
+    if(cached){
+
       return cached;
+
     }
 
+
     return new Response(
+
       "Offline",
+
       {
-        status: 503,
+
+        status:503,
+
         statusText:
           "Offline"
+
       }
+
     );
+
   }
+
 }
+
+
+/* =========================================
+   GOOGLE FONTS
+   CACHE FIRST
+
+   الخطوط مو ضروري نجلبها كل مرة.
+   ========================================= */
 
 async function handleFontRequest(
   request
-) {
+){
+
   const cache =
     await caches.open(
       FONT_CACHE
     );
+
 
   const cached =
     await cache.match(
       request
     );
 
-  if (cached) {
+
+  if(cached){
+
     return cached;
+
   }
 
-  try {
+
+  try{
+
     const response =
       await fetch(
         request
       );
 
-    if (
+
+    if(
       response &&
-      response.ok
-    ) {
+      (
+        response.ok ||
+        response.type ===
+          "opaque"
+      )
+    ){
+
       await cache.put(
+
         request,
+
         response.clone()
+
       );
+
     }
 
+
     return response;
-  } catch (error) {
+
+
+  }catch(error){
+
+
     return new Response(
+
       "",
+
       {
-        status: 504,
+
+        status:504,
+
         statusText:
           "Offline"
+
       }
+
     );
+
   }
+
 }
