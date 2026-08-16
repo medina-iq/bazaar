@@ -7070,22 +7070,41 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
     const normalizedPhone =
       medinaNormalizePendingPhone(phone);
 
-    if(
-      await medinaHasPendingRequest(
-        db,
-        fs,
-        name,
-        phone
-      )
-    ){
-      throw medinaPendingRequestError();
-    }
-
+    /*
+      LINKO DIRECT SUBSCRIPTION SEND:
+      نفس الاسم + الهاتف ينتج نفس معرف الوثيقة دائماً.
+      لا توجد استعلامات مسبقة ولا Transaction قبل الإرسال.
+    */
     const pendingId =
       medinaPendingIdentityId(name,phone);
 
     const requestRef =
       fs.doc(db,SUB_COLLECTION,pendingId);
+
+    const localPendingKey =
+      'medina_pending_subscription_v1_' + pendingId;
+
+    /*
+      إذا نجح إرسال نفس الطلب سابقاً من هذا الجهاز،
+      نمنع إعادة الإرسال فوراً بدون أي اتصال إضافي.
+    */
+    try{
+      if(
+        localStorage.getItem(localPendingKey) === 'pending'
+      ){
+        throw medinaPendingRequestError();
+      }
+    }catch(error){
+      if(
+        error &&
+        (
+          error.code === 'MEDINA_PENDING_REQUEST_EXISTS' ||
+          error.message === 'MEDINA_PENDING_REQUEST_EXISTS'
+        )
+      ){
+        throw error;
+      }
+    }
 
     const payload = {
       name: name,
@@ -7100,25 +7119,28 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
       deleted: false,
       date: nowText(),
       source: 'member_signup',
+      clientCreatedAtMs: Date.now(),
       createdAt: fs.serverTimestamp()
     };
 
-    await fs.runTransaction(db,async function(transaction){
-      const existing = await transaction.get(requestRef);
+    /*
+      كتابة واحدة مباشرة إلى Firestore.
+      هذا يعيد سلوك الإرسال السريع بدون فحص متعدد أو Transaction.
+    */
+    await fs.setDoc(
+      requestRef,
+      payload
+    );
 
-      if(
-        existing.exists() &&
-        medinaSamePendingIdentity(
-          existing.data() || {},
-          name,
-          phone
-        )
-      ){
-        throw medinaPendingRequestError();
-      }
-
-      transaction.set(requestRef,payload);
-    });
+    /*
+      لا نضع علامة pending إلا بعد نجاح الكتابة فعلياً.
+    */
+    try{
+      localStorage.setItem(
+        localPendingKey,
+        'pending'
+      );
+    }catch(_){}
 
     return Object.assign({},payload,{
       firebaseId:pendingId
