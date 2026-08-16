@@ -3234,7 +3234,7 @@ window.toggleOrderDetails=function(orderId){
 };
 window.renderOrders=function(){
     const list=document.getElementById('ordersList');if(!list)return;
-list.innerHTML=Array.isArray(orders)&&orders.length?orders.map((o,idx)=>{
+list.innerHTML=Array.isArray(orders)&&orders.length?orders.slice().sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0)).map((o,idx)=>{
       const orderNo=o.orderNumber||('ORD-OLD-'+(o.id||idx+1));
       const status=o.status||'جديد';
       const branch=o.branch||uniqueBranches((o.items||o.products||[]).map(x=>({...x,branch:x.branch||itemBranchName(x)})));
