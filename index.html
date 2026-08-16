@@ -6924,6 +6924,43 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
   }
 
   async function medinaHasPendingRequest(db,fs,name,phone){
+    /*
+      LINKO V74:
+      1) فحص مباشر سريع للمعرّف الحتمي للطلب الحالي.
+      2) فحوصات الطلبات القديمة بالتوازي بدل واحد وراء واحد.
+      3) القرار النهائي ضد التكرار يبقى داخل Transaction أيضاً.
+    */
+
+    const pendingId =
+      medinaPendingIdentityId(name,phone);
+
+    const exactRef =
+      fs.doc(db,SUB_COLLECTION,pendingId);
+
+    try{
+      const exactSnapshot =
+        fs.getDocFromServer
+          ? await fs.getDocFromServer(exactRef)
+          : await fs.getDoc(exactRef);
+
+      if(
+        exactSnapshot.exists() &&
+        medinaSamePendingIdentity(
+          exactSnapshot.data() || {},
+          name,
+          phone
+        )
+      ){
+        return true;
+      }
+    }catch(error){
+      /*
+        لا نعتبر فشل هذا الفحص إذناً بإرسال مكرر.
+        الـ Transaction أدناه يعيد فحص نفس الوثيقة بشكل ذري.
+      */
+      console.warn('MEDINA exact pending check skipped',error);
+    }
+
     const normalizedPhone =
       medinaNormalizePendingPhone(phone);
 
@@ -6945,38 +6982,66 @@ document.addEventListener('click',function(){setTimeout(applyAdminFix,120);},tru
 
     const seen = new Set();
 
-    for(const check of checks){
-      const key = check.field + '|' + check.value;
+    const uniqueChecks =
+      checks.filter(function(check){
+        const key =
+          check.field + '|' + check.value;
 
-      if(seen.has(key)) continue;
-      seen.add(key);
+        if(seen.has(key)) return false;
 
-      const query = fs.query(
-        fs.collection(db,SUB_COLLECTION),
-        fs.where(check.field,'==',check.value)
-      );
-
-      const snapshot = fs.getDocsFromServer
-        ? await fs.getDocsFromServer(query)
-        : await fs.getDocs(query);
-
-      let found = false;
-
-      snapshot.forEach(function(documentSnapshot){
-        if(found) return;
-
-        if(
-          medinaSamePendingIdentity(
-            documentSnapshot.data() || {},
-            name,
-            phone
-          )
-        ){
-          found = true;
-        }
+        seen.add(key);
+        return true;
       });
 
-      if(found) return true;
+    /*
+      بدل تنفيذ الاستعلامات بالتسلسل،
+      ننفذها بالتوازي لتقليل زمن الانتظار.
+    */
+    const results =
+      await Promise.allSettled(
+        uniqueChecks.map(
+          async function(check){
+            const query =
+              fs.query(
+                fs.collection(db,SUB_COLLECTION),
+                fs.where(check.field,'==',check.value)
+              );
+
+            const snapshot =
+              fs.getDocsFromServer
+                ? await fs.getDocsFromServer(query)
+                : await fs.getDocs(query);
+
+            let found = false;
+
+            snapshot.forEach(
+              function(documentSnapshot){
+                if(found) return;
+
+                if(
+                  medinaSamePendingIdentity(
+                    documentSnapshot.data() || {},
+                    name,
+                    phone
+                  )
+                ){
+                  found = true;
+                }
+              }
+            );
+
+            return found;
+          }
+        )
+      );
+
+    for(const result of results){
+      if(
+        result.status === 'fulfilled' &&
+        result.value === true
+      ){
+        return true;
+      }
     }
 
     return false;
@@ -7093,10 +7158,31 @@ if(form) form.reset();
             err.message === 'MEDINA_PENDING_REQUEST_EXISTS'
           )
         ){
-          linkoToast('طلبك السابق موجود، يرجى الانتظار لحين موافقة الإدارة وعدم تكرار الطلب');
+          linkoToast('طلبك السابق قيد التدقيق، يرجى الانتظار لحين مراجعة الإدارة');
         }else{
           console.error('MEDINA Firestore subscription send error',err);
-          linkoToast('تعذر إرسال الطلب إلى Firebase، تحقق من الإنترنت وقواعد Firestore');
+
+          const firebaseErrorCode =
+            String(
+              err && err.code
+                ? err.code
+                : ''
+            ).toLowerCase();
+
+          if(
+            navigator.onLine === false ||
+            firebaseErrorCode.includes('unavailable') ||
+            firebaseErrorCode.includes('deadline-exceeded') ||
+            firebaseErrorCode.includes('network')
+          ){
+            linkoToast('تعذر الاتصال بقاعدة البيانات، تحقق من الإنترنت وحاول مرة أخرى');
+          }else if(
+            firebaseErrorCode.includes('permission-denied')
+          ){
+            linkoToast('تعذر إرسال الطلب حالياً بسبب صلاحيات قاعدة البيانات، يرجى التواصل مع الإدارة');
+          }else{
+            linkoToast('تعذر إرسال الطلب حالياً، حاول مرة أخرى بعد لحظات');
+          }
         }
       }finally{
         if(btn){ btn.disabled = false; btn.innerHTML = oldHtml; }
