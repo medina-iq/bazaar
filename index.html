@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!-- MEDINA_BUILD_V71_STARTUP_GUARD_20260804 -->
+<!-- LINKO_DELIVERY_LOCATION_PHASE1_FIX_LAZY_MAP_20260819 -->
+<!-- LINKO_DELIVERY_LOCATION_REAL_FIX_20260819 -->
+<!-- LINKO_DRIVER_PHASE2_20260819 -->
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
 html{color-scheme:light!important;background:#dcefe5!important;}
@@ -665,6 +668,114 @@ html.medina-v71-startup-recovery #floatCart{
 }
 </style>
 
+
+<style id="linkoDeliveryLocationPhase1Styles">
+/* ===== LINKO_DELIVERY_LOCATION_PHASE1_20260819 ===== */
+.delivery-location-box{
+  margin:12px 0!important;
+  padding:13px!important;
+  border-radius:22px!important;
+  background:linear-gradient(135deg,#fffdf7,#fff)!important;
+  border:1.5px solid rgba(217,119,6,.46)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.09)!important;
+}
+.delivery-location-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.delivery-location-icon{
+  width:42px;height:42px;border-radius:15px;flex:0 0 auto;
+  display:grid;place-items:center;
+  color:#fff;background:linear-gradient(135deg,#d97706,#f5b544);
+  box-shadow:0 10px 22px rgba(217,119,6,.20)
+}
+.delivery-location-head h3{font-size:15px!important;margin:0 0 3px!important;color:#111827!important}
+.delivery-location-head p{font-size:11.5px!important;line-height:1.7!important;color:#475467!important;font-weight:800!important}
+.delivery-required{color:#dc2626}
+.delivery-location-status{
+  min-height:58px;border-radius:17px;padding:10px 11px;margin-bottom:9px;
+  display:flex;align-items:center;gap:9px;
+  background:#fff7ed;border:1px solid #fed7aa;color:#9a3412
+}
+.delivery-location-status .mi{font-size:25px}
+.delivery-location-status div{display:grid;gap:2px}
+.delivery-location-status b{font-size:12.5px}
+.delivery-location-status small{font-size:10.5px;font-weight:800;color:#9a3412}
+.delivery-location-status.confirmed{background:#ecfdf3;border-color:#86efac;color:#166534}
+.delivery-location-status.confirmed small{color:#166534}
+.delivery-location-btn{width:100%!important;min-height:48px!important;border-radius:16px!important}
+
+body.linko-dark .delivery-location-box{
+  background:linear-gradient(135deg,#111827,#0f172a)!important;
+  border-color:rgba(251,191,36,.55)!important
+}
+body.linko-dark .delivery-location-head h3{color:#fff!important}
+body.linko-dark .delivery-location-head p{color:#e2e8f0!important}
+body.linko-dark .delivery-location-status{background:#1f2937;border-color:#92400e;color:#fdba74}
+body.linko-dark .delivery-location-status small{color:#fed7aa}
+body.linko-dark .delivery-location-status.confirmed{background:#052e22;border-color:#22c55e;color:#bbf7d0}
+body.linko-dark .delivery-location-status.confirmed small{color:#bbf7d0}
+
+.delivery-map-modal{
+  position:fixed;inset:0;z-index:12000;display:none;
+  background:#eef5f0;color:#07111f
+}
+.delivery-map-modal.show{display:block}
+.delivery-map-shell{
+  width:100%;height:100dvh;display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  overflow:hidden;background:#eef5f0
+}
+.delivery-map-header{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  padding:max(14px,env(safe-area-inset-top)) 14px 12px;
+  background:#fff;border-bottom:1px solid #cbd5e1;z-index:2
+}
+.delivery-map-header h2{font-size:20px;font-weight:900;display:flex;align-items:center;gap:7px}
+.delivery-map-header h2 .mi{color:#d97706}
+.delivery-map-header p{margin-top:3px;color:#475467;font-weight:800;font-size:11.5px;line-height:1.65}
+.delivery-map-canvas{width:100%;height:100%;min-height:300px;background:#dbe7df;position:relative}
+.delivery-map-loading{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;padding:24px;text-align:center;background:linear-gradient(180deg,#e8f4ec,#dcefe5);color:#111827;z-index:3}
+.delivery-map-loading .mi{font-size:38px;color:#d97706;animation:linkoMapSpin 1s linear infinite}
+.delivery-map-loading b{font-size:16px;font-weight:900}.delivery-map-loading small{max-width:300px;color:#475467;font-weight:800;line-height:1.7}
+.delivery-map-loading.error .mi{animation:none;color:#dc2626}.delivery-map-loading .btn{margin-top:5px}
+@keyframes linkoMapSpin{to{transform:rotate(360deg)}}
+body.linko-dark .delivery-map-loading{background:linear-gradient(180deg,#0f172a,#020617);color:#fff}body.linko-dark .delivery-map-loading small{color:#cbd5e1}
+.delivery-map-bottom{
+  padding:11px 14px max(12px,env(safe-area-inset-bottom));
+  background:#fff;border-top:1px solid #cbd5e1;box-shadow:0 -10px 30px rgba(15,23,42,.10);
+  z-index:2
+}
+.delivery-map-selected{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:9px;
+  border-radius:16px;background:#f8fafc;border:1px solid #cbd5e1
+}
+.delivery-map-selected .mi{color:#d97706;font-size:24px}
+.delivery-map-selected div{display:grid;gap:2px}
+.delivery-map-selected b{font-size:12px}
+.delivery-map-selected small{font-size:10.5px;color:#64748b;font-weight:800}
+.delivery-map-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.delivery-map-actions .btn{min-height:48px!important;font-size:12px!important;padding:8px!important}
+.delivery-map-actions .btn[disabled]{opacity:.48;filter:grayscale(.3);cursor:not-allowed}
+.delivery-map-modal .leaflet-control-attribution{font-size:9px}
+.delivery-map-modal .leaflet-control-zoom a{font-family:Arial,sans-serif}
+body.delivery-map-open{overflow:hidden!important}
+
+body.linko-dark .delivery-map-modal,
+body.linko-dark .delivery-map-shell{background:#020617;color:#fff}
+body.linko-dark .delivery-map-header,
+body.linko-dark .delivery-map-bottom{background:#0f172a;border-color:rgba(255,255,255,.20)}
+body.linko-dark .delivery-map-header h2{color:#fff!important}
+body.linko-dark .delivery-map-header p{color:#e2e8f0!important}
+body.linko-dark .delivery-map-selected{background:#111827;border-color:rgba(255,255,255,.22)}
+body.linko-dark .delivery-map-selected b{color:#fff!important}
+body.linko-dark .delivery-map-selected small{color:#cbd5e1!important}
+
+@media(max-width:430px){
+  .delivery-map-header{padding-inline:12px}
+  .delivery-map-header h2{font-size:18px}
+  .delivery-map-bottom{padding-inline:12px}
+  .delivery-map-actions{grid-template-columns:1fr}
+}
+</style>
+
 </head><body><div id="linkoStartupLoadingNotice" role="status" aria-live="polite" aria-label="جاري تحميل الموقع"><span class="linko-startup-spinner" aria-hidden="true"></span><span><b>جاري تحميل الموقع</b><small>الاتصال بالإنترنت قد يكون ضعيفًا، يرجى الانتظار لثوانٍ…</small></span></div><script id="linkoStartupLoadingController">(function(){'use strict';var box=document.getElementById('linkoStartupLoadingNotice');if(!box)return;var done=false;function hide(){if(done)return;done=true;box.classList.add('linko-startup-loading-hide');setTimeout(function(){if(box&&box.parentNode)box.parentNode.removeChild(box);},220);}if(document.readyState==='complete'){hide();}else{window.addEventListener('load',hide,{once:true});}window.addEventListener('pageshow',function(e){if(e.persisted)hide();},{once:true});setTimeout(hide,15000);})();</script>
 <img id="linkoSharedLogoSource" src="data:image/webp;base64,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" alt="" aria-hidden="true" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none"><script id="linkoSharedLogoEarlySource">(function(){var source=document.getElementById("linkoSharedLogoSource");if(source&&source.src)window.__linkoSharedLogo=source.src;})();</script><section class="auth-screen app-page active" id="authPage"><div class="auth-card glass"><div class="linko-auth-logo-row"><span class="mi linko-auth-star linko-auth-star-left" aria-hidden="true">auto_awesome</span><div class="brand-logo"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار سوق المدينة الكبير"></div><span class="mi linko-auth-star linko-auth-star-right" aria-hidden="true">auto_awesome</span></div><script id="linkoStage8AuthLogoImmediateHydration">(function(){var value=window.__linkoSharedLogo||'';var img=document.querySelector('#authPage .brand-logo img[data-linko-shared-logo="1"]');if(value&&img){img.src=value;img.style.objectFit='contain';}})();</script><h1>سوق المدينة الكبير</h1><div class="auth-tabs"><button id="loginTab" class="active" onclick="return linkoInstantAuthTab('login',event)">دخول</button><button id="registerTab" onclick="return linkoInstantAuthTab('register',event)">اشتراك جديد</button></div><form id="loginForm" class="auth-form active" onsubmit="return linkoQueuedMemberLogin(event)"><div class="field"><label>الاسم الكامل</label><input id="loginUsername" autocomplete="name" required placeholder="اكتب الاسم الكامل"></div><div class="field"><label>الرمز</label><input id="loginPassword" autocomplete="current-password" required type="password" placeholder="اكتب الرمز"></div><button class="btn full" type="submit"><span class="mi">login</span> دخول الأعضاء</button></form><form id="registerForm" class="auth-form" onsubmit="return linkoQueuedRegister(event)"><div class="field"><label>الاسم الكامل</label><input id="regName" required placeholder="الاسم الكامل"></div><div class="field"><label>رقم الهاتف</label><input id="regPhone" required inputmode="tel" placeholder="07xxxxxxxxx"></div><div class="field"><label>العنوان</label><input id="regAddress" required placeholder="المنطقة / أقرب نقطة دالة"></div><div class="field"><label>الرمز</label><input id="regPassword" required type="password" minlength="4" placeholder="رمز خاص بالحساب"></div><div class="avatar-upload-card"><div class="avatar-preview" id="regAvatarPreview"><span class="mi">person</span></div><div><h4>صورة الملف الشخصي <small style="color:#98a2b3">اختياري</small></h4><p>ارفع صورة واضحة، وتقدر تضبطها بسهولة قبل حفظها. الصورة تظهر كاملة داخل حسابك بدون قص.</p><input class="avatar-file" id="regAvatarInput" type="file" accept="image/*" onchange="handleAvatarFile(event)"><div class="avatar-actions"><label for="regAvatarInput"><span class="mi">add_a_photo</span> اختيار صورة</label><button type="button" class="secondary" onclick="openPhotoEditor()"><span class="mi">tune</span> ضبط الصورة</button><button type="button" class="secondary" onclick="removeAvatar()"><span class="mi">delete</span> حذف</button></div></div></div><label class="terms"><input id="regTerms" type="checkbox"> أوافق على شروط استخدام الخدمة</label><button class="btn full" type="submit"><span class="mi">person_add</span> إرسال طلب الاشتراك</button></form></div></section>
 
@@ -1126,7 +1237,7 @@ html.medina-v71-startup-recovery #floatCart{
   },{once:true});
 })();
 </script>
-<section class="app-page" id="homePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>سوق المدينة الكبير</h2><small id="welcomeText">أهلاً بك</small></div></div><div class="top-actions"><button class="icon-btn" onclick="openMenu()"><span class="mi">menu</span></button><button class="icon-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span class="badge" id="notifBadge">3</span></button></div></div></header><div class="member-card"><div class="member-head"><div class="member-info"><b id="memberName">عضو تجريبي</b><small>بطاقة العضوية الرقمية</small></div><div class="member-avatar" id="memberAvatar"><span class="mi">person</span></div></div><div class="member-stats"><div class="member-stat"><small>الرصيد</small><b id="memberBalance">0 د.ع</b></div><div class="member-stat"><small>الحالة</small><b>مفعل</b></div><div class="member-stat"><small>الطلبات</small><b id="memberOrdersCount">0</b></div></div></div><div class="searchbar"><div class="input-icon"><span class="mi">search</span><input id="globalSearch" oninput="renderProducts()" placeholder="ابحث عن منتج أو فرع..."></div><button class="icon-btn" onclick="toast('تم فتح خيارات البحث')"><span class="mi">tune</span></button></div><div class="section-title"><div><h2>الفروع والأقسام</h2><small>اختَر فرعاً لعرض منتجاته</small></div><button class="chip" onclick="selectBranch('all')">الكل</button></div><div class="branch-rail" id="branchesRail"></div><section class="products-section" id="productsSection"><div class="section-title"><div><h2 id="selectedBranchTitle">منتجات الفروع</h2><small id="productsCount">اختَر فرعاً أو ابحث عن منتج</small></div></div><div class="cats-rail compact" id="catsRail"></div><div class="products-grid" id="productsGrid"></div></section></div></section><section class="app-page" id="cartPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>السلة</h2><small>راجع طلبك قبل الإرسال</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سلة الطلب</h1><p>يمكنك تعديل الكميات وحذف المنتجات قبل إرسال الطلب.</p></div><div class="cart-layout"><div class="list" id="cartList"></div><div class="summary-box"><div class="sum-row"><span>عدد المنتجات</span><b id="cartItemsCount">0</b></div><div class="sum-row"><span>المجموع</span><b id="cartSubtotal">0 د.ع</b></div><div class="sum-row"><span>التوصيل</span><b>حسب المنطقة</b></div><div class="sum-row total"><span>الإجمالي</span><b id="cartTotal">0 د.ع</b></div><div class="field"><label>ملاحظة للطلب</label><textarea id="orderNote" placeholder="ملاحظات اختيارية: نوع، ماركة، وقت مناسب..."></textarea></div><button class="btn full" onclick="sendOrder()"><span class="mi">send</span> إرسال الطلب</button><button class="btn secondary full" onclick="clearCart()" style="margin-top:8px"><span class="mi">delete</span> تفريغ السلة</button></div></div></div></section><section class="app-page" id="ordersPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>طلباتي</h2><small>متابعة الطلبات السابقة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سجل الطلبات</h1><p>الطلبات التي تم إنشاؤها من الواجهة تظهر هنا.</p></div><div class="list" id="ordersList"></div></div></section><section class="app-page" id="notificationsPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>الإشعارات</h2><small>تنبيهات الحساب والطلبات</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>الإشعارات</h1><p>جميع التنبيهات الخاصة بعضويتك وطلباتك.</p></div><div class="list" id="notesList"></div></div></section><section class="app-page" id="profilePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>حسابي</h2><small>الملف الشخصي وطلبات الإدارة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="profile-hero"><div class="profile-top"><div class="avatar-big" id="profileAvatar"><span class="mi">person</span></div><div><h2 id="profileName">عضو تجريبي</h2><p id="profileUsername">عضو سوق المدينة الكبير</p></div></div></div><div class="profile-grid"><div class="info-box"><small>الهاتف</small><b id="profilePhone">07800000000</b></div><div class="info-box"><small>العنوان</small><b id="profileAddress">بغداد</b></div><div class="info-box"><small>الرصيد</small><b id="profileBalance">0 د.ع</b></div><div class="info-box"><small>تاريخ الإنشاء</small><b id="profileCreated">غير محدد</b></div></div><div class="section-title"><div><h2>طلبات الإدارة</h2><small>أرسل طلب تعديل أو إضافة رصيد</small></div></div><div class="request-actions"><button class="btn secondary" onclick="document.getElementById('profileAvatarInput').click()"><span class="mi">add_a_photo</span> تغيير صورة الملف</button><button class="btn secondary" onclick="openRequest('تغيير الاسم')"><span class="mi">badge</span> تغيير الاسم</button><button class="btn secondary" onclick="openRequest('تغيير الهاتف')"><span class="mi">call</span> تغيير الهاتف</button><button class="btn secondary" onclick="openRequest('تغيير العنوان')"><span class="mi">location_on</span> تغيير العنوان</button><button class="btn secondary" onclick="openRequest('إضافة رصيد')"><span class="mi">account_balance_wallet</span> إضافة رصيد</button><button class="btn secondary" onclick="openRequest('تغيير كلمة السر')"><span class="mi">lock_reset</span> تغيير كلمة السر</button></div><input id="profileAvatarInput" class="avatar-file" type="file" accept="image/*" onchange="handleProfileAvatarChange(event)"><div class="list" id="requestsList"></div></div></section><button class="float-cart" id="floatCart" onclick="go('cartPage')"><span class="mi">shopping_cart</span> السلة <span id="floatCount">0</span></button><nav class="bottom-nav" id="bottomNav"><button class="nav-btn active" onclick="go('homePage')"><span class="mi">home</span><span>الرئيسية</span></button><button class="nav-btn" onclick="go('cartPage')"><span class="mi">shopping_cart</span><span>السلة</span></button><button class="nav-btn" onclick="go('ordersPage')"><span class="mi">inventory_2</span><span>طلباتي</span></button><button class="nav-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span>الإشعارات</span></button><button class="nav-btn" onclick="go('profilePage')"><span class="mi">person</span><span>حسابي</span></button></nav><div class="side-menu" id="sideMenu"><div class="menu-panel"><div class="top-row" style="margin-bottom:14px"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>القائمة</h2><small>سوق المدينة الكبير</small></div></div><button class="icon-btn" onclick="closeMenu()"><span class="mi">close</span></button></div><button class="menu-item" onclick="showInfoPage('about')"><span><span class="mi">groups</span> من نحن</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('contact')"><span><span class="mi">share</span> حسابات التواصل</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('usage')"><span><span class="mi">help</span> كيفية استخدام الموقع</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('policy')"><span><span class="mi">policy</span> سياسة الاستخدام</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="logout()"><span><span class="mi">logout</span> تسجيل الخروج</span><span class="mi">chevron_left</span></button></div></div><div class="modal" id="infoModal"><div class="modal-card"><h2 id="infoTitle"></h2><div id="infoText" class="menu-page-body"></div><button class="btn full" onclick="closeModal('infoModal')">تم</button></div></div><div class="modal" id="requestModal"><div class="modal-card"><h2 id="requestTitle">طلب إلى الإدارة</h2><p>اكتب تفاصيل الطلب وسيظهر داخل سجل طلباتك بحالة قيد المراجعة.</p><div class="field"><label>التفاصيل</label><textarea id="requestText" placeholder="اكتب التفاصيل هنا..."></textarea></div><div class="modal-actions"><button class="btn" onclick="submitRequest()">إرسال</button><button class="btn secondary" onclick="closeModal('requestModal')">إلغاء</button></div></div></div><div class="modal" id="orderModal"><div class="modal-card"><h2>تم إرسال الطلب</h2><p>تم حفظ الطلب داخل سجل الطلبات التجريبي. عند الربط الحقيقي سيتم إرساله إلى قاعدة البيانات والإدارة.</p><button class="btn full" onclick="closeModal('orderModal');go('ordersPage')">عرض الطلبات</button></div></div><div class="photo-editor" id="photoEditor"><div class="photo-editor-card"><h2>ضبط الصورة</h2><p style="color:var(--muted);font-weight:800;line-height:1.8;margin:6px 0 12px">اسحب الصورة بإصبعك وعدّل الحجم. سيتم عرضها داخل الحساب بدون قص.</p><div class="photo-stage" id="photoStage"><img id="photoEditImg" alt="صورة العضو"></div><input id="photoZoom" type="range" min="1" max="2.2" step="0.05" value="1" oninput="updatePhotoTransform()"><div class="modal-actions"><button class="btn secondary" onclick="closePhotoEditor()">إلغاء</button><button class="btn" onclick="savePhotoEdit()">حفظ الصورة</button></div></div></div><div class="toast" id="toast"></div><script>
+<section class="app-page" id="homePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>سوق المدينة الكبير</h2><small id="welcomeText">أهلاً بك</small></div></div><div class="top-actions"><button class="icon-btn" onclick="openMenu()"><span class="mi">menu</span></button><button class="icon-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span class="badge" id="notifBadge">3</span></button></div></div></header><div class="member-card"><div class="member-head"><div class="member-info"><b id="memberName">عضو تجريبي</b><small>بطاقة العضوية الرقمية</small></div><div class="member-avatar" id="memberAvatar"><span class="mi">person</span></div></div><div class="member-stats"><div class="member-stat"><small>الرصيد</small><b id="memberBalance">0 د.ع</b></div><div class="member-stat"><small>الحالة</small><b>مفعل</b></div><div class="member-stat"><small>الطلبات</small><b id="memberOrdersCount">0</b></div></div></div><div class="searchbar"><div class="input-icon"><span class="mi">search</span><input id="globalSearch" oninput="renderProducts()" placeholder="ابحث عن منتج أو فرع..."></div><button class="icon-btn" onclick="toast('تم فتح خيارات البحث')"><span class="mi">tune</span></button></div><div class="section-title"><div><h2>الفروع والأقسام</h2><small>اختَر فرعاً لعرض منتجاته</small></div><button class="chip" onclick="selectBranch('all')">الكل</button></div><div class="branch-rail" id="branchesRail"></div><section class="products-section" id="productsSection"><div class="section-title"><div><h2 id="selectedBranchTitle">منتجات الفروع</h2><small id="productsCount">اختَر فرعاً أو ابحث عن منتج</small></div></div><div class="cats-rail compact" id="catsRail"></div><div class="products-grid" id="productsGrid"></div></section></div></section><section class="app-page" id="cartPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>السلة</h2><small>راجع طلبك قبل الإرسال</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سلة الطلب</h1><p>يمكنك تعديل الكميات وحذف المنتجات قبل إرسال الطلب.</p></div><div class="cart-layout"><div class="list" id="cartList"></div><div class="summary-box"><div class="sum-row"><span>عدد المنتجات</span><b id="cartItemsCount">0</b></div><div class="sum-row"><span>المجموع</span><b id="cartSubtotal">0 د.ع</b></div><div class="sum-row"><span>التوصيل</span><b>حسب المنطقة</b></div><div class="sum-row total"><span>الإجمالي</span><b id="cartTotal">0 د.ع</b></div><div class="field"><label>ملاحظة للطلب</label><textarea id="orderNote" placeholder="ملاحظات اختيارية: نوع، ماركة، وقت مناسب..."></textarea></div><button class="btn full" id="sendOrderBtn" onclick="sendOrder()"><span class="mi">send</span> إرسال الطلب</button><button class="btn secondary full" onclick="clearCart()" style="margin-top:8px"><span class="mi">delete</span> تفريغ السلة</button></div></div></div></section><section class="app-page" id="ordersPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>طلباتي</h2><small>متابعة الطلبات السابقة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سجل الطلبات</h1><p>الطلبات التي تم إنشاؤها من الواجهة تظهر هنا.</p></div><div class="list" id="ordersList"></div></div></section><section class="app-page" id="notificationsPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>الإشعارات</h2><small>تنبيهات الحساب والطلبات</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>الإشعارات</h1><p>جميع التنبيهات الخاصة بعضويتك وطلباتك.</p></div><div class="list" id="notesList"></div></div></section><section class="app-page" id="profilePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>حسابي</h2><small>الملف الشخصي وطلبات الإدارة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="profile-hero"><div class="profile-top"><div class="avatar-big" id="profileAvatar"><span class="mi">person</span></div><div><h2 id="profileName">عضو تجريبي</h2><p id="profileUsername">عضو سوق المدينة الكبير</p></div></div></div><div class="profile-grid"><div class="info-box"><small>الهاتف</small><b id="profilePhone">07800000000</b></div><div class="info-box"><small>العنوان</small><b id="profileAddress">بغداد</b></div><div class="info-box"><small>الرصيد</small><b id="profileBalance">0 د.ع</b></div><div class="info-box"><small>تاريخ الإنشاء</small><b id="profileCreated">غير محدد</b></div></div><div class="section-title"><div><h2>طلبات الإدارة</h2><small>أرسل طلب تعديل أو إضافة رصيد</small></div></div><div class="request-actions"><button class="btn secondary" onclick="document.getElementById('profileAvatarInput').click()"><span class="mi">add_a_photo</span> تغيير صورة الملف</button><button class="btn secondary" onclick="openRequest('تغيير الاسم')"><span class="mi">badge</span> تغيير الاسم</button><button class="btn secondary" onclick="openRequest('تغيير الهاتف')"><span class="mi">call</span> تغيير الهاتف</button><button class="btn secondary" onclick="openRequest('تغيير العنوان')"><span class="mi">location_on</span> تغيير العنوان</button><button class="btn secondary" onclick="openRequest('إضافة رصيد')"><span class="mi">account_balance_wallet</span> إضافة رصيد</button><button class="btn secondary" onclick="openRequest('تغيير كلمة السر')"><span class="mi">lock_reset</span> تغيير كلمة السر</button></div><input id="profileAvatarInput" class="avatar-file" type="file" accept="image/*" onchange="handleProfileAvatarChange(event)"><div class="list" id="requestsList"></div></div></section><button class="float-cart" id="floatCart" onclick="go('cartPage')"><span class="mi">shopping_cart</span> السلة <span id="floatCount">0</span></button><nav class="bottom-nav" id="bottomNav"><button class="nav-btn active" onclick="go('homePage')"><span class="mi">home</span><span>الرئيسية</span></button><button class="nav-btn" onclick="go('cartPage')"><span class="mi">shopping_cart</span><span>السلة</span></button><button class="nav-btn" onclick="go('ordersPage')"><span class="mi">inventory_2</span><span>طلباتي</span></button><button class="nav-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span>الإشعارات</span></button><button class="nav-btn" onclick="go('profilePage')"><span class="mi">person</span><span>حسابي</span></button></nav><div class="side-menu" id="sideMenu"><div class="menu-panel"><div class="top-row" style="margin-bottom:14px"><div class="brand"><div class="brand-mini"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-linko-shared-logo="1" alt="شعار"></div><div><h2>القائمة</h2><small>سوق المدينة الكبير</small></div></div><button class="icon-btn" onclick="closeMenu()"><span class="mi">close</span></button></div><button class="menu-item" onclick="showInfoPage('about')"><span><span class="mi">groups</span> من نحن</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('contact')"><span><span class="mi">share</span> حسابات التواصل</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('usage')"><span><span class="mi">help</span> كيفية استخدام الموقع</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('policy')"><span><span class="mi">policy</span> سياسة الاستخدام</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="logout()"><span><span class="mi">logout</span> تسجيل الخروج</span><span class="mi">chevron_left</span></button></div></div><div class="modal" id="infoModal"><div class="modal-card"><h2 id="infoTitle"></h2><div id="infoText" class="menu-page-body"></div><button class="btn full" onclick="closeModal('infoModal')">تم</button></div></div><div class="modal" id="requestModal"><div class="modal-card"><h2 id="requestTitle">طلب إلى الإدارة</h2><p>اكتب تفاصيل الطلب وسيظهر داخل سجل طلباتك بحالة قيد المراجعة.</p><div class="field"><label>التفاصيل</label><textarea id="requestText" placeholder="اكتب التفاصيل هنا..."></textarea></div><div class="modal-actions"><button class="btn" onclick="submitRequest()">إرسال</button><button class="btn secondary" onclick="closeModal('requestModal')">إلغاء</button></div></div></div><div class="modal" id="orderModal"><div class="modal-card"><h2>تم إرسال الطلب</h2><p>تم حفظ الطلب داخل سجل الطلبات التجريبي. عند الربط الحقيقي سيتم إرساله إلى قاعدة البيانات والإدارة.</p><button class="btn full" onclick="closeModal('orderModal');go('ordersPage')">عرض الطلبات</button></div></div><div class="photo-editor" id="photoEditor"><div class="photo-editor-card"><h2>ضبط الصورة</h2><p style="color:var(--muted);font-weight:800;line-height:1.8;margin:6px 0 12px">اسحب الصورة بإصبعك وعدّل الحجم. سيتم عرضها داخل الحساب بدون قص.</p><div class="photo-stage" id="photoStage"><img id="photoEditImg" alt="صورة العضو"></div><input id="photoZoom" type="range" min="1" max="2.2" step="0.05" value="1" oninput="updatePhotoTransform()"><div class="modal-actions"><button class="btn secondary" onclick="closePhotoEditor()">إلغاء</button><button class="btn" onclick="savePhotoEdit()">حفظ الصورة</button></div></div></div><div class="toast" id="toast"></div><script>
 const DEMO_USER={username:'member_demo',password:'123456',name:'عضو سوق المدينة',phone:'07800000000',address:'بغداد',balance:75000,status:'مفعل',created:'2026/07/04',avatar:localStorage.getItem('lm_demo_avatar')||''};
 let currentUser=null, selectedBranch='all', selectedCat='all', currentRequestType='', cart=JSON.parse(localStorage.getItem('lm_cart')||'[]'), orders=JSON.parse(localStorage.getItem('lm_orders')||'[]'), requests=JSON.parse(localStorage.getItem('lm_requests')||'[]');
 const branches=[
@@ -2721,7 +2832,22 @@ body.linko-dark #cartList .cart-details{color:#e2e8f0!important}
     const summary=document.querySelector('#cartPage .summary-box'); if(!summary||document.getElementById('orderContactBox')) return;
     const note=document.getElementById('orderNote');
     const u=getUser();
-    const html=`<div class="order-contact-box" id="orderContactBox"><h3><span class="mi">person_pin_circle</span> معلومات مستلم الطلب</h3><div class="order-contact-grid"><div class="field"><label>اسم الشخص</label><input id="orderCustomerName" value="${esc(u.name||'')}" placeholder="اكتب الاسم"></div><div class="field"><label>رقم الهاتف</label><input id="orderCustomerPhone" value="${esc(u.phone||'')}" inputmode="tel" placeholder="07xxxxxxxxx"></div><div class="field wide"><label>العنوان التفصيلي <span style="color:#dc2626">*</span></label><input id="orderAddress" value="" placeholder="المحافظة، المنطقة، أقرب نقطة دالة، رقم الدار"><span class="mi order-address-icon">location_on</span></div></div></div>`;
+    const html=`<div class="order-contact-box" id="orderContactBox"><h3><span class="mi">person_pin_circle</span> معلومات مستلم الطلب</h3><div class="order-contact-grid"><div class="field"><label>اسم الشخص</label><input id="orderCustomerName" value="${esc(u.name||'')}" placeholder="اكتب الاسم"></div><div class="field"><label>رقم الهاتف</label><input id="orderCustomerPhone" value="${esc(u.phone||'')}" inputmode="tel" placeholder="07xxxxxxxxx"></div><div class="field wide"><label>العنوان التفصيلي <span style="color:#dc2626">*</span></label><input id="orderAddress" value="" placeholder="المحافظة، المنطقة، أقرب نقطة دالة، رقم الدار"><span class="mi order-address-icon">location_on</span></div></div></div><div class="delivery-location-box" id="deliveryLocationBox">
+  <div class="delivery-location-head">
+    <span class="delivery-location-icon"><span class="mi">location_on</span></span>
+    <div>
+      <h3>موقع التسليم على الخريطة <span class="delivery-required">*</span></h3>
+      <p>تحديد الموقع إجباري قبل إرسال الطلب حتى يصل المندوب إلى المكان الصحيح.</p>
+    </div>
+  </div>
+  <div class="delivery-location-status" id="deliveryLocationStatus">
+    <span class="mi">location_off</span>
+    <div><b>لم يتم تحديد الموقع</b><small>اضغط الزر وحدد موقعك ثم أكّد النقطة.</small></div>
+  </div>
+  <button class="btn delivery-location-btn" id="openDeliveryMapBtn" type="button" onclick="openDeliveryLocationMap()">
+    <span class="mi">map</span> تحديد موقعي على الخريطة
+  </button>
+</div>`;
     if(note) note.closest('.field')?.insertAdjacentHTML('beforebegin',html); else summary.insertAdjacentHTML('afterbegin',html);
 }
   const oldGo=window.go;
@@ -10172,6 +10298,12 @@ if(form) form.reset();
     items.forEach(function(item, index){
       lines.push((index+1) + '. ' + item.name);
       lines.push('الكمية: ' + item.quantity);
+      if(Number(item.unitPrice || 0) > 0){
+        lines.push('سعر الوحدة: ' + Number(item.unitPrice || 0).toLocaleString('ar-IQ') + ' د.ع');
+        lines.push('مجموع المنتج: ' + Number(item.lineTotal || 0).toLocaleString('ar-IQ') + ' د.ع');
+      }else if(item.isSpecial){
+        lines.push('السعر: يحدد بعد المراجعة');
+      }
       if(item.branch) lines.push('الفرع: ' + item.branch);
       if(item.details) lines.push('التفاصيل: ' + item.details);
       if(item.note) lines.push('ملاحظة: ' + item.note);
@@ -10211,15 +10343,44 @@ if(form) form.reset();
     list.innerHTML = rows.length ? rows.map(function(order){
       const items = Array.isArray(order.items) ? order.items : (Array.isArray(order.products) ? order.products : []);
       const names = items.slice(0,4).map(function(item){ return esc(item.name) + ' × ' + Number(item.quantity || item.qty || 1); }).join('، ');
+      const key = clean(order.status || 'pending').toLowerCase();
+      const statusLabel =
+        key === 'assigned' ? 'تم تعيين مندوب' :
+        key === 'picked_up' ? 'المندوب بالطريق' :
+        key === 'delivered' ? 'تم التسليم' :
+        key === 'rejected' || key === 'cancelled' ? 'ملغي' :
+        'بانتظار مندوب';
+      const statusClass =
+        key === 'assigned' || key === 'delivered' ? 'ok' :
+        key === 'picked_up' ? 'info' :
+        key === 'rejected' || key === 'cancelled' ? 'bad' : 'pending';
+      const progressText =
+        key === 'assigned' ? 'تمت الموافقة على طلبك، قريباً سيكون المندوب عندك.' :
+        key === 'picked_up' ? 'المندوب استلم الطلب وهو في الطريق إليك.' :
+        key === 'delivered' ? 'تم تسليم الطلب بنجاح.' :
+        key === 'rejected' || key === 'cancelled' ? 'تم إلغاء الطلب.' :
+        'تم إرسال طلبك، جارٍ البحث عن مندوب.';
+      const total = Number(order.totalAmount || order.total || order.subtotal || 0) || 0;
+      const rating = Math.max(0,Math.min(5,Number(order.memberRating || 0) || 0));
+      const ratingHtml = key === 'delivered'
+        ? (rating
+          ? '<div class="linko-order-rating-done"><b>تقييمك: '+('★'.repeat(rating))+('☆'.repeat(5-rating))+'</b>'
+            +(clean(order.memberRatingComment)?'<small>'+esc(order.memberRatingComment)+'</small>':'')+'</div>'
+          : '<button class="btn secondary full linko-rate-order-btn" type="button" onclick="linkoOpenOrderRating(\''+esc(order.id || order.orderNumber)+'\')">⭐ تقييم الطلب والمندوب</button>')
+        : '';
       return '<div class="order-card"><div class="order-top"><div>'
         + '<h3>طلب رقم ' + esc(order.orderNumber || order.id) + '</h3>'
         + '<p>' + (names || (Number(order.totalQuantity || order.itemCount || 0) + ' منتجات')) + '</p>'
         + '<small>' + esc(dateText(order)) + '</small>'
+        + (total > 0 ? '<p class="linko-order-estimated-total">المجموع التقريبي: '+esc(total.toLocaleString('ar-IQ'))+' د.ع</p>' : '')
         + ((order.balanceDeducted === true || order.paymentDeducted === true)
           ? '<p style="margin-top:8px;font-weight:900">المبلغ النهائي: ' + esc(Number(order.finalAmount || order.deductedAmount || 0).toLocaleString('ar-IQ')) + ' د.ع</p>'
             + '<p style="margin-top:4px;color:#047857;font-weight:900">تم خصم المبلغ — الرصيد بعد الخصم: ' + esc(Number(order.balanceAfter || 0).toLocaleString('ar-IQ')) + ' د.ع</p>'
           : '')
-        + '</div></div></div>';
+        + '</div><span class="status '+statusClass+'" data-order-status="'+esc(key)+'">'+esc(statusLabel)+'</span></div>'
+        + '<div class="linko-order-progress-note '+statusClass+'">'+esc(progressText)+'</div>'
+        + ratingHtml
+        + '</div>';
     }).join('') : '<div class="empty-card">لا توجد طلبات بعد</div>';
   }
   async function startMemberOrdersListener(){
@@ -12559,6 +12720,835 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 </script>
 
 
+
+
+<div class="delivery-map-modal" id="deliveryMapModal" aria-hidden="true">
+  <div class="delivery-map-shell">
+    <header class="delivery-map-header">
+      <div>
+        <h2><span class="mi">pin_drop</span> تحديد موقع التسليم</h2>
+        <p>حدد موقعك بدقة، ويمكنك تحريك العلامة أو الضغط على أي نقطة بالخريطة.</p>
+      </div>
+      <button class="icon-btn" type="button" onclick="closeDeliveryLocationMap()" aria-label="إغلاق">
+        <span class="mi">close</span>
+      </button>
+    </header>
+
+    <div class="delivery-map-canvas" id="deliveryMapCanvas"></div>
+
+    <div class="delivery-map-bottom">
+      <div class="delivery-map-selected" id="deliveryMapSelected">
+        <span class="mi">my_location</span>
+        <div><b>حدد موقعك أولاً</b><small>استخدم موقع الجهاز أو اختر النقطة يدوياً.</small></div>
+      </div>
+
+      <div class="delivery-map-actions">
+        <button class="btn secondary" type="button" onclick="locateDeliveryDevice()">
+          <span class="mi">my_location</span> استخدام موقعي الحالي
+        </button>
+        <button class="btn" id="confirmDeliveryLocationBtn" type="button" onclick="confirmDeliveryLocation()" disabled>
+          <span class="mi">check_circle</span> تأكيد موقع التسليم
+        </button>
+      </div>
+      <button class="btn secondary full" type="button" onclick="closeDeliveryLocationMap()">
+        رجوع بدون تأكيد
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script id="linkoDeliveryLocationPhase1Runtime">
+(function(){
+  'use strict';
+  if(window.__linkoDeliveryLocationPhase1Runtime) return;
+  window.__linkoDeliveryLocationPhase1Runtime = true;
+
+  const STORAGE_KEY = 'linko_pending_delivery_location_v1';
+  const DEFAULT_CENTER = [33.3152,44.3661]; // Baghdad fallback only for map opening.
+  let leafletPromise = null;
+  let map = null;
+
+  function loadLeafletAsset(base){
+    return new Promise(function(resolve,reject){
+      if(typeof L !== 'undefined'){ resolve(true); return; }
+
+      const oldCss=document.querySelector('link[data-linko-leaflet-css]');
+      if(!oldCss){
+        const css=document.createElement('link');
+        css.rel='stylesheet';
+        css.href=base+'/leaflet.css';
+        css.crossOrigin='anonymous';
+        css.dataset.linkoLeafletCss='1';
+        document.head.appendChild(css);
+      }
+
+      const script=document.createElement('script');
+      script.src=base+'/leaflet.js';
+      script.crossOrigin='anonymous';
+      script.async=true;
+      script.dataset.linkoLeafletJs='1';
+      const timer=setTimeout(function(){
+        try{script.remove();}catch(e){}
+        reject(new Error('leaflet-timeout'));
+      },7000);
+      script.onload=function(){
+        clearTimeout(timer);
+        if(typeof L !== 'undefined') resolve(true);
+        else reject(new Error('leaflet-missing'));
+      };
+      script.onerror=function(){
+        clearTimeout(timer);
+        try{script.remove();}catch(e){}
+        reject(new Error('leaflet-load-failed'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function loadLeaflet(){
+    if(typeof L !== 'undefined') return Promise.resolve(true);
+    if(leafletPromise) return leafletPromise;
+
+    leafletPromise=loadLeafletAsset('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist')
+      .catch(function(){
+        // fallback only when the first CDN is unavailable
+        return loadLeafletAsset('https://unpkg.com/leaflet@1.9.4/dist');
+      })
+      .catch(function(err){
+        leafletPromise=null;
+        throw err;
+      });
+
+    return leafletPromise;
+  }
+  let marker = null;
+  let draft = null;
+  let locating = false;
+
+  function cleanNumber(value){
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function loadSaved(){
+    try{
+      const row = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+      if(
+        row &&
+        row.confirmed === true &&
+        Number.isFinite(Number(row.lat)) &&
+        Number.isFinite(Number(row.lng))
+      ){
+        window.__linkoDeliveryLocation = {
+          lat:Number(row.lat),
+          lng:Number(row.lng),
+          accuracy:Number(row.accuracy || 0) || null,
+          confirmed:true
+        };
+      }
+    }catch(e){}
+  }
+
+  function saveConfirmed(location){
+    window.__linkoDeliveryLocation = Object.assign({},location,{confirmed:true});
+    try{ sessionStorage.setItem(STORAGE_KEY,JSON.stringify(window.__linkoDeliveryLocation)); }catch(e){}
+    updateCartLocationUI();
+  }
+
+  function reset(){
+    window.__linkoDeliveryLocation = null;
+    draft = null;
+    try{ sessionStorage.removeItem(STORAGE_KEY); }catch(e){}
+    updateCartLocationUI();
+  }
+  window.linkoResetDeliveryLocation = reset;
+
+  function fmt(n){
+    return Number(n).toFixed(6);
+  }
+
+  function updateCartLocationUI(){
+    const box = document.getElementById('deliveryLocationStatus');
+    const send = document.getElementById('sendOrderBtn');
+    const loc = window.__linkoDeliveryLocation;
+    const confirmed = !!(loc && loc.confirmed);
+
+    if(box){
+      const stateKey = confirmed
+        ? 'yes:' + fmt(loc.lat) + ':' + fmt(loc.lng)
+        : 'no';
+
+      if(box.dataset.locationState !== stateKey){
+        box.dataset.locationState = stateKey;
+        box.classList.toggle('confirmed',confirmed);
+
+        if(confirmed){
+          box.innerHTML = '<span class="mi">location_on</span><div><b>تم تثبيت موقع التسليم</b><small>'
+            + fmt(loc.lat) + ' , ' + fmt(loc.lng)
+            + '</small></div>';
+        }else{
+          box.innerHTML = '<span class="mi">location_off</span><div><b>لم يتم تحديد الموقع</b><small>اضغط الزر وحدد موقعك ثم أكّد النقطة.</small></div>';
+        }
+      }
+    }
+
+    if(send){
+      if(send.disabled === confirmed){
+        send.disabled = !confirmed;
+      }
+      send.title = confirmed ? '' : 'حدد موقع التسليم أولاً';
+    }
+  }
+  window.updateDeliveryLocationUI = updateCartLocationUI;
+
+  function ensureMap(){
+    if(map) return true;
+    if(typeof L === 'undefined'){
+      try{ if(typeof toast === 'function') toast('تعذر تحميل الخريطة، تحقق من الإنترنت'); }catch(e){}
+      return false;
+    }
+
+    map = L.map('deliveryMapCanvas',{
+      zoomControl:true,
+      attributionControl:true
+    }).setView(DEFAULT_CENTER,13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    map.on('click',function(e){
+      setDraft(e.latlng.lat,e.latlng.lng,null,true);
+    });
+
+    return true;
+  }
+
+  function ensureMarker(lat,lng){
+    if(!map) return;
+    if(!marker){
+      marker = L.marker([lat,lng],{draggable:true}).addTo(map);
+      marker.on('dragend',function(){
+        const p = marker.getLatLng();
+        setDraft(p.lat,p.lng,null,false);
+      });
+    }else{
+      marker.setLatLng([lat,lng]);
+    }
+  }
+
+  function setDraft(lat,lng,accuracy,centerMap){
+    lat = cleanNumber(lat);
+    lng = cleanNumber(lng);
+    if(lat === null || lng === null) return;
+
+    draft = {
+      lat,
+      lng,
+      accuracy:cleanNumber(accuracy),
+      confirmed:false
+    };
+
+    ensureMarker(lat,lng);
+    if(centerMap && map) map.setView([lat,lng],17);
+
+    const selected = document.getElementById('deliveryMapSelected');
+    if(selected){
+      selected.innerHTML =
+        '<span class="mi">pin_drop</span><div><b>تم اختيار نقطة التسليم</b><small>'
+        + fmt(lat) + ' , ' + fmt(lng)
+        + (draft.accuracy ? ' • دقة تقريبية ' + Math.round(draft.accuracy) + 'م' : '')
+        + '</small></div>';
+    }
+
+    const confirm = document.getElementById('confirmDeliveryLocationBtn');
+    if(confirm) confirm.disabled = false;
+  }
+
+  window.locateDeliveryDevice = function(){
+    if(locating) return;
+    if(!navigator.geolocation){
+      try{ if(typeof toast === 'function') toast('هذا الجهاز لا يدعم تحديد الموقع'); }catch(e){}
+      return;
+    }
+
+    locating = true;
+    const selected = document.getElementById('deliveryMapSelected');
+    if(selected){
+      selected.innerHTML = '<span class="mi">sync</span><div><b>جاري تحديد موقعك...</b><small>انتظر لحظات ولا تغلق الخريطة.</small></div>';
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        locating = false;
+        setDraft(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          pos.coords.accuracy,
+          true
+        );
+      },
+      function(err){
+        locating = false;
+        const selectedNow = document.getElementById('deliveryMapSelected');
+        if(selectedNow){
+          selectedNow.innerHTML = '<span class="mi">touch_app</span><div><b>لم نتمكن من أخذ موقع الجهاز</b><small>اسمح بالوصول للموقع أو اضغط على مكانك يدوياً بالخريطة.</small></div>';
+        }
+        try{
+          if(typeof toast === 'function'){
+            toast(err && err.code === 1
+              ? 'اسمح للموقع بالوصول إلى موقعك أو حدده يدوياً'
+              : 'تعذر تحديد الموقع الحالي، اختر موقعك يدوياً');
+          }
+        }catch(e){}
+      },
+      {
+        enableHighAccuracy:true,
+        timeout:12000,
+        maximumAge:15000
+      }
+    );
+  };
+
+  window.openDeliveryLocationMap = function(){
+    const modal = document.getElementById('deliveryMapModal');
+    const canvas = document.getElementById('deliveryMapCanvas');
+    if(!modal) return;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    document.body.classList.add('delivery-map-open');
+
+    if(canvas && !map){
+      canvas.innerHTML='<div class="delivery-map-loading"><span class="mi">sync</span><b>جاري تحميل الخريطة...</b><small>لن يؤثر تحميل الخريطة على بقية الموقع.</small></div>';
+    }
+
+    loadLeaflet().then(function(){
+      setTimeout(function(){
+        if(canvas && !map) canvas.innerHTML='';
+        if(!ensureMap()) return;
+        map.invalidateSize();
+
+        const current = window.__linkoDeliveryLocation;
+        if(current && current.confirmed){
+          setDraft(current.lat,current.lng,current.accuracy,true);
+        }else{
+          const confirm = document.getElementById('confirmDeliveryLocationBtn');
+          if(confirm) confirm.disabled = true;
+          window.locateDeliveryDevice();
+        }
+      },40);
+    }).catch(function(err){
+      console.warn('LINKO map library load failed',err);
+      if(canvas){
+        canvas.innerHTML='<div class="delivery-map-loading error"><span class="mi">wifi_off</span><b>تعذر تحميل الخريطة</b><small>تحقق من الإنترنت ثم أغلق الخريطة وحاول مرة أخرى.</small><button class="btn secondary" type="button" onclick="closeDeliveryLocationMap()">رجوع</button></div>';
+      }
+    });
+  };
+
+  window.closeDeliveryLocationMap = function(){
+    const modal = document.getElementById('deliveryMapModal');
+    if(!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    document.body.classList.remove('delivery-map-open');
+  };
+
+  window.confirmDeliveryLocation = function(){
+    if(!draft){
+      try{ if(typeof toast === 'function') toast('حدد موقعك على الخريطة أولاً'); }catch(e){}
+      return;
+    }
+    saveConfirmed(draft);
+    window.closeDeliveryLocationMap();
+    try{ if(typeof toast === 'function') toast('تم تثبيت موقع التسليم بنجاح'); }catch(e){}
+  };
+document.addEventListener('DOMContentLoaded',function(){
+    loadSaved();
+    updateCartLocationUI();
+  });
+  window.addEventListener('load',function(){
+    loadSaved();
+    updateCartLocationUI();
+  });
+
+  // Closing by device/back-style Escape on desktop.
+  document.addEventListener('keydown',function(e){
+    if(e.key === 'Escape') window.closeDeliveryLocationMap();
+  });
+})();
+</script>
+
+
+<script id="linkoDeliveryLocationCartRefreshHook">
+(function(){
+  'use strict';
+  if(window.__linkoDeliveryLocationCartRefreshHook)return;
+  window.__linkoDeliveryLocationCartRefreshHook=true;
+
+  function refresh(){
+    try{
+      if(typeof window.updateDeliveryLocationUI==='function'){
+        window.updateDeliveryLocationUI();
+      }
+    }catch(e){}
+  }
+
+  function hookRenderCart(){
+    if(typeof window.renderCart!=='function')return false;
+    if(window.renderCart.__linkoLocationHooked)return true;
+
+    const original=window.renderCart;
+    const wrapped=function(){
+      const result=original.apply(this,arguments);
+      setTimeout(refresh,0);
+      return result;
+    };
+    wrapped.__linkoLocationHooked=true;
+    window.renderCart=wrapped;
+    return true;
+  }
+
+  function hookGo(){
+    if(typeof window.go!=='function')return false;
+    if(window.go.__linkoLocationHooked)return true;
+
+    const original=window.go;
+    const wrapped=function(pageId){
+      const result=original.apply(this,arguments);
+      if(pageId==='cartPage'){
+        setTimeout(refresh,0);
+        setTimeout(refresh,120);
+      }
+      return result;
+    };
+    wrapped.__linkoLocationHooked=true;
+    window.go=wrapped;
+    return true;
+  }
+
+  function install(){
+    hookRenderCart();
+    hookGo();
+    refresh();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',install,{once:true});
+  }else{
+    install();
+  }
+
+  setTimeout(install,300);
+  setTimeout(install,1000);
+})();
+</script>
+
+
+<script id="linkoDriverPhase2AdminPatch">
+(function(){
+  'use strict';
+  if(window.__linkoDriverPhase2AdminPatch)return;
+  window.__linkoDriverPhase2AdminPatch=true;
+
+  const FIREBASE_CONFIG={
+    apiKey:"AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA",
+    authDomain:"medina-bazaar-e2c18.firebaseapp.com",
+    projectId:"medina-bazaar-e2c18",
+    storageBucket:"medina-bazaar-e2c18.firebasestorage.app",
+    messagingSenderId:"375693456199",
+    appId:"1:375693456199:web:2b36e0368ed898a7a11262"
+  };
+
+  function adminCode(){
+    return `
+(function(){
+  'use strict';
+  if(window.__linkoDriverAdminInside)return;
+  window.__linkoDriverAdminInside=true;
+
+  const CFG=${JSON.stringify(FIREBASE_CONFIG)};
+  const REQUESTS='driverRequests';
+  const DRIVERS='drivers';
+  let fbPromise=null,reqRows=[],driverRows=[],reqUnsub=null,driverUnsub=null;
+  const busy=new Set();
+
+  function esc(v){
+    return String(v==null?'':v).replace(/[&<>"']/g,function(m){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+    });
+  }
+  function clean(v){return String(v==null?'':v).trim();}
+  function msg(v){try{if(typeof toast==='function')toast(v);else console.log(v)}catch(e){}}
+  function ts(v){
+    try{
+      if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');
+      if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');
+    }catch(e){}
+    return clean(v)||'-';
+  }
+  function statusText(v){
+    v=clean(v).toLowerCase();
+    return v==='pending'?'قيد الانتظار':
+      v==='approved'||v==='active'?'مفعل':
+      v==='rejected'?'مرفوض':
+      v==='stopped'?'موقوف':v||'-';
+  }
+  function statusClass(v){
+    v=clean(v).toLowerCase();
+    if(v==='approved'||v==='active')return 'ok';
+    if(v==='pending')return 'wait';
+    return 'bad';
+  }
+  async function fb(){
+    if(fbPromise)return fbPromise;
+    fbPromise=Promise.all([
+      import('https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js')
+    ]).then(function(mods){
+      const appMod=mods[0],fs=mods[1];
+      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(CFG);
+      return {db:fs.getFirestore(app),fs:fs};
+    });
+    return fbPromise;
+  }
+
+  function ensureStyle(){
+    if(document.getElementById('linko-driver-admin-style'))return;
+    const st=document.createElement('style');
+    st.id='linko-driver-admin-style';
+    st.textContent=\`
+      .driver-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+      .driver-admin-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:13px;box-shadow:var(--soft);display:grid;gap:9px}
+      .driver-admin-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+      .driver-admin-head h3{font-size:16px;font-weight:900}
+      .driver-admin-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+      .driver-admin-pill{padding:8px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:12px;font-weight:900}
+      .driver-admin-pill small{display:block;color:var(--muted);font-size:10px;margin-bottom:2px}
+      .driver-admin-section-title{margin:16px 0 9px;font-size:18px;font-weight:900}
+      body.theme-dark .driver-admin-card{background:#111827;border-color:#334155}
+      body.theme-dark .driver-admin-pill{background:#0f172a;border-color:#334155;color:#fff}
+      @media(max-width:720px){.driver-admin-grid{grid-template-columns:1fr}.driver-admin-meta{grid-template-columns:1fr 1fr}}
+    \`;
+    document.head.appendChild(st);
+  }
+
+  function pendingCount(){
+    return reqRows.filter(function(x){return clean(x.status).toLowerCase()==='pending'}).length;
+  }
+
+  function renderDriversPage(){
+    const pending=reqRows.filter(function(x){return clean(x.status).toLowerCase()==='pending'});
+    const processed=reqRows.filter(function(x){return clean(x.status).toLowerCase()!=='pending'}).slice(0,20);
+    const activeDrivers=driverRows.filter(function(x){return x.deleted!==true});
+
+    function reqCard(r){
+      return '<article class="driver-admin-card">'
+        +'<div class="driver-admin-head"><h3>'+esc(r.name||'مندوب')+'</h3>'
+        +'<span class="status '+statusClass(r.status)+'">'+esc(statusText(r.status))+'</span></div>'
+        +'<div class="driver-admin-meta">'
+        +'<div class="driver-admin-pill"><small>الهاتف</small>'+esc(r.phoneDisplay||r.phone||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>المنطقة</small>'+esc(r.area||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>المركبة</small>'+esc(r.vehicleType||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>رقم المركبة</small>'+esc(r.vehicleNumber||'-')+'</div>'
+        +'</div>'
+        +'<small class="muted">'+esc(ts(r.createdAt)||r.createdAtText||'-')+'</small>'
+        +(clean(r.status).toLowerCase()==='pending'
+          ?'<div class="actions-row">'
+            +'<button class="btn mini" data-driver-admin-action="approve" data-id="'+esc(r.id)+'">موافقة</button>'
+            +'<button class="btn warn mini" data-driver-admin-action="reject" data-id="'+esc(r.id)+'">رفض</button>'
+            +'</div>'
+          :'')
+        +'</article>';
+    }
+
+    function driverCard(d){
+      const active=clean(d.status).toLowerCase()==='active';
+      return '<article class="driver-admin-card">'
+        +'<div class="driver-admin-head"><h3>'+esc(d.name||'مندوب')+'</h3>'
+        +'<span class="status '+(active?'ok':'bad')+'">'+esc(active?'مفعل':'موقوف')+'</span></div>'
+        +'<div class="driver-admin-meta">'
+        +'<div class="driver-admin-pill"><small>الهاتف</small>'+esc(d.phoneDisplay||d.phone||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>المنطقة</small>'+esc(d.area||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>المركبة</small>'+esc(d.vehicleType||'-')+'</div>'
+        +'<div class="driver-admin-pill"><small>رقم المركبة</small>'+esc(d.vehicleNumber||'-')+'</div>'
+        +'</div>'
+        +'<div class="actions-row">'
+        +'<button class="btn '+(active?'warn':'')+' mini" data-driver-admin-action="toggle" data-id="'+esc(d.id)+'" data-next="'+(active?'stopped':'active')+'">'+(active?'إيقاف المندوب':'تفعيل المندوب')+'</button>'
+        +'</div>'
+        +'</article>';
+    }
+
+    return '<div class="kpis">'
+      +'<div class="kpi" data-icon="person_add"><small>طلبات بانتظار الموافقة</small><b>'+pending.length+'</b></div>'
+      +'<div class="kpi" data-icon="delivery_dining"><small>المندوبون المفعلون</small><b>'+activeDrivers.filter(function(x){return clean(x.status).toLowerCase()==='active'}).length+'</b></div>'
+      +'<div class="kpi" data-icon="person_off"><small>المندوبون الموقوفون</small><b>'+activeDrivers.filter(function(x){return clean(x.status).toLowerCase()==='stopped'}).length+'</b></div>'
+      +'</div>'
+      +'<div class="panel"><div class="panel-head"><div><h2>طلبات تسجيل المندوبين</h2><p>الموافقة تنشئ حساب مندوب مفعل بنفس بيانات الطلب.</p></div><button class="btn secondary mini" data-driver-admin-action="refresh">تحديث</button></div>'
+      +'<div class="driver-admin-grid">'+(pending.map(reqCard).join('')||'<div class="empty">لا توجد طلبات مندوبين بانتظار الموافقة</div>')+'</div>'
+      +(processed.length?'<h3 class="driver-admin-section-title">آخر الطلبات المعالجة</h3><div class="driver-admin-grid">'+processed.map(reqCard).join('')+'</div>':'')
+      +'</div>'
+      +'<div class="panel"><div class="panel-head"><div><h2>إدارة المندوبين</h2><p>تفعيل أو إيقاف حساب المندوب بدون حذف سجل الطلبات.</p></div></div>'
+      +'<div class="driver-admin-grid">'+(activeDrivers.map(driverCard).join('')||'<div class="empty">لا يوجد مندوبون مفعلون بعد</div>')+'</div></div>';
+  }
+
+  function appendNav(){
+    const nav=document.getElementById('nav');
+    if(!nav)return;
+    let btn=document.getElementById('linkoDriverAdminNav');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='linkoDriverAdminNav';
+      btn.type='button';
+      btn.innerHTML='<span class="ico"><span class="material-symbols-rounded">delivery_dining</span></span><span>المندوبين</span><span id="linkoDriverReqBadge" class="status bad" style="display:none"></span>';
+      btn.addEventListener('click',function(){
+        try{active='drivers';}catch(e){}
+        const title=document.getElementById('pageTitle'),desc=document.getElementById('pageDesc'),side=document.getElementById('sidebar');
+        if(title)title.textContent='المندوبين';
+        if(desc)desc.textContent='طلبات التسجيل، التفعيل وإدارة حسابات مندوبي التوصيل.';
+        if(side)side.classList.remove('open');
+        renderDriverSection();
+      });
+      nav.appendChild(btn);
+    }
+    document.querySelectorAll('#nav button').forEach(function(x){x.classList.toggle('active',x===btn&&typeof active!=='undefined'&&active==='drivers')});
+    const badge=document.getElementById('linkoDriverReqBadge');
+    if(badge){
+      const n=pendingCount();
+      badge.textContent=n;
+      badge.style.display=n?'inline-flex':'none';
+    }
+  }
+
+  function renderDriverSection(){
+    ensureStyle();
+    appendNav();
+    const main=document.getElementById('main');
+    if(main)main.innerHTML=renderDriversPage();
+  }
+  window.linkoRenderDriverAdmin=renderDriverSection;
+
+  const originalBuild=typeof buildNav==='function'?buildNav:null;
+  if(originalBuild){
+    window.buildNav=function(){
+      const r=originalBuild.apply(this,arguments);
+      appendNav();
+      return r;
+    };
+  }
+
+  const originalRender=typeof render==='function'?render:null;
+  if(originalRender){
+    window.render=function(){
+      if(typeof active!=='undefined'&&active==='drivers'){
+        renderDriverSection();
+        return;
+      }
+      const r=originalRender.apply(this,arguments);
+      appendNav();
+      return r;
+    };
+  }
+
+  async function approve(id){
+    if(busy.has(id))return;
+    busy.add(id);
+    try{
+      const r=reqRows.find(function(x){return String(x.id)===String(id)});
+      if(!r)throw new Error('REQUEST_NOT_FOUND');
+      const f=await fb();
+      const batch=f.fs.writeBatch(f.db);
+      const driverRef=f.fs.doc(f.db,DRIVERS,String(id));
+      const requestRef=f.fs.doc(f.db,REQUESTS,String(id));
+      batch.set(driverRef,{
+        driverId:String(id),
+        name:clean(r.name),
+        phone:clean(r.phone),
+        phoneDisplay:clean(r.phoneDisplay||r.phone),
+        area:clean(r.area),
+        vehicleType:clean(r.vehicleType),
+        vehicleNumber:clean(r.vehicleNumber),
+        codeHash:clean(r.codeHash),
+        status:'active',
+        createdAt:r.createdAt||f.fs.serverTimestamp(),
+        approvedAt:f.fs.serverTimestamp(),
+        updatedAt:f.fs.serverTimestamp(),
+        deleted:false
+      },{merge:true});
+      batch.set(requestRef,{status:'approved',approvedAt:f.fs.serverTimestamp(),updatedAt:f.fs.serverTimestamp()},{merge:true});
+      await batch.commit();
+      msg('تمت الموافقة وتفعيل حساب المندوب');
+    }catch(e){console.error(e);msg('تعذر الموافقة على المندوب');}
+    finally{busy.delete(id);}
+  }
+
+  async function reject(id){
+    if(busy.has(id))return;
+    busy.add(id);
+    try{
+      const f=await fb();
+      await f.fs.setDoc(f.fs.doc(f.db,REQUESTS,String(id)),{
+        status:'rejected',rejectedAt:f.fs.serverTimestamp(),updatedAt:f.fs.serverTimestamp()
+      },{merge:true});
+      msg('تم رفض طلب المندوب');
+    }catch(e){console.error(e);msg('تعذر رفض الطلب');}
+    finally{busy.delete(id);}
+  }
+
+  async function toggleDriver(id,next){
+    if(busy.has(id))return;
+    busy.add(id);
+    try{
+      const f=await fb();
+      await f.fs.setDoc(f.fs.doc(f.db,DRIVERS,String(id)),{
+        status:next,updatedAt:f.fs.serverTimestamp()
+      },{merge:true});
+      msg(next==='active'?'تم تفعيل المندوب':'تم إيقاف المندوب');
+    }catch(e){console.error(e);msg('تعذر تحديث حالة المندوب');}
+    finally{busy.delete(id);}
+  }
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('[data-driver-admin-action]');
+    if(!btn)return;
+    e.preventDefault();e.stopPropagation();
+    const action=btn.getAttribute('data-driver-admin-action'),id=btn.getAttribute('data-id');
+    if(action==='approve')approve(id);
+    else if(action==='reject')reject(id);
+    else if(action==='toggle')toggleDriver(id,btn.getAttribute('data-next')||'stopped');
+    else if(action==='refresh'){start(true);msg('تم تحديث بيانات المندوبين');}
+  },true);
+
+  function norm(doc){return Object.assign({id:doc.id},doc.data()||{})}
+  async function start(force){
+    try{
+      const f=await fb();
+      if(force){
+        if(reqUnsub){reqUnsub();reqUnsub=null}
+        if(driverUnsub){driverUnsub();driverUnsub=null}
+      }
+      if(!reqUnsub){
+        reqUnsub=f.fs.onSnapshot(f.fs.collection(f.db,REQUESTS),function(snap){
+          reqRows=snap.docs.map(norm).sort(function(a,b){
+            const av=Number(a.clientCreatedAtMs||0),bv=Number(b.clientCreatedAtMs||0);
+            return bv-av;
+          });
+          appendNav();
+          try{if(typeof active!=='undefined'&&active==='drivers')renderDriverSection();}catch(e){}
+        },function(err){console.warn('driver requests listener',err);});
+      }
+      if(!driverUnsub){
+        driverUnsub=f.fs.onSnapshot(f.fs.collection(f.db,DRIVERS),function(snap){
+          driverRows=snap.docs.map(norm);
+          try{if(typeof active!=='undefined'&&active==='drivers')renderDriverSection();}catch(e){}
+        },function(err){console.warn('drivers listener',err);});
+      }
+    }catch(e){console.warn('driver admin start failed',e);}
+  }
+
+  ensureStyle();
+  appendNav();
+  start(false);
+})();
+`;
+  }
+
+  function inject(){
+    const fr=document.getElementById('linkoAdminFrame');
+    if(!fr||!fr.contentDocument||!fr.contentDocument.body)return false;
+    try{
+      const w=fr.contentWindow,doc=fr.contentDocument;
+      if(w.__linkoDriverAdminInside){
+        try{if(typeof w.linkoRenderDriverAdmin==='function'&&w.active==='drivers')w.linkoRenderDriverAdmin();}catch(e){}
+        return true;
+      }
+      const s=doc.createElement('script');
+      s.id='linko-driver-admin-injected';
+      s.textContent=adminCode();
+      doc.body.appendChild(s);
+      return true;
+    }catch(e){
+      console.warn('driver admin inject waiting',e);
+      return false;
+    }
+  }
+
+  function boot(){
+    const fr=document.getElementById('linkoAdminFrame');
+    if(fr&&!fr.__linkoDriverAdminLoadBound){
+      fr.__linkoDriverAdminLoadBound=true;
+      fr.addEventListener('load',function(){setTimeout(inject,120);setTimeout(inject,500);});
+    }
+    setTimeout(inject,100);
+    setTimeout(inject,600);
+    setTimeout(inject,1600);
+  }
+
+  document.addEventListener('DOMContentLoaded',boot,{once:true});
+  window.addEventListener('load',boot,{once:true});
+})();
+</script>
+
+<style id="linkoDriverMemberOrderStatusStyle">
+.linko-driver-status-note{
+  margin-top:8px;padding:9px 10px;border-radius:14px;
+  background:#ecfdf3;border:1px solid #86efac;color:#166534;
+  font-size:11px;font-weight:900;line-height:1.65
+}
+body.linko-dark .linko-driver-status-note{
+  background:#052e22;border-color:#22c55e;color:#bbf7d0
+}
+</style>
+<script id="linkoDriverMemberOrderStatusPatch">
+(function(){
+  'use strict';
+  if(window.__linkoDriverMemberOrderStatusPatch)return;
+  window.__linkoDriverMemberOrderStatusPatch=true;
+
+  function text(status){
+    status=String(status||'').toLowerCase();
+    if(status==='assigned')return 'تمت الموافقة على طلبك، قريباً سيكون المندوب عندك';
+    if(status==='picked_up')return 'المندوب استلم الطلب وهو في الطريق إليك';
+    if(status==='delivered')return 'تم تسليم الطلب بنجاح';
+    if(status==='pending'||status==='new'||status==='جديد')return 'طلبك قيد المراجعة وبانتظار مندوب';
+    return '';
+  }
+
+  function decorate(){
+    const page=document.getElementById('ordersPage');
+    if(!page)return;
+    page.querySelectorAll('.order-card').forEach(function(card){
+      const badge=card.querySelector('.status');
+      if(!badge)return;
+      const value=String(badge.textContent||'').trim();
+      const t=text(value);
+      if(!t)return;
+      let note=card.querySelector('.linko-driver-status-note');
+      if(!note){
+        note=document.createElement('div');
+        note.className='linko-driver-status-note';
+        card.appendChild(note);
+      }
+      note.textContent=t;
+      if(value==='assigned')badge.textContent='تم تعيين مندوب';
+      else if(value==='picked_up')badge.textContent='المندوب بالطريق';
+      else if(value==='delivered')badge.textContent='تم التسليم';
+      else if(value==='pending')badge.textContent='بانتظار مندوب';
+    });
+  }
+
+  const oldGo=window.go;
+  if(typeof oldGo==='function'){
+    window.go=function(id){
+      const r=oldGo.apply(this,arguments);
+      if(id==='ordersPage'){setTimeout(decorate,50);setTimeout(decorate,250);}
+      return r;
+    };
+  }
+  window.linkoDecorateDriverOrderStatus=decorate;
+})();
+</script>
 
 </body></html><style id="linkoSafePatchFinal">
 /* خانة التوصيل تحت بطاقة العضوية */
@@ -17055,18 +18045,24 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   }
 
   function normalizeItems(rows){
-    return rows.map((item,index) => ({
-      index:index + 1,
-      id:clean(item.id),
-      name:clean(item.name) || 'منتج',
-      branchId:clean(item.branchId),
-      branch:clean(item.branchName || item.branch) || 'غير محدد',
-      quantity:Math.max(1, Number(item.qty || item.quantity || 1) || 1),
-      details:clean(item.details),
-      note:clean(item.note),
-      restaurant:clean(item.restaurant),
-      isSpecial:!!item.isSpecial
-    }));
+    return rows.map((item,index) => {
+      const quantity = Math.max(1, Number(item.qty || item.quantity || 1) || 1);
+      const unitPrice = Math.max(0, Number(item.price || item.unitPrice || 0) || 0);
+      return {
+        index:index + 1,
+        id:clean(item.id),
+        name:clean(item.name) || 'منتج',
+        branchId:clean(item.branchId),
+        branch:clean(item.branchName || item.branch) || 'غير محدد',
+        quantity,
+        unitPrice,
+        lineTotal:unitPrice * quantity,
+        details:clean(item.details),
+        note:clean(item.note),
+        restaurant:clean(item.restaurant),
+        isSpecial:!!item.isSpecial
+      };
+    });
   }
 
   function makeOrderNumber(){
@@ -17103,6 +18099,16 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
       'العضو: ' + contact.name,
       'الهاتف: ' + contact.phone,
       'العنوان: ' + contact.address,
+      'الموقع على الخريطة: ' + (
+        window.__linkoDeliveryLocation && window.__linkoDeliveryLocation.confirmed
+          ? 'https://www.google.com/maps/search/?api=1&query='
+            + encodeURIComponent(
+                String(window.__linkoDeliveryLocation.lat)
+                + ','
+                + String(window.__linkoDeliveryLocation.lng)
+              )
+          : 'غير محدد'
+      ),
       'التوصيل: ' + delivery,
       '------------------------------'
     ];
@@ -17114,6 +18120,11 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
       if(item.note) lines.push('ملاحظة: ' + item.note);
       lines.push('------------------------------');
     });
+    const estimatedTotal = items.reduce((sum,item) => sum + Number(item.lineTotal || 0), 0);
+    if(estimatedTotal > 0){
+      lines.push('المجموع التقريبي: ' + estimatedTotal.toLocaleString('ar-IQ') + ' د.ع');
+      lines.push('------------------------------');
+    }
     if(note) lines.push('ملاحظة عامة: ' + note);
     return lines.join('\n');
   }
@@ -17142,6 +18153,7 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
     try{ if(typeof renderBranchProducts === 'function') renderBranchProducts(); }catch(e){}
     try{ if(typeof updateCart === 'function') updateCart(); }catch(e){}
     try{ if(typeof refreshCartIndicators === 'function') refreshCartIndicators(); }catch(e){}
+    try{ if(typeof window.linkoResetDeliveryLocation === 'function') window.linkoResetDeliveryLocation(); }catch(e){}
   }
 
   function notify(text){
@@ -17176,6 +18188,18 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
       return;
     }
 
+    const deliveryLocation = window.__linkoDeliveryLocation || null;
+    if(
+      !deliveryLocation ||
+      deliveryLocation.confirmed !== true ||
+      !Number.isFinite(Number(deliveryLocation.lat)) ||
+      !Number.isFinite(Number(deliveryLocation.lng))
+    ){
+      notify('حدد موقع التسليم على الخريطة قبل إرسال الطلب');
+      try{ if(typeof openDeliveryLocationMap === 'function') openDeliveryLocationMap(); }catch(e){}
+      return;
+    }
+
     sending = true;
     const buttons = [...document.querySelectorAll('[onclick*="sendOrder"]')];
     buttons.forEach(button => button.disabled = true);
@@ -17197,6 +18221,7 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
       const delivery = deliveryValue();
       const nowText = new Date().toLocaleString('ar-IQ');
       const branches = [...new Set(items.map(item => item.branch).filter(Boolean))];
+      const subtotal = items.reduce((sum,item) => sum + Number(item.lineTotal || 0), 0);
 
       const orderRef = f.fs.doc(f.db, 'orders', number);
       const payload = {
@@ -17206,6 +18231,17 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
         memberUsername:clean(memberData.username || memberData.name || memberData.fullName),
         memberPhone:contact.phone,
         memberAddress:contact.address,
+        customerLocation:{
+          lat:Number(deliveryLocation.lat),
+          lng:Number(deliveryLocation.lng),
+          confirmed:true,
+          accuracy:Number(deliveryLocation.accuracy || 0) || null
+        },
+        customerLocationLat:Number(deliveryLocation.lat),
+        customerLocationLng:Number(deliveryLocation.lng),
+        customerLocationMapUrl:'https://www.google.com/maps/dir/?api=1&destination='
+          + encodeURIComponent(String(deliveryLocation.lat)+','+String(deliveryLocation.lng))
+          + '&travelmode=driving&dir_action=navigate',
         branch:branches.join('، ') || 'غير محدد',
         branches,
         products:items,
@@ -17213,6 +18249,9 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
         specialRequests:items.filter(item => item.isSpecial),
         note,
         delivery,
+        subtotal,
+        total:subtotal,
+        totalAmount:subtotal,
         itemCount:items.length,
         totalQuantity:items.reduce((sum,item) => sum + item.quantity, 0),
         status:'pending',
@@ -17506,5 +18545,550 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
       refreshCreatedDate(true);
     }
   });
+})();
+</script>
+
+
+<!-- LINKO_PRE_AUDIT_PHASE3_20260819 -->
+<style id="linkoPreAuditPhase3Styles">
+.linko-live-price{
+  display:flex!important;align-items:center;justify-content:space-between;gap:6px;
+  margin:8px 0 7px;padding:7px 9px;border-radius:13px;
+  background:#ecfdf3;border:1px solid #bbf7d0;color:#047857;font-weight:900;font-size:12px
+}
+.linko-live-price small{font-size:9px!important;color:#047857!important;font-weight:900!important}
+.linko-cart-price{
+  margin-top:5px;font-size:11px;font-weight:900;color:#047857;line-height:1.7
+}
+#cartSubtotal,#cartTotal{display:inline!important}
+.summary-box .sum-row.total{display:flex!important}
+#addProductMeta.linko-price-meta{
+  display:block!important;margin-top:4px!important;color:#047857!important;font-weight:900!important;font-size:13px!important
+}
+.linko-order-estimated-total{margin-top:7px;color:#047857;font-weight:900}
+.linko-order-progress-note{
+  margin-top:10px;padding:9px 10px;border-radius:14px;font-size:11px;font-weight:900;line-height:1.7;
+  background:#fff7ed;border:1px solid #fed7aa;color:#9a3412
+}
+.linko-order-progress-note.ok{background:#ecfdf3;border-color:#86efac;color:#166534}
+.linko-order-progress-note.info{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.linko-order-progress-note.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.linko-order-rating-done{
+  margin-top:9px;padding:10px;border-radius:14px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;
+  display:grid;gap:3px;font-weight:900
+}
+.linko-order-rating-done small{color:#92400e!important;line-height:1.6!important}
+.linko-rate-order-btn{margin-top:9px!important;min-height:44px!important}
+.linko-rating-modal{
+  position:fixed;inset:0;z-index:16000;display:none;align-items:center;justify-content:center;
+  background:rgba(2,6,23,.68);backdrop-filter:blur(8px);padding:16px
+}
+.linko-rating-modal.show{display:flex}
+.linko-rating-card{
+  width:min(460px,96vw);background:#fff;color:#0f172a;border-radius:28px;padding:19px;
+  box-shadow:0 30px 90px rgba(0,0,0,.28);text-align:center
+}
+.linko-rating-card h3{font-size:21px;font-weight:900;margin-bottom:5px}
+.linko-rating-card p{color:#64748b;font-size:12px;font-weight:800;line-height:1.7}
+.linko-rating-stars{display:flex;direction:ltr;justify-content:center;gap:5px;margin:14px 0}
+.linko-rating-star{width:46px;height:46px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0;font-size:27px;color:#cbd5e1}
+.linko-rating-star.on{color:#f59e0b;background:#fffbeb;border-color:#fde68a}
+.linko-rating-card textarea{
+  width:100%;min-height:82px;border:1px solid #cbd5e1;border-radius:16px;padding:11px;font:inherit;resize:vertical
+}
+.linko-rating-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+body.linko-dark .linko-live-price,body.linko-dark .linko-cart-price{color:#86efac}
+body.linko-dark .linko-live-price{background:#052e22;border-color:#166534}
+body.linko-dark #addProductMeta.linko-price-meta{color:#86efac!important}
+body.linko-dark .linko-rating-card{background:#0f172a;color:#fff}
+body.linko-dark .linko-rating-card p{color:#cbd5e1}
+body.linko-dark .linko-rating-card textarea{background:#111827;color:#fff;border-color:#334155}
+</style>
+
+<div class="linko-rating-modal" id="linkoRatingModal" aria-hidden="true">
+  <div class="linko-rating-card">
+    <h3>تقييم الطلب والمندوب</h3>
+    <p>اختر من نجمة إلى خمس نجوم، ويمكنك كتابة ملاحظة اختيارية.</p>
+    <div class="linko-rating-stars" id="linkoRatingStars">
+      <button class="linko-rating-star" type="button" data-stars="1">★</button>
+      <button class="linko-rating-star" type="button" data-stars="2">★</button>
+      <button class="linko-rating-star" type="button" data-stars="3">★</button>
+      <button class="linko-rating-star" type="button" data-stars="4">★</button>
+      <button class="linko-rating-star" type="button" data-stars="5">★</button>
+    </div>
+    <textarea id="linkoRatingComment" placeholder="ملاحظة عن الطلب أو المندوب (اختياري)"></textarea>
+    <div class="linko-rating-actions">
+      <button class="btn secondary" type="button" onclick="linkoCloseOrderRating()">إلغاء</button>
+      <button class="btn" id="linkoSaveRatingBtn" type="button" onclick="linkoSaveOrderRating()">حفظ التقييم</button>
+    </div>
+  </div>
+</div>
+
+<script id="linkoPreAuditPriceSessionRatingRuntime">
+(function(){
+  'use strict';
+  if(window.__linkoPreAuditPriceSessionRatingRuntime)return;
+  window.__linkoPreAuditPriceSessionRatingRuntime=true;
+
+  const CFG={
+    apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',
+    authDomain:'medina-bazaar-e2c18.firebaseapp.com',
+    projectId:'medina-bazaar-e2c18',
+    storageBucket:'medina-bazaar-e2c18.firebasestorage.app',
+    messagingSenderId:'375693456199',
+    appId:'1:375693456199:web:2b36e0368ed898a7a11262'
+  };
+  const CONTROLS='productControls';
+  const ORDERS='orders';
+  let fbPromise=null,priceUnsub=null,memberSessionUnsub=null;
+  let savedPrices=new Map(),memberRefreshDirty=false,sessionDisabled=false;
+  let ratingOrderId='',ratingStars=0;
+
+  function clean(v){return String(v==null?'':v).trim();}
+  function esc(v){return clean(v).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
+  function toastSafe(v){try{if(typeof toast==='function')toast(v);else alert(v)}catch(e){}}
+  function productRows(){try{return Array.isArray(products)?products:[]}catch(e){return []}}
+  function currentCart(){try{return Array.isArray(cart)?cart:[]}catch(e){try{return JSON.parse(localStorage.getItem('lm_cart')||'[]')}catch(_){return []}}}
+  function money(v){return Math.max(0,Number(v||0)||0).toLocaleString('ar-IQ')+' د.ع'}
+  function productById(id){return productRows().find(function(p){return String(p.id)===String(id)})||null}
+
+  const PRICE_RULES={
+    market:[1000,500,15],meat:[5000,1000,15],produce:[1000,500,12],bakery:[500,500,10],
+    restaurants:[3000,1000,16],furniture:[15000,5000,18],fashion:[5000,2500,18],beauty:[4000,2500,18],
+    smoke:[1500,1000,15],electronics:[10000,7500,20],homebuild:[5000,5000,20],vehicles:[15000,10000,20],
+    gifts:[2000,2000,18],contracting:[25000,15000,20],linko:[25000,10000,15]
+  };
+  function productIndex(p){
+    const m=String(p&&p.id||'').match(/_(\d+)$/);
+    return m?Number(m[1]):0;
+  }
+  function defaultPrice(p){
+    const branch=String(p&&p.branch||'market');
+    const r=PRICE_RULES[branch]||[2000,1000,20];
+    const i=productIndex(p);
+    return r[0]+((i*7+3)%r[2])*r[1];
+  }
+  function ensurePrices(){
+    productRows().forEach(function(p){
+      const id=String(p.id||'');
+      if(savedPrices.has(id))p.price=savedPrices.get(id);
+      else if(!(Number(p.price)>0))p.price=defaultPrice(p);
+    });
+  }
+
+  async function firebase(){
+    if(fbPromise)return fbPromise;
+    fbPromise=Promise.all([
+      import('https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js')
+    ]).then(function(mods){
+      const appMod=mods[0],fs=mods[1];
+      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(CFG);
+      return {db:fs.getFirestore(app),fs:fs};
+    });
+    return fbPromise;
+  }
+
+  function saveCartPrices(){
+    try{
+      const rows=currentCart();
+      let changed=false;
+      rows.forEach(function(x){
+        if(x.isSpecial)return;
+        const p=productById(x.id);
+        if(p&&Number(x.price)!==Number(p.price)){x.price=Number(p.price||0);changed=true}
+      });
+      if(changed){
+        try{if(typeof cart!=='undefined'&&Array.isArray(cart)){cart=rows}}catch(e){}
+        localStorage.setItem('lm_cart',JSON.stringify(rows));
+      }
+    }catch(e){}
+  }
+
+  function productIdFromCard(card){
+    if(!card)return '';
+    let id=card.getAttribute('data-product-id')||'';
+    if(id)return id;
+    const btn=card.querySelector('button[onclick*="openAddProductModal"],button[onclick*="addToCart"]');
+    const on=btn&&btn.getAttribute('onclick')||'';
+    const m=on.match(/(?:openAddProductModal|addToCart)\(['"]([^'"]+)['"]/);
+    return m?m[1]:'';
+  }
+  function decorateProducts(){
+    ensurePrices();
+    ['productsGrid','branchProductsGrid'].forEach(function(rootId){
+      const root=document.getElementById(rootId);if(!root)return;
+      root.querySelectorAll('.product-card').forEach(function(card){
+        const id=productIdFromCard(card),p=productById(id);if(!p)return;
+        const body=card.querySelector('.product-body')||card;
+        let row=card.querySelector('.linko-live-price');
+        if(!row){
+          row=document.createElement('div');row.className='linko-live-price';
+          const priceRow=body.querySelector('.price-row');
+          if(priceRow)body.insertBefore(row,priceRow);else body.appendChild(row);
+        }
+        row.innerHTML='<span>'+money(p.price)+'</span><small>سعر الوحدة</small>';
+      });
+    });
+  }
+  function decorateCart(){
+    ensurePrices();saveCartPrices();
+    const rows=currentCart(),cards=document.querySelectorAll('#cartList .cart-item');
+    let subtotal=0;
+    cards.forEach(function(card,index){
+      const x=rows[index];if(!x)return;
+      const p=x.isSpecial?null:productById(x.id);
+      const price=x.isSpecial?0:Number((p&&p.price)||x.price||0);
+      const qty=Math.max(1,Number(x.qty||x.quantity||1)||1);
+      subtotal+=price*qty;
+      let line=card.querySelector('.linko-cart-price');
+      if(!line){line=document.createElement('div');line.className='linko-cart-price';const middle=card.children[1]||card;middle.appendChild(line)}
+      line.textContent=x.isSpecial?'السعر يحدد بعد المراجعة':('سعر الوحدة: '+money(price)+' — المجموع: '+money(price*qty));
+    });
+    const sub=document.getElementById('cartSubtotal'),total=document.getElementById('cartTotal');
+    if(sub)sub.textContent=money(subtotal);
+    if(total)total.textContent=money(subtotal);
+  }
+  function updateAddModalPrice(id){
+    const p=productById(id),meta=document.getElementById('addProductMeta');
+    if(!p||!meta)return;
+    meta.classList.add('linko-price-meta');
+    meta.textContent='السعر: '+money(p.price)+' للوحدة';
+  }
+
+  function wrapRender(name,after){
+    const old=window[name];
+    if(typeof old!=='function'||old.__linkoPriceWrapped)return;
+    const wrapped=function(){
+      const r=old.apply(this,arguments);
+      setTimeout(after,0);
+      return r;
+    };
+    wrapped.__linkoPriceWrapped=true;
+    window[name]=wrapped;
+  }
+
+  async function setPrice(id,value){
+    const p=productById(id);if(!p)throw new Error('PRODUCT_NOT_FOUND');
+    const price=Math.max(0,Math.round(Number(value)||0));
+    if(price<=0)throw new Error('INVALID_PRICE');
+    const previous=Number(p.price||0);
+    p.price=price;savedPrices.set(String(id),price);memberRefreshDirty=true;
+    saveCartPrices();
+    try{
+      const f=await firebase();
+      await f.fs.setDoc(f.fs.doc(f.db,CONTROLS,encodeURIComponent(String(id))),{
+        productId:String(id),price:price,updatedAt:f.fs.serverTimestamp()
+      },{merge:true});
+      return price;
+    }catch(error){
+      p.price=previous;
+      if(previous>0)savedPrices.set(String(id),previous);else savedPrices.delete(String(id));
+      throw error;
+    }
+  }
+
+  function extendProductAPI(){
+    ensurePrices();
+    const current=window.__linkoStage6ProductAvailabilityAPI||{};
+    if(current.__linkoPriceAPI)return;
+    const oldList=typeof current.list==='function'?current.list.bind(current):null;
+    const next=Object.assign({},current);
+    next.list=function(){
+      ensurePrices();
+      const base=oldList?oldList():productRows().map(function(p){return {id:String(p.id),name:p.name,branchId:p.branch,status:p.status}});
+      return base.map(function(row){
+        const p=productById(row.id);
+        return Object.assign({},row,{price:Number((p&&p.price)||defaultPrice(p||row)||0)});
+      });
+    };
+    next.setPrice=setPrice;
+    next.__linkoPriceAPI=true;
+    window.__linkoStage6ProductAvailabilityAPI=next;
+  }
+
+  function refreshMemberPriceUI(){
+    ensurePrices();saveCartPrices();
+    try{if(typeof renderProducts==='function')renderProducts()}catch(e){}
+    try{
+      const page=document.getElementById('branchPage');
+      if(page&&page.classList.contains('active')&&typeof renderBranchProducts==='function')renderBranchProducts();
+    }catch(e){}
+    try{if(typeof renderCart==='function')renderCart()}catch(e){}
+    decorateProducts();decorateCart();
+    memberRefreshDirty=false;
+  }
+
+  async function startPriceListener(){
+    try{
+      const f=await firebase();
+      if(priceUnsub)priceUnsub();
+      priceUnsub=f.fs.onSnapshot(f.fs.collection(f.db,CONTROLS),function(snapshot){
+        let changed=false;
+        snapshot.forEach(function(doc){
+          const d=doc.data()||{};
+          if(!(Number(d.price)>0))return;
+          const id=String(d.productId||decodeURIComponent(doc.id));
+          const value=Math.round(Number(d.price));
+          if(savedPrices.get(id)!==value){savedPrices.set(id,value);changed=true}
+        });
+        if(changed){
+          ensurePrices();saveCartPrices();extendProductAPI();
+          const admin=document.getElementById('linkoAdminShell');
+          if(admin&&admin.classList.contains('show'))memberRefreshDirty=true;
+          else refreshMemberPriceUI();
+        }
+        injectAdminPriceEditor();
+      },function(err){console.warn('LINKO product prices listener failed',err)});
+    }catch(e){console.warn('LINKO product prices Firebase init failed',e)}
+  }
+
+  // Product modal price + final render wrappers.
+  ensurePrices();
+  wrapRender('renderProducts',decorateProducts);
+  wrapRender('renderBranchProducts',decorateProducts);
+  wrapRender('renderCart',decorateCart);
+  const oldOpenAdd=window.openAddProductModal;
+  if(typeof oldOpenAdd==='function'&&!oldOpenAdd.__linkoPriceWrapped){
+    const wrapped=function(id){
+      const r=oldOpenAdd.apply(this,arguments);
+      setTimeout(function(){updateAddModalPrice(id)},20);
+      return r;
+    };
+    wrapped.__linkoPriceWrapped=true;
+    window.openAddProductModal=wrapped;
+  }
+
+  // Admin closes -> refresh member cards once, not continuously.
+  const oldClose=window.linkoCloseAdmin;
+  if(typeof oldClose==='function'){
+    window.linkoCloseAdmin=function(){
+      const r=oldClose.apply(this,arguments);
+      if(memberRefreshDirty)setTimeout(refreshMemberPriceUI,60);
+      return r;
+    };
+  }
+
+  function adminSource(){
+    return '('+function(){
+      'use strict';
+      if(window.__linkoPriceAdminFrame)return;
+      window.__linkoPriceAdminFrame=true;
+      function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
+      function api(){try{return parent.__linkoStage6ProductAvailabilityAPI||null}catch(e){return null}}
+      function rows(){const a=api();try{return a&&typeof a.list==='function'?a.list():[]}catch(e){return []}}
+      function money(v){return Math.max(0,Number(v||0)||0).toLocaleString('ar-IQ')+' د.ع'}
+      function msg(v){try{if(typeof toast==='function')toast(v);else alert(v)}catch(e){}}
+      function currentSearch(){return String(window.__linkoStage6ProductSearch||'')}
+      window.linkoStage6FilterProducts=function(value){
+        window.__linkoStage6ProductSearch=String(value||'');
+        const q=window.__linkoStage6ProductSearch.trim().toLowerCase();
+        document.querySelectorAll('[data-linko-stage6-product-card]').forEach(function(card){
+          const text=String(card.getAttribute('data-search')||'').toLowerCase();
+          card.style.display=!q||text.indexOf(q)!==-1?'':'none';
+        });
+      };
+      window.products=function(){
+        const all=rows(),q=currentSearch();
+        const cards=all.map(function(p){
+          const unavailable=p.status==='unavailable'||p.status==='غير متوفر';
+          const search=[p.name,p.branchName,money(p.price),unavailable?'غير متوفر':'متوفر'].join(' ');
+          return '<div class="product-card" data-linko-stage6-product-card data-product-id="'+esc(p.id)+'" data-search="'+esc(search)+'">'
+            +'<div class="product-img"><span class="material-symbols-rounded">shopping_cart</span></div>'
+            +'<div><h3>'+esc(p.name)+'</h3><p class="muted">'+esc(p.branchName||'-')+'</p>'
+            +'<p style="margin-top:5px;font-weight:900;color:#047857">'+esc(money(p.price))+'</p>'
+            +'<span class="status '+(unavailable?'bad':'ok')+'">'+(unavailable?'غير متوفر':'متوفر')+'</span></div>'
+            +'<div class="actions-row">'
+            +'<button class="btn secondary mini" type="button" onclick="linkoPriceEditName(\''+esc(p.id)+'\')">تعديل الاسم</button>'
+            +'<button class="btn blue mini" type="button" onclick="linkoPriceEditPrice(\''+esc(p.id)+'\')">تعديل السعر</button>'
+            +'<button class="btn '+(unavailable?'':'warn')+' mini" type="button" onclick="linkoPriceToggleStatus(\''+esc(p.id)+'\',\''+(unavailable?'available':'unavailable')+'\')">'+(unavailable?'جعله متوفر':'جعله غير متوفر')+'</button>'
+            +'</div></div>';
+        }).join('');
+        setTimeout(function(){window.linkoStage6FilterProducts(q)},0);
+        return '<div class="panel"><div class="panel-head"><div><h2>إدارة المنتجات</h2>'
+          +'<p>تعديل اسم المنتج والسعر وحالة التوفر. الصور تدار من فريق LINKO.</p></div></div>'
+          +'<div class="tools"><input class="input" id="prodSearch" value="'+esc(q)+'" oninput="linkoStage6FilterProducts(this.value)" placeholder="بحث عن منتج أو فرع أو سعر"></div>'
+          +'<div class="cards">'+(cards||'<div class="empty">لا توجد منتجات</div>')+'</div></div>';
+      };
+      window.linkoPriceEditName=function(id){
+        const p=rows().find(function(x){return String(x.id)===String(id)}),a=api();
+        if(!p||!a||typeof a.setName!=='function')return msg('تعذر ربط اسم المنتج');
+        openModal('تعديل اسم المنتج','<div class="field"><label>اسم المنتج</label><input class="input" id="linkoPriceNameInput" value="'+esc(p.name)+'"></div><button class="btn wide" type="button" onclick="linkoPriceSaveName(\''+esc(id)+'\',this)">حفظ الاسم</button>');
+      };
+      window.linkoPriceSaveName=async function(id,button){
+        const a=api(),input=document.getElementById('linkoPriceNameInput'),name=String(input&&input.value||'').trim();
+        if(!name)return msg('اكتب اسم المنتج');
+        const old=button.textContent;button.disabled=true;button.textContent='جاري الحفظ...';
+        try{await a.setName(id,name);if(typeof closeModal==='function')closeModal();msg('تم حفظ اسم المنتج');render()}
+        catch(e){console.error(e);msg('تعذر حفظ الاسم');button.disabled=false;button.textContent=old}
+      };
+      window.linkoPriceEditPrice=function(id){
+        const p=rows().find(function(x){return String(x.id)===String(id)}),a=api();
+        if(!p||!a||typeof a.setPrice!=='function')return msg('تعذر ربط سعر المنتج');
+        openModal('تعديل سعر المنتج','<div class="field"><label>السعر بالدينار العراقي</label><input class="input" id="linkoPriceValueInput" type="number" inputmode="numeric" min="1" step="250" value="'+esc(String(p.price||0))+'"></div><button class="btn wide" type="button" onclick="linkoPriceSaveValue(\''+esc(id)+'\',this)">حفظ السعر</button>');
+        setTimeout(function(){const i=document.getElementById('linkoPriceValueInput');if(i){i.focus();i.select()}},30);
+      };
+      window.linkoPriceSaveValue=async function(id,button){
+        const a=api(),input=document.getElementById('linkoPriceValueInput'),price=Math.round(Number(input&&input.value||0));
+        if(!(price>0))return msg('اكتب سعراً صحيحاً');
+        const old=button.textContent;button.disabled=true;button.textContent='جاري الحفظ...';
+        try{await a.setPrice(id,price);if(typeof closeModal==='function')closeModal();msg('تم حفظ سعر المنتج');render()}
+        catch(e){console.error(e);msg('تعذر حفظ السعر');button.disabled=false;button.textContent=old}
+      };
+      window.linkoPriceToggleStatus=async function(id,next){
+        const a=api();if(!a||typeof a.setStatus!=='function')return msg('تعذر ربط حالة المنتج');
+        try{await a.setStatus(id,next);msg(next==='unavailable'?'تم جعل المنتج غير متوفر':'تم جعل المنتج متوفر');render()}
+        catch(e){console.error(e);msg('تعذر حفظ حالة المنتج')}
+      };
+      try{if(typeof active!=='undefined'&&active==='products'&&typeof render==='function')render()}catch(e){}
+    }.toString()+')();';
+  }
+
+  function injectAdminPriceEditor(){
+    extendProductAPI();
+    const fr=document.getElementById('linkoAdminFrame');
+    if(!fr||!fr.contentDocument||!fr.contentDocument.body)return false;
+    try{
+      const w=fr.contentWindow,doc=fr.contentDocument;
+      if(!w.__linkoPriceAdminFrame){
+        const sc=doc.createElement('script');sc.textContent=adminSource();doc.body.appendChild(sc);
+      }else if(typeof w.active!=='undefined'&&w.active==='products'&&typeof w.render==='function'){
+        w.render();
+      }
+      return true;
+    }catch(e){return false}
+  }
+
+  // ---------- Persistent member session ----------
+  function savedMember(){
+    for(const key of ['linko_current_member','lm_current_user']){
+      try{const u=JSON.parse(localStorage.getItem(key)||'null');if(u)return u}catch(e){}
+    }
+    return null;
+  }
+  function memberId(u){u=u||{};return clean(u.firebaseId||u.memberId||u.docId||u.id)}
+  function activeMember(u){
+    const st=clean(u&&u.status).toLowerCase();
+    return !(u&&u.deleted)&&!['deleted','removed','stopped','inactive','blocked','rejected','موقوف','محذوف','مرفوض'].includes(st);
+  }
+  function saveMember(u){
+    if(!u)return;
+    try{window.currentUser=u}catch(e){}
+    try{currentUser=u}catch(e){}
+    try{localStorage.setItem('linko_current_member',JSON.stringify(u));localStorage.setItem('lm_current_user',JSON.stringify(u))}catch(e){}
+  }
+  function clearSavedMember(){
+    try{localStorage.removeItem('linko_current_member');localStorage.removeItem('lm_current_user')}catch(e){}
+    try{window.currentUser=null}catch(e){}
+    try{currentUser=null}catch(e){}
+  }
+  function showSavedMember(u){
+    if(!u||sessionDisabled)return;
+    saveMember(u);
+    try{if(typeof fillUser==='function')fillUser()}catch(e){}
+    try{if(typeof go==='function')go('homePage')}catch(e){}
+  }
+  async function verifySavedMember(u){
+    const id=memberId(u);if(!id||sessionDisabled)return;
+    try{
+      const f=await firebase();
+      if(memberSessionUnsub)memberSessionUnsub();
+      memberSessionUnsub=f.fs.onSnapshot(f.fs.doc(f.db,'members',id),function(snap){
+        if(sessionDisabled)return;
+        if(!snap.exists()){clearSavedMember();try{go('authPage')}catch(e){};return}
+        const d=Object.assign({},u,snap.data()||{},{
+          id:id,firebaseId:id,memberId:id,docId:id
+        });
+        if(!activeMember(d)){clearSavedMember();toastSafe('تم إيقاف الحساب من الإدارة');try{go('authPage')}catch(e){};return}
+        saveMember(d);
+        try{if(typeof fillUser==='function')fillUser()}catch(e){}
+      },function(err){console.warn('LINKO saved member session verify skipped',err)});
+    }catch(e){console.warn('LINKO saved member session Firebase init skipped',e)}
+  }
+  function resumeMemberSession(){
+    if(sessionDisabled)return;
+    const u=savedMember();if(!u)return;
+    showSavedMember(u);verifySavedMember(u);
+  }
+  const oldLogoutFinal=window.logout;
+  if(typeof oldLogoutFinal==='function'){
+    window.logout=function(){
+      sessionDisabled=true;
+      try{if(memberSessionUnsub){memberSessionUnsub();memberSessionUnsub=null}}catch(e){}
+      clearSavedMember();
+      return oldLogoutFinal.apply(this,arguments);
+    };
+  }
+  const oldLoginFinal=window.login;
+  if(typeof oldLoginFinal==='function'){
+    window.login=async function(){
+      sessionDisabled=false;
+      const r=await oldLoginFinal.apply(this,arguments);
+      setTimeout(function(){const u=savedMember();if(u)verifySavedMember(u)},250);
+      return r;
+    };
+  }
+
+  // ---------- Rating ----------
+  function setRatingStars(value){
+    ratingStars=Math.max(1,Math.min(5,Number(value)||1));
+    document.querySelectorAll('#linkoRatingStars .linko-rating-star').forEach(function(btn){
+      btn.classList.toggle('on',Number(btn.getAttribute('data-stars'))<=ratingStars);
+    });
+  }
+  document.querySelectorAll('#linkoRatingStars .linko-rating-star').forEach(function(btn){
+    btn.addEventListener('click',function(){setRatingStars(btn.getAttribute('data-stars'))});
+  });
+  window.linkoOpenOrderRating=function(id){
+    ratingOrderId=String(id||'');ratingStars=0;
+    document.getElementById('linkoRatingComment').value='';
+    document.querySelectorAll('#linkoRatingStars .linko-rating-star').forEach(function(btn){btn.classList.remove('on')});
+    const modal=document.getElementById('linkoRatingModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+  };
+  window.linkoCloseOrderRating=function(){
+    const modal=document.getElementById('linkoRatingModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');
+  };
+  window.linkoSaveOrderRating=async function(){
+    if(!ratingOrderId)return;
+    if(!ratingStars){toastSafe('اختر عدد النجوم أولاً');return}
+    const button=document.getElementById('linkoSaveRatingBtn'),old=button.textContent;
+    button.disabled=true;button.textContent='جاري الحفظ...';
+    try{
+      const u=savedMember(),uid=memberId(u);if(!uid)throw new Error('NO_MEMBER');
+      const f=await firebase(),ref=f.fs.doc(f.db,ORDERS,ratingOrderId),snap=await f.fs.getDoc(ref);
+      if(!snap.exists())throw new Error('ORDER_NOT_FOUND');
+      const order=snap.data()||{};
+      if(clean(order.memberId)!==uid)throw new Error('NOT_YOUR_ORDER');
+      if(clean(order.status).toLowerCase()!=='delivered')throw new Error('NOT_DELIVERED');
+      await f.fs.updateDoc(ref,{
+        memberRating:ratingStars,
+        memberRatingComment:clean(document.getElementById('linkoRatingComment').value),
+        ratingDriverId:clean(order.driverId),
+        ratingDriverName:clean(order.driverName),
+        ratedAt:f.fs.serverTimestamp(),
+        updatedAt:f.fs.serverTimestamp()
+      });
+      window.linkoCloseOrderRating();toastSafe('شكراً، تم حفظ تقييمك');
+    }catch(e){
+      console.error('LINKO order rating failed',e);
+      toastSafe('تعذر حفظ التقييم حالياً');
+    }finally{button.disabled=false;button.textContent=old}
+  };
+
+  // Initial safe startup, no static external resource.
+  function boot(){
+    ensurePrices();extendProductAPI();decorateProducts();decorateCart();
+    injectAdminPriceEditor();
+    resumeMemberSession();
+    startPriceListener();
+    const fr=document.getElementById('linkoAdminFrame');
+    if(fr&&!fr.__linkoPriceAdminLoad){
+      fr.__linkoPriceAdminLoad=true;
+      fr.addEventListener('load',function(){setTimeout(injectAdminPriceEditor,100);setTimeout(injectAdminPriceEditor,450)});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  setTimeout(function(){extendProductAPI();injectAdminPriceEditor();decorateProducts();decorateCart()},500);
+  setTimeout(function(){extendProductAPI();injectAdminPriceEditor()},1400);
 })();
 </script>
