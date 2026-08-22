@@ -4527,7 +4527,7 @@ else {try{renderBranches();}catch(e){}}
   'use strict';
   if(window.__linkoCatalogControlHub) return;
 
-  const AGGREGATES={productControls:'__linko_catalog_v1__',branchControls:'__linko_branches_v1__'};
+  const AGGREGATES={productControls:'linko_catalog_v1',branchControls:'linko_branches_v1'};
   const channels=new Map();
 
   function clean(v){return String(v==null?'':v).trim();}
