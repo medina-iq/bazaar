@@ -1311,7 +1311,7 @@ function renderProducts(){
   if(searching)scored.sort(function(a,b){return a.score-b.score||String(a.p.name||'').localeCompare(String(b.p.name||''),'ar');});
   const list=scored.map(x=>x.p);
   productsCount.textContent=list.length+' منتج ظاهر';
-  productsGrid.innerHTML=list.length?list.map(p=>{const inCart=cart.find(x=>x.id===p.id);return `<article class="product-card"><div class="product-img"><span class="p-badge">${p.badge}</span><span class="p-status ${p.status==='غير متوفر'?'off':''}">${p.status}</span>${p.image?`<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">`:`<span class="mi">${p.icon}</span>`}</div><div class="product-body"><h3>${p.name}</h3><div class="price-row"><button class="add-btn ${inCart?'added':''}" ${p.status==='غير متوفر'?'disabled':''} onclick="addToCart('${p.id}',this)"><span class="mi">${inCart?'check':'add'}</span>${inCart?'مضاف':'أضف'}</button></div></div></article>`}).join(''):'<div class="empty-card">لا توجد نتائج مطابقة حالياً</div>'
+  productsGrid.innerHTML=list.length?list.map(p=>{const inCart=cart.find(x=>x.id===p.id);return `<article class="product-card"><div class="product-img"><span class="p-badge">${p.badge}</span><span class="p-status ${p.status==='غير متوفر'?'off':''}">${p.status}</span>${p.image?`<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async" fetchpriority="low">`:`<span class="mi">${p.icon}</span>`}</div><div class="product-body"><h3>${p.name}</h3><div class="price-row"><button class="add-btn ${inCart?'added':''}" ${p.status==='غير متوفر'?'disabled':''} onclick="addToCart('${p.id}',this)"><span class="mi">${inCart?'check':'add'}</span>${inCart?'مضاف':'أضف'}</button></div></div></article>`}).join(''):'<div class="empty-card">لا توجد نتائج مطابقة حالياً</div>'
 }
 function addToCart(id,btn){const p=products.find(x=>x.id===id);if(!p||p.status==='غير متوفر')return;let item=cart.find(x=>x.id===id);if(item)item.qty++;else cart.push({...p,qty:1});saveCart();btn.classList.add('added');btn.innerHTML='<span class="mi">check</span>مضاف';toast('تمت إضافة المنتج للسلة');renderCart();updateCart()}
 function saveCart(){localStorage.setItem('lm_cart',JSON.stringify(cart))}function saveOrders(){localStorage.setItem('lm_orders',JSON.stringify(orders))}function saveRequests(){localStorage.setItem('lm_requests',JSON.stringify(requests))}
@@ -1498,7 +1498,7 @@ ensureBranchPage();
 list=list.filter(p=>(selectedCat==='all'||p.badge===selectedCat||(selectedCat==='متوفر'&&p.status==='متوفر')||(selectedCat==='غير متوفر'&&p.status==='غير متوفر'))&&(!q||p.name.toLowerCase().includes(q)));
     const count=document.getElementById('branchProductsCount'); if(count) count.textContent=list.length+' منتج ظاهر';
     const grid=document.getElementById('branchProductsGrid'); if(!grid) return;
-    grid.innerHTML=list.length?list.map(p=>{const inCart=cart.find(x=>x.id===p.id);return `<article class="product-card"><div class="product-img"><span class="p-badge">${p.badge}</span><span class="p-status ${p.status==='غير متوفر'?'off':''}">${p.status}</span>${p.image?`<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">`:`<span class="mi">${p.icon}</span>`}</div><div class="product-body"><h3>${p.name}</h3><div class="price-row"><button class="add-btn ${inCart?'added':''}" ${p.status==='غير متوفر'?'disabled':''} onclick="addToCart('${p.id}',this)"><span class="mi">${inCart?'check':'add'}</span>${inCart?'مضاف':'أضف'}</button></div></div></article>`}).join(''):'<div class="empty-card">لا توجد منتجات مطابقة داخل هذا الفرع</div>';
+    grid.innerHTML=list.length?list.map(p=>{const inCart=cart.find(x=>x.id===p.id);return `<article class="product-card"><div class="product-img"><span class="p-badge">${p.badge}</span><span class="p-status ${p.status==='غير متوفر'?'off':''}">${p.status}</span>${p.image?`<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async" fetchpriority="low">`:`<span class="mi">${p.icon}</span>`}</div><div class="product-body"><h3>${p.name}</h3><div class="price-row"><button class="add-btn ${inCart?'added':''}" ${p.status==='غير متوفر'?'disabled':''} onclick="addToCart('${p.id}',this)"><span class="mi">${inCart?'check':'add'}</span>${inCart?'مضاف':'أضف'}</button></div></div></article>`}).join(''):'<div class="empty-card">لا توجد منتجات مطابقة داخل هذا الفرع</div>';
 };
   const oldAdd=window.addToCart;
 window.addToCart=function(id,btn){
@@ -4960,7 +4960,7 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   function registerServiceWorker(){
     if(!('serviceWorker' in navigator)) return;
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('./service-worker.js?v=20260822-v74', {updateViaCache:'none'}).then(function(registration){ registration.update().catch(function(){}); }).catch(function(){});
+      navigator.serviceWorker.register('./service-worker.js?v=20260822-v75', {updateViaCache:'none'}).then(function(registration){ registration.update().catch(function(){}); }).catch(function(){});
     }, {once:true});
   }
 
@@ -5100,7 +5100,8 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   function notificationDate(d){const v=d.createdAt||d.date;try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(d.date||'');}
   function renderNotes(){const list=document.getElementById('notesList');if(!list)return;list.innerHTML=session.notificationsRows.length?session.notificationsRows.map(function(n){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(n.title||'إشعار من الإدارة')+'</h3><p>'+esc(n.text||n.message||'')+'</p><small>'+esc(n.date||'')+'</small></div></div></div>';}).join(''):'<div class="empty-card">لا توجد إشعارات حالياً</div>';}
   function feedDocId(type,value){const raw=type==='all_members'?'all':(type==='member'?'member_':'branch_')+String(value||'');return encodeURIComponent(raw);}
-  async function loadNotifications(){const u=currentMember(),id=memberId(u);session.notificationsRows=[];if(!u){renderNotes();return;}try{const f=await firebase(),refs=[f.fs.doc(f.db,'notificationFeeds',feedDocId('all_members','all'))];if(id)refs.push(f.fs.doc(f.db,'notificationFeeds',feedDocId('member',id)));const branch=clean(u.branchId||u.branch||u.section);if(branch)refs.push(f.fs.doc(f.db,'notificationFeeds',feedDocId('branch',branch)));const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}renderNotes();}catch(e){console.warn('notification feed load failed',e);renderNotes();}}
+  async function memberNotifyFeedId(u){u=u||{};const name=normalizeName(u.name||u.username||u.fullName),code=clean(u.code||u.password||u.pin);if(!name||!code)return'';return 'member_login_'+await digest('LINKO_NOTIFY_V1|'+name+'|'+code);}
+  async function loadNotifications(){const u=currentMember(),id=memberId(u);session.notificationsRows=[];if(!u){renderNotes();return;}try{const f=await firebase(),feedIds=[feedDocId('all_members','all')];if(id)feedIds.push(feedDocId('member',id));const loginAlias=await memberNotifyFeedId(u);if(loginAlias)feedIds.push(encodeURIComponent(loginAlias));const branch=clean(u.branchId||u.branch||u.section);if(branch)feedIds.push(feedDocId('branch',branch));const refs=[...new Set(feedIds)].map(function(fid){return f.fs.doc(f.db,'notificationFeeds',fid);});const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}renderNotes();}catch(e){console.warn('notification feed load failed',e);renderNotes();}}
 
   function renderRequests(){const list=document.getElementById('requestsList');if(!list)return;const rows=session.profileRows.filter(function(r){return clean(r.status||'pending')==='pending';});list.innerHTML=rows.length?rows.map(function(r){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(r.type||r.title||'طلب تعديل')+'</h3><p>'+esc(r.details||r.newValue||'')+'</p><small>'+esc(r.date||'')+'</small></div><span class="status pending">قيد المراجعة</span></div></div>';}).join(''):'<div class="empty-card">لا توجد طلبات إدارة حالياً</div>';}
   async function loadProfileRequests(){const u=currentMember(),id=memberId(u);if(!id){session.profileRows=[];renderRequests();return;}if(session.profileMemberId===id){renderRequests();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'memberChangeRequests'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)),snap=await f.fs.getDocs(q);session.profileRows=snap.docs.map(function(d){const x=d.data()||{};return{id:d.id,type:x.type||x.title,details:x.details||x.newValue,status:x.status||'pending',date:clean(x.date)||notificationDate(x)};});session.profileMemberId=id;renderRequests();}catch(e){console.warn('profile requests bounded load failed',e);renderRequests();}}
@@ -5121,23 +5122,27 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 (function(){
   'use strict';
   if(window.__linkoCatalogReturnRefreshV1)return;window.__linkoCatalogReturnRefreshV1=true;
-  let last=Date.now(),busy=false;const COOLDOWN=45000;
-  async function refresh(){
-    if(busy||Date.now()-last<COOLDOWN||!window.__linkoCatalogControlHub||typeof window.__linkoCatalogControlHub.refreshAll!=='function')return;
+  let last=Date.now(),busy=false;const COOLDOWN=10000;
+  async function refresh(target,force){
+    const name=typeof target==='string'&&['productControls','branchControls'].includes(target)?target:'';
+    if(busy||(!force&&Date.now()-last<COOLDOWN)||!window.__linkoCatalogControlHub)return;
     busy=true;last=Date.now();
     try{
       const mods=await Promise.all([import('https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js')]);
       const appMod=mods[0],fs=mods[1],cfg={apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',authDomain:'medina-bazaar-e2c18.firebaseapp.com',projectId:'medina-bazaar-e2c18',storageBucket:'medina-bazaar-e2c18.firebasestorage.app',messagingSenderId:'375693456199',appId:'1:375693456199:web:2b36e0368ed898a7a11262'};
-      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(cfg);
-      await window.__linkoCatalogControlHub.refreshAll({db:fs.getFirestore(app),fs:fs});
+      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(cfg),ref={db:fs.getFirestore(app),fs:fs};
+      if(name&&typeof window.__linkoCatalogControlHub.refresh==='function')await window.__linkoCatalogControlHub.refresh(ref,name);
+      else if(typeof window.__linkoCatalogControlHub.refreshAll==='function')await window.__linkoCatalogControlHub.refreshAll(ref);
     }catch(e){console.warn('catalog return refresh skipped',e);}finally{busy=false;}
   }
-  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refresh();});
-  window.addEventListener('pageshow',function(e){if(e.persisted)refresh();});
-  window.addEventListener('focus',refresh);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refresh('',false);});
+  window.addEventListener('pageshow',function(e){if(e.persisted)refresh('',false);});
+  window.addEventListener('focus',function(){refresh('',false);});
+  window.addEventListener('storage',function(e){if(e.key==='linko_catalog_refresh_signal'){let p={};try{p=JSON.parse(e.newValue||'{}');}catch(_e){}refresh(p.type||'',true);}});
+  try{const bc=new BroadcastChannel('linko_catalog_updates');bc.addEventListener('message',function(e){refresh(e&&e.data&&e.data.type||'',true);});}catch(e){}
 })();
 </script>
-<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-CATALOG-NOTIFY-FIX-20260822';</script>
+<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-ROOT-FIX-V12-20260822';</script>
 </body></html><style id="linkoSafePatchFinal">
 /* خانة التوصيل تحت بطاقة العضوية */
 #homeDeliveryStatusBox{
@@ -7169,3 +7174,21 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   setTimeout(function(){extendProductAPI();},1400);
 })();
 </script>
+
+
+<script id="linkoMemberPerformanceAndNotificationFinalV12">
+(function(){
+  'use strict';
+  if(window.__linkoMemberPerformanceAndNotificationFinalV12)return;window.__linkoMemberPerformanceAndNotificationFinalV12=true;
+  function optimizeVisibleImages(){
+    const imgs=[...document.querySelectorAll('#productsGrid .product-card img')];
+    imgs.forEach(function(img,i){img.decoding='async';if(i<8){img.loading='eager';try{img.fetchPriority=i<4?'high':'auto';}catch(e){}}else{img.loading='lazy';try{img.fetchPriority='low';}catch(e){}}});
+  }
+  const oldRender=window.renderProducts;
+  if(typeof oldRender==='function')window.renderProducts=function(){const r=oldRender.apply(this,arguments);requestAnimationFrame(optimizeVisibleImages);return r;};
+  const oldGoFinal=window.go;
+  if(typeof oldGoFinal==='function')window.go=function(pageId){const r=oldGoFinal.apply(this,arguments);if(pageId==='notificationsPage'&&window.__linkoMemberDataV4&&typeof window.__linkoMemberDataV4.loadNotifications==='function')setTimeout(function(){window.__linkoMemberDataV4.loadNotifications();},0);if(pageId==='homePage')setTimeout(optimizeVisibleImages,0);return r;};
+  document.addEventListener('DOMContentLoaded',optimizeVisibleImages,{once:true});
+})();
+</script>
+<style id="linkoMemberPerformanceStyleV12">#productsGrid .product-card{content-visibility:auto;contain-intrinsic-size:300px 360px}#productsGrid .product-img img{background:#fff}</style>
