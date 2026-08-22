@@ -4609,16 +4609,14 @@ else {try{renderBranches();}catch(e){}}
     await fs.setDoc(ref,{schemaVersion:1,controls:{},createdAt:fs.serverTimestamp(),updatedAt:fs.serverTimestamp()},{merge:true});
     return {ref:ref,data:{controls:{}}};
   }
+  function sanitizeControlPatch(name,patch){const out={};patch=patch||{};if(Object.prototype.hasOwnProperty.call(patch,'name')){const v=clean(patch.name);if(v)out.name=v;}if(Object.prototype.hasOwnProperty.call(patch,'status'))out.status=patch.status==='unavailable'?'unavailable':'available';if(name==='productControls'&&Object.prototype.hasOwnProperty.call(patch,'price')){const n=Math.round(Number(patch.price));if(Number.isFinite(n)&&n>0)out.price=n;}return out;}
   async function writeControl(firebaseRef,collectionName,id,patch){
-    const name=clean(collectionName),itemId=clean(id);if(!AGGREGATES[name]||!itemId)throw new Error('INVALID_CONTROL_WRITE');
-    const fs=firebaseRef.fs,db=firebaseRef.db,info=await ensureAggregate(firebaseRef,name),ref=info.ref,key=mapKey(itemId);
-    const recordBase=name==='productControls'?{productId:itemId}:{branchId:itemId};
-    await fs.runTransaction(db,async function(tx){
-      const snap=await tx.get(ref),data=snap.exists()?(snap.data()||{}):{},controls=Object.assign({},data.controls||{}),before=controls[key]||{};
-      controls[key]=Object.assign({},before,recordBase,patch||{},{updatedAt:fs.serverTimestamp()});
-      tx.set(ref,{schemaVersion:1,controls:controls,updatedAt:fs.serverTimestamp()},{merge:true});
-    });
-    try{await fs.setDoc(fs.doc(db,name,encodeURIComponent(itemId)),Object.assign({},recordBase,patch||{},{updatedAt:fs.serverTimestamp()}),{merge:true});}catch(e){}
+    const name=clean(collectionName),itemId=clean(id);
+    if(!AGGREGATES[name]||!itemId)throw new Error('INVALID_CONTROL_WRITE');
+    const fs=firebaseRef.fs,db=firebaseRef.db,info=await ensureAggregate(firebaseRef,name),ref=info.ref,key=mapKey(itemId),recordBase=name==='productControls'?{productId:itemId}:{branchId:itemId},safePatch=sanitizeControlPatch(name,patch),existing=((info.data||{}).controls||{})[key]||{},next=Object.assign({},existing,recordBase,safePatch);
+    Object.keys(next).forEach(function(k){if(next[k]===undefined||(typeof next[k]==='number'&&!Number.isFinite(next[k])))delete next[k];});
+    const nextControls=Object.assign({},(info.data||{}).controls||{});nextControls[key]=next;
+    await fs.setDoc(ref,{schemaVersion:1,controls:nextControls,updatedAt:fs.serverTimestamp()},{merge:true});
     const channel=channels.get(name);if(channel){channel.loaded=false;channel.last=null;}
   }
   function stats(){const result={};channels.forEach(function(channel,name){result[name]={loaded:!!channel.loaded,mode:'one-shot-aggregate'};});return result;}
@@ -5035,7 +5033,7 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 
   function clean(v){return String(v==null?'':v).trim();}
   function esc(v){return clean(v).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
-  function normalizeName(v){return clean(v).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\u064B-\u065F\u0670]/g,'').replace(/\s+/g,' ');}
+  function normalizeName(v){let s=clean(v);try{s=s.normalize('NFKC');}catch(e){}return s.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\u064B-\u065F\u0670]/g,'').replace(/\s+/g,' ');}
   function currentMember(){try{if(window.currentUser)return window.currentUser;}catch(e){}for(const key of ['linko_current_member','lm_current_user']){try{const u=JSON.parse(localStorage.getItem(key)||'null');if(u)return u;}catch(e){}}return null;}
   function memberId(u){u=u||{};return clean(u.firebaseId||u.memberId||u.firestoreId||u.docId||u.id);}
   function saveMember(u){try{window.currentUser=u;}catch(e){}try{currentUser=u;}catch(e){}try{localStorage.setItem('linko_current_member',JSON.stringify(u));localStorage.setItem('lm_current_user',JSON.stringify(u));}catch(e){}}
@@ -5046,25 +5044,21 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   function memberFromDoc(doc){const d=doc.data()||{},code=clean(d.code||d.password||d.pin);return Object.assign({},d,{id:doc.id,firebaseId:doc.id,memberId:doc.id,name:clean(d.name||d.username||d.fullName),username:clean(d.username||d.name||d.fullName),fullName:clean(d.fullName||d.name||d.username),code:code,password:clean(d.password||code),pin:clean(d.pin||code),phone:clean(d.phone||d.mobile),area:clean(d.area||d.address),address:clean(d.address||d.area),balance:Number(d.balance||0),ordersCount:Number(d.ordersCount||d.orderCount||0),orderCount:Number(d.ordersCount||d.orderCount||0),avatar:d.avatar||d.img||'',img:d.img||d.avatar||''});}
   async function digest(v){const bytes=new TextEncoder().encode(String(v));const hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),function(b){return b.toString(16).padStart(2,'0');}).join('');}
   async function loginKeyId(name,code){let n=clean(name);try{n=n.normalize('NFKC');}catch(e){}n=n.replace(/\s+/g,' ').toLowerCase();return digest('LINKO_MEMBER_LOGIN_V2|'+n+'|'+clean(code));}
+  function normalizePendingPhone(v){return clean(v).replace(/[^0-9+]/g,'').replace(/^\+964/,'0').replace(/^00964/,'0');}
+  async function pendingIdentityKey(name,phone){return digest('LINKO_PENDING_IDENTITY_V1|'+normalizeName(name)+'|'+normalizePendingPhone(phone));}
+  async function pendingLoginKey(name,code){return digest('LINKO_PENDING_LOGIN_V1|'+normalizeName(name)+'|'+clean(code));}
+  function pendingError(){const e=new Error('PENDING_SUBSCRIPTION');e.code='PENDING_SUBSCRIPTION';return e;}
+  async function hasPendingRegistration(f,name,phone){const key=await pendingIdentityKey(name,phone),ref=f.fs.doc(f.db,'pendingSubscriptionKeys',key),snap=await f.fs.getDoc(ref);return{pending:snap.exists()&&clean((snap.data()||{}).status||'pending')==='pending',key:key,ref:ref};}
+  async function hasPendingLogin(f,name,code){const key=await pendingLoginKey(name,code),snap=await f.fs.getDoc(f.fs.doc(f.db,'pendingLoginKeys',key));return snap.exists()&&clean((snap.data()||{}).status||'pending')==='pending';}
+
   function matches(doc,name,code){if(!doc||!doc.exists())return false;const d=doc.data()||{};if(!activeMember(d))return false;const names=[d.name,d.username,d.fullName].map(normalizeName).filter(Boolean),codes=[d.code,d.password,d.pin].map(clean).filter(Boolean);return names.includes(normalizeName(name))&&codes.includes(clean(code));}
 
   window.register=async function(event){
-    if(event&&event.preventDefault)event.preventDefault();
-    if(session.busyRegister)return false;
+    if(event&&event.preventDefault)event.preventDefault();if(session.busyRegister)return false;
     const name=clean(document.getElementById('regName')&&document.getElementById('regName').value),phone=clean(document.getElementById('regPhone')&&document.getElementById('regPhone').value),address=clean(document.getElementById('regAddress')&&document.getElementById('regAddress').value),code=clean(document.getElementById('regPassword')&&document.getElementById('regPassword').value),terms=document.getElementById('regTerms');
-    if(!name||!phone||!address||!code){try{toast('أكمل بيانات الاشتراك أولاً');}catch(e){}return false;}
-    if(terms&&!terms.checked){try{toast('وافق على شروط استخدام الخدمة أولاً');}catch(e){}return false;}
+    if(!name||!phone||!address||!code){try{toast('أكمل بيانات الاشتراك أولاً');}catch(e){}return false;}if(terms&&!terms.checked){try{toast('وافق على شروط استخدام الخدمة أولاً');}catch(e){}return false;}
     session.busyRegister=true;const button=document.querySelector('#registerForm button[type="submit"]'),old=button?button.innerHTML:'';if(button){button.disabled=true;button.innerHTML='<span class="mi">sync</span> جاري إرسال الطلب...';}
-    try{
-      const f=await firebase(),ref=f.fs.doc(f.fs.collection(f.db,'subscriptionRequests'));
-      await f.fs.setDoc(ref,{name:name,fullName:name,phone:phone,address:address,area:address,password:code,code:code,status:'pending',source:'member_site',createdAt:f.fs.serverTimestamp(),clientCreatedAtMs:Date.now()});
-      const form=document.getElementById('registerForm');if(form)form.reset();
-      try{pendingAvatarData='';if(typeof renderAvatarBox==='function')renderAvatarBox(document.getElementById('regAvatarPreview'),'');}catch(e){}
-      try{if(typeof switchAuth==='function')switchAuth('login');}catch(e){}
-      try{toast('تم إرسال طلب الاشتراك إلى الإدارة بنجاح');}catch(e){}
-      return false;
-    }catch(error){console.error('member subscription request failed',error);try{toast('تعذر إرسال طلب الاشتراك الآن، حاول مرة ثانية');}catch(e){}return false;}
-    finally{session.busyRegister=false;if(button){button.disabled=false;button.innerHTML=old;}}
+    try{const f=await firebase(),check=await hasPendingRegistration(f,name,phone);if(check.pending)throw pendingError();const loginPendingId=await pendingLoginKey(name,code),requestId='pending_'+check.key,requestRef=f.fs.doc(f.db,'subscriptionRequests',requestId),batch=f.fs.writeBatch(f.db),now=Date.now();batch.set(requestRef,{name,fullName:name,normalizedName:normalizeName(name),phone,normalizedPhone:normalizePendingPhone(phone),address,area:address,password:code,code,status:'pending',deleted:false,source:'member_site',pendingIdentityKey:check.key,pendingLoginKey:loginPendingId,createdAt:f.fs.serverTimestamp(),clientCreatedAtMs:now});batch.set(check.ref,{requestId,status:'pending',updatedAt:f.fs.serverTimestamp()},{merge:true});batch.set(f.fs.doc(f.db,'pendingLoginKeys',loginPendingId),{requestId,status:'pending',updatedAt:f.fs.serverTimestamp()},{merge:true});await batch.commit();const form=document.getElementById('registerForm');if(form)form.reset();try{pendingAvatarData='';if(typeof renderAvatarBox==='function')renderAvatarBox(document.getElementById('regAvatarPreview'),'');}catch(e){}try{if(typeof switchAuth==='function')switchAuth('login');}catch(e){}try{toast('تم إرسال طلب الاشتراك إلى الإدارة بنجاح');}catch(e){}return false;}catch(error){console.error('member subscription request failed',error);try{if(error&&(error.code==='PENDING_SUBSCRIPTION'||error.message==='PENDING_SUBSCRIPTION'))toast('طلبك السابق قيد التدقيق، يرجى عدم تكرار الطلبات');else toast('تعذر إرسال طلب الاشتراك الآن، حاول مرة ثانية');}catch(e){}return false;}finally{session.busyRegister=false;if(button){button.disabled=false;button.innerHTML=old;}}
   };
 
   window.login=async function(event){
@@ -5086,9 +5080,9 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
         }catch(e){console.warn('single legacy login fallback skipped',e);}
         if(selected){try{await f.fs.setDoc(keyRef,{memberId:selected.id,active:true,version:6,updatedAt:f.fs.serverTimestamp()},{merge:true});}catch(e){}}
       }
-      if(!selected)throw new Error('INVALID_LOGIN');
+      if(!selected){try{if(await hasPendingLogin(f,name,code))throw pendingError();}catch(e){if(e&&(e.code==='PENDING_SUBSCRIPTION'||e.message==='PENDING_SUBSCRIPTION'))throw e;console.warn('pending login check skipped',e);}throw new Error('INVALID_LOGIN');}
       const user=memberFromDoc(selected);saveMember(user);setOrderCount(user.ordersCount||0);try{if(typeof fillUser==='function')fillUser();}catch(e){}try{if(typeof go==='function')go('homePage');}catch(e){}try{toast('تم تسجيل الدخول بنجاح');}catch(e){}return false;
-    }catch(error){console.error('member login failed',error);clearMember();try{toast('الاسم أو الرمز غير صحيح');}catch(e){}return false;}
+    }catch(error){console.error('member login failed',error);clearMember();try{if(error&&(error.code==='PENDING_SUBSCRIPTION'||error.message==='PENDING_SUBSCRIPTION'))toast('طلبك السابق قيد التدقيق، يرجى التواصل مع الإدارة');else toast('الاسم أو الرمز غير صحيح');}catch(e){}return false;}
     finally{session.busyLogin=false;if(button){button.disabled=false;button.innerHTML=old;}}
   };
 
@@ -5099,9 +5093,23 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 
   function notificationDate(d){const v=d.createdAt||d.date;try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(d.date||'');}
   function renderNotes(){const list=document.getElementById('notesList');if(!list)return;list.innerHTML=session.notificationsRows.length?session.notificationsRows.map(function(n){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(n.title||'إشعار من الإدارة')+'</h3><p>'+esc(n.text||n.message||'')+'</p><small>'+esc(n.date||'')+'</small></div></div></div>';}).join(''):'<div class="empty-card">لا توجد إشعارات حالياً</div>';}
-  function feedDocId(type,value){const raw=type==='all_members'?'all':(type==='member'?'member_':'branch_')+String(value||'');return encodeURIComponent(raw);}
-  async function memberNotifyFeedId(u){u=u||{};const name=normalizeName(u.name||u.username||u.fullName),code=clean(u.code||u.password||u.pin);if(!name||!code)return'';return 'member_login_'+await digest('LINKO_NOTIFY_V1|'+name+'|'+code);}
-  async function loadNotifications(){const u=currentMember(),id=memberId(u);session.notificationsRows=[];if(!u){renderNotes();return;}try{const f=await firebase(),feedIds=[feedDocId('all_members','all')];if(id)feedIds.push(feedDocId('member',id));const loginAlias=await memberNotifyFeedId(u);if(loginAlias)feedIds.push(encodeURIComponent(loginAlias));const branch=clean(u.branchId||u.branch||u.section);if(branch)feedIds.push(feedDocId('branch',branch));const refs=[...new Set(feedIds)].map(function(fid){return f.fs.doc(f.db,'notificationFeeds',fid);});const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}renderNotes();}catch(e){console.warn('notification feed load failed',e);renderNotes();}}
+  function memberNotificationFeedId(type,value){const safe=encodeURIComponent(clean(value||''));if(type==='all_members')return'admin_all';if(type==='member')return'admin_member_'+safe;return'admin_branch_'+safe;}
+  async function loadNotifications(){
+    const u=currentMember(),id=memberId(u);session.notificationsRows=[];
+    if(!u){renderNotes();return;}
+    try{
+      const f=await firebase(),docIds=['admin_all'];
+      if(id)docIds.push(memberNotificationFeedId('member',id));
+      const branch=clean(u.branchId||u.branch||u.section);
+      if(branch)docIds.push(memberNotificationFeedId('branch',branch));
+      const refs=[...new Set(docIds)].map(function(docId){return f.fs.doc(f.db,'memberNotifications',docId);});
+      const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();
+      snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});
+      session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});
+      const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}
+      renderNotes();
+    }catch(e){console.warn('member admin notification load failed',e);renderNotes();}
+  }
 
   function renderRequests(){const list=document.getElementById('requestsList');if(!list)return;const rows=session.profileRows.filter(function(r){return clean(r.status||'pending')==='pending';});list.innerHTML=rows.length?rows.map(function(r){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(r.type||r.title||'طلب تعديل')+'</h3><p>'+esc(r.details||r.newValue||'')+'</p><small>'+esc(r.date||'')+'</small></div><span class="status pending">قيد المراجعة</span></div></div>';}).join(''):'<div class="empty-card">لا توجد طلبات إدارة حالياً</div>';}
   async function loadProfileRequests(){const u=currentMember(),id=memberId(u);if(!id){session.profileRows=[];renderRequests();return;}if(session.profileMemberId===id){renderRequests();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'memberChangeRequests'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)),snap=await f.fs.getDocs(q);session.profileRows=snap.docs.map(function(d){const x=d.data()||{};return{id:d.id,type:x.type||x.title,details:x.details||x.newValue,status:x.status||'pending',date:clean(x.date)||notificationDate(x)};});session.profileMemberId=id;renderRequests();}catch(e){console.warn('profile requests bounded load failed',e);renderRequests();}}
@@ -5142,7 +5150,7 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   try{const bc=new BroadcastChannel('linko_catalog_updates');bc.addEventListener('message',function(e){refresh(e&&e.data&&e.data.type||'',true);});}catch(e){}
 })();
 </script>
-<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-ROOT-FIX-V12-20260822';</script>
+<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-FINAL-ROOTFIX-V14-20260822';</script>
 </body></html><style id="linkoSafePatchFinal">
 /* خانة التوصيل تحت بطاقة العضوية */
 #homeDeliveryStatusBox{
