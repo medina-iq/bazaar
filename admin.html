@@ -26,6 +26,9 @@ LINKO MEDINA - STANDALONE ADMIN V6 - 2026-08-22
 @media(max-width:620px){.image-picker{grid-template-columns:1fr}.image-preview{width:100%;height:170px}}
 @media(max-width:900px){.topbar,.login-card,.modal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.section{animation:none!important}.product-card{content-visibility:auto;contain-intrinsic-size:100px 320px}}
 html,body{touch-action:pan-x pan-y;overscroll-behavior-x:none}
+/* iOS Safari: prevent focus zoom while keeping normal vertical scrolling. */
+input,select,textarea{font-size:16px!important}
+button,a,[role="button"]{touch-action:manipulation}
 .admin-request{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;display:grid;gap:8px;box-shadow:var(--soft)}
 .admin-request.unread{border-color:#fed7aa;background:#fffaf0}
 .admin-request .req-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -353,37 +356,47 @@ body.theme-dark .admin-req-card,body.theme-dark .admin-member-box,body.theme-dar
     return out;
   }
 
-  function snapshotItems(name,nextControls){
+  function compactControls(name,nextControls){
+    const out={};
     const get=function(id){
-      const key=mapKey(id),direct=nextControls[key]||nextControls[id]||{};
+      const target=String(id||''),key=mapKey(target),direct=nextControls[key]||nextControls[target]||{};
       if(direct&&Object.keys(direct).length)return direct;
       const field=name==='productControls'?'productId':'branchId';
-      for(const k of Object.keys(nextControls)){const row=nextControls[k]||{};if(String(row[field]||'')===String(id))return row;}
+      for(const k of Object.keys(nextControls||{})){const row=nextControls[k]||{};if(String(row[field]||'')===target)return row;}
       return {};
     };
-    if(name==='productControls')return STATIC_PRODUCTS.map(function(base){
-      const r=get(base.id),x={id:String(base.id),productId:String(base.id),name:clean(r.name)||base.name,status:r.status==='unavailable'?'unavailable':'available'};
-      const price=Number(r.price)>0?Math.round(Number(r.price)):defaultPrice(base);x.price=price;return x;
-    });
-    return STATIC_BRANCHES.map(function(base){const r=get(base.id);return{id:String(base.id),branchId:String(base.id),name:clean(r.name)||base.name,status:(r.status==='unavailable'||r.status==='stopped')?'unavailable':'available'};});
+    if(name==='productControls'){
+      STATIC_PRODUCTS.forEach(function(base){
+        const id=String(base.id),r=get(id),row={productId:id,name:clean(r.name)||String(base.name||''),status:r.status==='unavailable'?'unavailable':'available'};
+        const price=Number(r.price)>0?Math.round(Number(r.price)):defaultPrice(base);
+        row.price=Number.isFinite(price)&&price>0?price:1;
+        out[mapKey(id)]=row;
+      });
+    }else{
+      STATIC_BRANCHES.forEach(function(base){
+        const id=String(base.id),r=get(id);
+        out[mapKey(id)]={branchId:id,name:clean(r.name)||String(base.name||''),status:(r.status==='unavailable'||r.status==='stopped')?'unavailable':'available'};
+      });
+    }
+    return out;
   }
   async function writeControl(name,id,patch){
     const f=await firebase(),itemId=clean(id),key=mapKey(itemId),field=name==='productControls'?'productId':'branchId';
     if(!itemId)throw new Error('INVALID_CONTROL_ID');
     await loadAggregate(name,false);
-    const previous=controlRecord(name,itemId),safePatch=sanitizeControlPatch(name,patch),next=Object.assign({},previous,safePatch);next[field]=itemId;
+    const previous=controlRecord(name,itemId),safePatch=sanitizeControlPatch(name,patch),next=Object.assign({},previous,safePatch);
+    next[field]=itemId;
     if(!next.status)next.status='available';
-    Object.keys(next).forEach(function(k){if(next[k]===undefined||(typeof next[k]==='number'&&!Number.isFinite(next[k])))delete next[k];});
-    const nextControls=Object.assign({},controls[name]||{});nextControls[key]=next;
-    const aggregateRef=f.fs.doc(f.db,name,AGG[name]),itemRef=f.fs.doc(f.db,name,encodeURIComponent(itemId));
-    const direct=Object.assign({},next,{updatedAt:f.fs.serverTimestamp()});
-    const batch=f.fs.writeBatch(f.db);
-    // First write mirrors the trusted working file: one normal per-item document.
-    batch.set(itemRef,direct,{merge:true});
-    // Second write is the low-read member snapshot: a sanitized array in one aggregate document.
-    batch.set(aggregateRef,{schemaVersion:2,items:snapshotItems(name,nextControls),updatedAt:f.fs.serverTimestamp()},{merge:true});
-    await batch.commit();
-    controls[name]=nextControls;loaded[name]=true;return Object.assign({},next);
+    const nextControls=Object.assign({},controls[name]||{});
+    nextControls[key]=next;
+    const compact=compactControls(name,nextControls);
+    const payload={schemaVersion:3,controls:compact,updatedAtMs:Date.now()};
+    // Root fix: one plain JSON document write only. No transaction, no batch,
+    // no FieldValue sentinels and no array snapshot. This is the only source
+    // the member page listens to for product/branch controls.
+    await f.fs.setDoc(f.fs.doc(f.db,name,AGG[name]),payload);
+    controls[name]=compact;loaded[name]=true;
+    return Object.assign({},compact[key]||next);
   }
   window.__linkoStage6ProductAvailabilityAPI={
     list:productList,
@@ -667,15 +680,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 </script>
 
-<script id="linkoAdminMobilePerformanceV12">
+<script id="linkoAdminMobilePerformanceV13">
 (function(){
   'use strict';
-  document.addEventListener('gesturestart',function(e){e.preventDefault();},{passive:false});
-  document.addEventListener('gesturechange',function(e){e.preventDefault();},{passive:false});
-  document.addEventListener('gestureend',function(e){e.preventDefault();},{passive:false});
+  // Safari can ignore parts of the viewport lock for accessibility. We also
+  // block pinch/double-tap gestures inside this admin-only page.
+  ['gesturestart','gesturechange','gestureend'].forEach(function(type){
+    document.addEventListener(type,function(e){e.preventDefault();},{passive:false});
+  });
+  document.addEventListener('touchstart',function(e){if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
   document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
+  document.addEventListener('dblclick',function(e){e.preventDefault();},{passive:false});
+  let lastTouchEnd=0;
+  document.addEventListener('touchend',function(e){
+    const now=Date.now();
+    if(now-lastTouchEnd<=300)e.preventDefault();
+    lastTouchEnd=now;
+  },{passive:false});
 })();
 </script>
-<script>window.__LINKO_ADMIN_BUILD="PROD-FINAL-ROOTFIX-V14-20260822";</script>
+<script>window.__LINKO_ADMIN_BUILD="PROD-CATALOG-ROOTFIX-V15-20260822";</script>
 </body>
 </html>
