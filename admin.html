@@ -5,7 +5,7 @@ LINKO MEDINA - STANDALONE ADMIN V6 - 2026-08-22
 - This file is not embedded in index.html.
 - Firestore sections are lazy and bounded.
 - Products/branches use aggregate documents.
-- Members/subscriptions/change requests/notifications load only when their section is opened.
+- Members/subscriptions/change requests load only when their section is opened.
 -->
 <html lang="ar" dir="rtl">
 <head>
@@ -173,7 +173,7 @@ direction:ltr;
 @media(max-width:620px){.kpis{grid-template-columns:1fr!important}.kpi{min-height:112px!important}.kpi small{padding-left:54px}.kpi:after{width:42px!important;height:42px!important;font-size:25px!important}.panel{border-radius:22px!important;padding:14px!important}.btn{width:auto}.actions-row .btn{flex:1 1 auto}.product-card,.member-card,.request-card,.branch-card,.log{padding:12px!important}.top-actions{gap:7px!important}.theme-label{display:inline}.top-brand span{font-size:15px!important}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .theme-dark .kpi{background:linear-gradient(180deg,rgba(17,24,39,.98),rgba(11,18,32,.94))!important;border-color:rgba(255,255,255,.08)!important}.theme-dark .product-card,.theme-dark .member-card,.theme-dark .request-card,.theme-dark .branch-card,.theme-dark .log{background:linear-gradient(180deg,#111827,#0b1220)!important;border-color:rgba(255,255,255,.08)!important}.theme-dark .kpi small{color:#a7b0c0!important}.theme-dark .x{background:#111827;color:#fff}
-/* ===== LINKO ADMIN V9 - NO COMPOSITE INDEXES + WEEKLY SUMMARY - 20260822\n/* LINKO ADMIN PATCH: requests, trash, reports grid, premium notification ===== */
+/* ===== LINKO ADMIN V9 - NO COMPOSITE INDEXES + WEEKLY SUMMARY - 20260822\n/* LINKO ADMIN PATCH: requests, trash, reports grid ===== */
 .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 .nav button.nav-trash{color:#fecaca!important;background:rgba(220,38,38,.10)!important;border:1px solid rgba(248,113,113,.22)!important;margin-top:8px}
 .nav button.nav-trash.active,.nav button.nav-trash:hover{background:linear-gradient(135deg,rgba(220,38,38,.28),rgba(153,27,27,.22))!important;color:#fff!important}
@@ -325,21 +325,25 @@ body.theme-dark .admin-req-card,body.theme-dark .admin-member-box,body.theme-dar
       });
     });
   }
+
   async function loadAggregate(name,force){
     if(loaded[name]&&!force)return controls[name];
     if(loading[name])return loading[name];
     loading[name]=(async function(){
       const f=await firebase(),ref=f.fs.doc(f.db,name,AGG[name]),snap=await f.fs.getDoc(ref);
-      if(!snap.exists()){await f.fs.setDoc(ref,{schemaVersion:1,controls:{},createdAt:f.fs.serverTimestamp(),updatedAt:f.fs.serverTimestamp()},{merge:true});controls[name]={};}
-      else controls[name]=Object.assign({},(snap.data()||{}).controls||{});
-      loaded[name]=true;return controls[name];
+      const next={};
+      if(snap.exists()){
+        const data=snap.data()||{};
+        if(Array.isArray(data.items)){
+          data.items.forEach(function(row){
+            row=row||{};const id=clean(row.id||(name==='productControls'?row.productId:row.branchId));if(!id)return;
+            const copy=Object.assign({},row);if(name==='productControls')copy.productId=id;else copy.branchId=id;next[mapKey(id)]=copy;
+          });
+        }else Object.assign(next,data.controls||{});
+      }
+      controls[name]=next;loaded[name]=true;return controls[name];
     })().finally(function(){loading[name]=null;});
     return loading[name];
-  }
-  function signalCatalogRefresh(name,id){
-    const payload={type:name,id:String(id||''),at:Date.now()};
-    try{localStorage.setItem('linko_catalog_refresh_signal',JSON.stringify(payload));}catch(e){}
-    try{const bc=new BroadcastChannel('linko_catalog_updates');bc.postMessage(payload);bc.close();}catch(e){}
   }
   function sanitizeControlPatch(name,patch){
     const out={};patch=patch||{};
@@ -348,28 +352,38 @@ body.theme-dark .admin-req-card,body.theme-dark .admin-member-box,body.theme-dar
     if(name==='productControls'&&Object.prototype.hasOwnProperty.call(patch,'price')){const n=Math.round(Number(patch.price));if(Number.isFinite(n)&&n>0)out.price=n;}
     return out;
   }
+
+  function snapshotItems(name,nextControls){
+    const get=function(id){
+      const key=mapKey(id),direct=nextControls[key]||nextControls[id]||{};
+      if(direct&&Object.keys(direct).length)return direct;
+      const field=name==='productControls'?'productId':'branchId';
+      for(const k of Object.keys(nextControls)){const row=nextControls[k]||{};if(String(row[field]||'')===String(id))return row;}
+      return {};
+    };
+    if(name==='productControls')return STATIC_PRODUCTS.map(function(base){
+      const r=get(base.id),x={id:String(base.id),productId:String(base.id),name:clean(r.name)||base.name,status:r.status==='unavailable'?'unavailable':'available'};
+      const price=Number(r.price)>0?Math.round(Number(r.price)):defaultPrice(base);x.price=price;return x;
+    });
+    return STATIC_BRANCHES.map(function(base){const r=get(base.id);return{id:String(base.id),branchId:String(base.id),name:clean(r.name)||base.name,status:(r.status==='unavailable'||r.status==='stopped')?'unavailable':'available'};});
+  }
   async function writeControl(name,id,patch){
     const f=await firebase(),itemId=clean(id),key=mapKey(itemId),field=name==='productControls'?'productId':'branchId';
-    if(!itemId) throw new Error('INVALID_CONTROL_ID');
+    if(!itemId)throw new Error('INVALID_CONTROL_ID');
     await loadAggregate(name,false);
-    const ref=f.fs.doc(f.db,name,AGG[name]);
-    const previous=controlRecord(name,itemId),safePatch=sanitizeControlPatch(name,patch),next=Object.assign({},previous,safePatch);
-    next[field]=itemId;
+    const previous=controlRecord(name,itemId),safePatch=sanitizeControlPatch(name,patch),next=Object.assign({},previous,safePatch);next[field]=itemId;
+    if(!next.status)next.status='available';
     Object.keys(next).forEach(function(k){if(next[k]===undefined||(typeof next[k]==='number'&&!Number.isFinite(next[k])))delete next[k];});
-
-    // Root fix: write the aggregate as a normal object. No transaction and no dynamic dotted FieldPath.
-    // This follows the same direct setDoc(...,{merge:true}) pattern used by the trusted working file.
-    const nextControls=Object.assign({},controls[name]||{});
-    nextControls[key]=next;
-    await f.fs.setDoc(ref,{schemaVersion:1,controls:nextControls,updatedAt:f.fs.serverTimestamp()},{merge:true});
-
-    // One verification read only after an admin edit.
-    const verify=await f.fs.getDoc(ref),verified=((verify.data()||{}).controls||{})[key];
-    if(!verified) throw new Error('CONTROL_SAVE_VERIFY_FAILED');
-    controls[name]=Object.assign({},(verify.data()||{}).controls||{});
-    loaded[name]=true;
-    signalCatalogRefresh(name,itemId);
-    return Object.assign({},verified);
+    const nextControls=Object.assign({},controls[name]||{});nextControls[key]=next;
+    const aggregateRef=f.fs.doc(f.db,name,AGG[name]),itemRef=f.fs.doc(f.db,name,encodeURIComponent(itemId));
+    const direct=Object.assign({},next,{updatedAt:f.fs.serverTimestamp()});
+    const batch=f.fs.writeBatch(f.db);
+    // First write mirrors the trusted working file: one normal per-item document.
+    batch.set(itemRef,direct,{merge:true});
+    // Second write is the low-read member snapshot: a sanitized array in one aggregate document.
+    batch.set(aggregateRef,{schemaVersion:2,items:snapshotItems(name,nextControls),updatedAt:f.fs.serverTimestamp()},{merge:true});
+    await batch.commit();
+    controls[name]=nextControls;loaded[name]=true;return Object.assign({},next);
   }
   window.__linkoStage6ProductAvailabilityAPI={
     list:productList,
@@ -417,7 +431,7 @@ const CFG={apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',authDomain:'medina-b
 const THEME_LS='linko_market_admin_theme';
 const SETTINGS_LS='linko_market_admin_settings_v10';
 const PAGE_SIZE=20;
-const COL={subscriptions:'subscriptionRequests',members:'members',loginKeys:'memberLoginKeys',orders:'orders',changes:'memberChangeRequests',memberNotes:'memberNotifications',adminNotes:'adminNotificationLog',logs:'adminOperationLogs',weeklyReports:'weeklyReports',pendingIdentity:'pendingSubscriptionKeys',pendingLogin:'pendingLoginKeys',meta:'systemMeta'};
+const COL={subscriptions:'subscriptionRequests',members:'members',loginKeys:'memberLoginKeys',orders:'orders',changes:'memberChangeRequests',logs:'adminOperationLogs',weeklyReports:'weeklyReports',pendingIdentity:'pendingSubscriptionKeys',pendingLogin:'pendingLoginKeys',meta:'systemMeta'};
 const sections=[
   ['dashboard','dashboard','الرئيسية Dashboard','أرقام حقيقية ومختصرة لحالة النظام.'],
   ['subscriptions','assignment_add','طلبات الاشتراك','طلبات الاشتراك المعلقة فقط، الأحدث أولاً.'],
@@ -426,7 +440,6 @@ const sections=[
   ['branches','storefront','إدارة الفروع','إدارة الفروع من مستند التجميع.'],
   ['requests','move_to_inbox','طلبات التعديل','طلبات التعديل المعلقة فقط، مع حذف السجلات المنتهية القديمة.'],
   ['reports','monitoring','التقارير','تقرير حقيقي للأسبوع الحالي فقط.'],
-  ['notifications','notifications','الإشعارات','إرسال إشعار وسجل آخر 3 إشعارات إدارية فقط.'],
   ['logs','receipt_long','سجل العمليات','آخر 3 عمليات إدارية حقيقية فقط.'],
   ['settings','settings','إعدادات النظام','إعدادات محلية لا تولّد قراءات Firestore.']
 ];
@@ -440,7 +453,7 @@ const store={
   dashboard:{loaded:false,loading:false,data:{}},
   reports:{loaded:false,loading:false,data:{}},
   subscriptions:pageState(),members:pageState(),changes:pageState(),
-  notifications:{loaded:false,rows:[],selectedMember:null},logs:{loaded:false,rows:[]},
+  logs:{loaded:false,rows:[]},
   memberSearchMode:false,memberSearchRows:[]
 };
 function pageState(){return{loaded:false,loading:false,rows:[],docs:[],page:0,cursors:[null],hasNext:false,total:null};}
@@ -470,8 +483,8 @@ function buildNav(){const nav=$('nav');if(!nav)return;nav.innerHTML=sections.map
 function navBadge(id){let n=null;if(id==='subscriptions')n=store.dashboard.data.pendingSubscriptions;if(id==='requests')n=store.dashboard.data.pendingChanges;return Number.isFinite(Number(n))&&Number(n)>0?` <span class="status bad">${Number(n)}</span>`:'';}
 function openSec(id){active=id;const s=sections.find(x=>x[0]===id);if(s){$('pageTitle').textContent=s[2];$('pageDesc').textContent=s[3];}$('sidebar')?.classList.remove('open');buildNav();render();loadSection(id);}
 function loadingPanel(text='جاري تحميل البيانات الحقيقية...'){return `<div class="panel"><div class="empty">${esc(text)}</div></div>`;}
-function render(){let html='';if(active==='dashboard')html=dashboard();else if(active==='subscriptions')html=subscriptions();else if(active==='members')html=members();else if(active==='products')html=products();else if(active==='branches')html=branches();else if(active==='requests')html=requestsInbox();else if(active==='reports')html=reports();else if(active==='notifications')html=notifications();else if(active==='logs')html=logs();else if(active==='settings')html=settings();$('main').innerHTML=html;}
-async function loadSection(id){if(id==='dashboard')return loadDashboard(false);if(id==='subscriptions')return loadSubscriptions(false);if(id==='members')return loadMembers(false);if(id==='products')return loadProducts(false);if(id==='branches')return loadBranches(false);if(id==='requests')return loadChanges(false);if(id==='reports')return loadReports(false);if(id==='notifications')return loadNotificationHistory(false);if(id==='logs')return loadLogs(false);}
+function render(){let html='';if(active==='dashboard')html=dashboard();else if(active==='subscriptions')html=subscriptions();else if(active==='members')html=members();else if(active==='products')html=products();else if(active==='branches')html=branches();else if(active==='requests')html=requestsInbox();else if(active==='reports')html=reports();else if(active==='logs')html=logs();else if(active==='settings')html=settings();$('main').innerHTML=html;}
+async function loadSection(id){if(id==='dashboard')return loadDashboard(false);if(id==='subscriptions')return loadSubscriptions(false);if(id==='members')return loadMembers(false);if(id==='products')return loadProducts(false);if(id==='branches')return loadBranches(false);if(id==='requests')return loadChanges(false);if(id==='reports')return loadReports(false);if(id==='logs')return loadLogs(false);}
 async function exactCount(queryOrCollection){const f=await firebase();const snap=await f.fs.getCountFromServer(queryOrCollection);return Number(snap.data().count||0);}
 const QUEUE_CLEANUP_MARKER='0000000000000_queue_cleanup_v10';
 const TERMINAL_QUEUE_STATUSES=['approved','accepted','rejected','declined','deleted','removed','completed','done','cancelled','canceled','مقبول','موافق','مرفوض','محذوف','مكتمل','ملغي','ملغى'];
@@ -524,10 +537,34 @@ function weeklyReportRef(f,base=new Date()){return f.fs.doc(f.db,COL.weeklyRepor
 function weeklyReportMeta(f,base=new Date()){const start=startOfWeek(base),end=nextWeekStart(base);return{weekKey:reportWeekKey(base),weekStart:localDateKey(start),weekEnd:localDateKey(new Date(end.getTime()-1)),updatedAt:f.fs.serverTimestamp()};}
 function addWeeklyDeltaToBatch(batch,f,delta){const data=weeklyReportMeta(f);Object.keys(delta||{}).forEach(k=>{const n=Number(delta[k]||0);if(n)data[k]=f.fs.increment(n);});batch.set(weeklyReportRef(f),data,{merge:true});}
 async function cleanupPreviousWeeklyReport(f){try{const key='linko_weekly_cleanup_'+reportWeekKey();if(localStorage.getItem(key)==='1')return;const prev=startOfWeek();prev.setDate(prev.getDate()-7);await f.fs.deleteDoc(f.fs.doc(f.db,COL.weeklyReports,reportWeekKey(prev)));localStorage.setItem(key,'1');}catch(e){console.warn('weekly cleanup skipped',e);}}
-async function loadDashboard(force){const s=store.dashboard;if(s.loading||s.loaded&&!force)return;s.loading=true;if(active==='dashboard')render();try{const f=await firebase(),fs=f.fs,db=f.db;const today=startOfToday();const [membersAll,membersDeleted,pendingSubscriptions,pendingChanges,todayOrders]=await Promise.all([
- exactCount(fs.collection(db,COL.members)),exactCount(fs.query(fs.collection(db,COL.members),fs.where('status','==','deleted'))),exactCount(fs.collection(db,COL.subscriptions)),exactCount(fs.collection(db,COL.changes)),exactCount(fs.query(fs.collection(db,COL.orders),fs.where('createdAt','>=',fs.Timestamp.fromDate(today))))
-]);s.data={members:Math.max(0,membersAll-membersDeleted),pendingSubscriptions,pendingChanges,todayOrders,products:productRows().length,branches:branchRows().length};s.loaded=true;buildNav();}catch(e){console.error('dashboard counts',e);toast('تعذر تحديث بعض العدادات');}finally{s.loading=false;if(active==='dashboard')render();}}
-function dashboard(){const s=store.dashboard,d=s.data;if(!s.loaded&&s.loading)return loadingPanel();const val=k=>Number.isFinite(Number(d[k]))?Number(d[k]):'—';return `<div class="panel"><div class="panel-head"><div><h2>العدادات الرئيسية الحقيقية</h2><p>أرقام مختصرة وحقيقية بدون تحميل قوائم كاملة.</p></div><button class="btn secondary mini" onclick="loadDashboard(true)">تحديث</button></div></div><div class="kpis"><div class="kpi" data-icon="assignment_add"><small>طلبات الاشتراك المعلقة</small><b>${val('pendingSubscriptions')}</b></div><div class="kpi" data-icon="groups"><small>عدد الأعضاء</small><b>${val('members')}</b></div><div class="kpi" data-icon="shopping_cart"><small>عدد المنتجات</small><b>${val('products')}</b></div><div class="kpi" data-icon="storefront"><small>عدد الفروع</small><b>${val('branches')}</b></div><div class="kpi" data-icon="inventory_2"><small>طلبات اليوم</small><b>${val('todayOrders')}</b></div><div class="kpi" data-icon="edit_note"><small>طلبات التعديل المعلقة</small><b>${val('pendingChanges')}</b></div></div>`;}
+
+async function loadDashboard(force){
+  const s=store.dashboard;if(s.loading||s.loaded&&!force)return;
+  s.loading=true;s.loaded=true;
+  // Product/branch counts are already local/static: show immediately, no Firestore wait.
+  s.data=Object.assign({},s.data,{products:productRows().length,branches:branchRows().length});
+  if(active==='dashboard')render();
+  try{
+    const f=await firebase(),fs=f.fs,db=f.db,today=startOfToday();
+    const refreshView=function(){buildNav();if(active==='dashboard')render();};
+    const task=function(key,promise,transform){
+      Promise.resolve(promise).then(function(value){s.data[key]=transform?transform(value):value;refreshView();}).catch(function(error){console.warn('dashboard metric failed',key,error);s.data[key]='—';refreshView();});
+    };
+    task('pendingSubscriptions',exactCount(fs.collection(db,COL.subscriptions)));
+    task('pendingChanges',exactCount(fs.collection(db,COL.changes)));
+    task('todayOrders',exactCount(fs.query(fs.collection(db,COL.orders),fs.where('createdAt','>=',fs.Timestamp.fromDate(today)))));
+    Promise.allSettled([
+      exactCount(fs.collection(db,COL.members)),
+      exactCount(fs.query(fs.collection(db,COL.members),fs.where('status','==','deleted')))
+    ]).then(function(results){
+      const all=results[0].status==='fulfilled'?Number(results[0].value||0):null;
+      const deleted=results[1].status==='fulfilled'?Number(results[1].value||0):0;
+      s.data.members=all==null?'—':Math.max(0,all-deleted);refreshView();
+    });
+  }catch(e){console.error('dashboard init',e);}
+  finally{s.loading=false;if(active==='dashboard')render();}
+}
+function dashboard(){const s=store.dashboard,d=s.data;if(!s.loaded&&s.loading)return loadingPanel();const val=k=>d[k]==='—'?'—':(Number.isFinite(Number(d[k]))?Number(d[k]):'—');return `<div class="panel"><div class="panel-head"><div><h2>العدادات الرئيسية الحقيقية</h2><p>أرقام مختصرة وحقيقية بدون تحميل قوائم كاملة.</p></div><button class="btn secondary mini" onclick="loadDashboard(true)">تحديث</button></div></div><div class="kpis"><div class="kpi" data-icon="assignment_add"><small>طلبات الاشتراك المعلقة</small><b>${val('pendingSubscriptions')}</b></div><div class="kpi" data-icon="groups"><small>عدد الأعضاء</small><b>${val('members')}</b></div><div class="kpi" data-icon="shopping_cart"><small>عدد المنتجات</small><b>${val('products')}</b></div><div class="kpi" data-icon="storefront"><small>عدد الفروع</small><b>${val('branches')}</b></div><div class="kpi" data-icon="inventory_2"><small>طلبات اليوم</small><b>${val('todayOrders')}</b></div><div class="kpi" data-icon="edit_note"><small>طلبات التعديل المعلقة</small><b>${val('pendingChanges')}</b></div></div>`;}
 function pageBar(kind,s){return `<div class="pagination"><button class="btn secondary mini" onclick="pagePrev('${kind}')" ${s.page<=0?'disabled':''}>السابق</button><span>صفحة ${s.page+1}${s.total!=null?` • الإجمالي ${s.total}`:''}</span><button class="btn secondary mini" onclick="pageNext('${kind}')" ${!s.hasNext?'disabled':''}>التالي</button></div>`;}
 function resetPager(s){s.loaded=false;s.rows=[];s.docs=[];s.page=0;s.cursors=[null];s.hasNext=false;}
 async function pageNext(kind){const s=store[kind];if(!s||!s.hasNext||!s.docs.length)return;s.cursors[s.page+1]=s.docs[s.docs.length-1];s.page++;s.loaded=false;await loadByKind(kind,true);}
@@ -596,7 +633,8 @@ function normalizeChange(d){const x=d.data()||{};return{id:d.id,type:clean(x.typ
 async function loadChanges(force){const s=store.changes;if(s.total==null||force&&s.page===0){try{const f=await firebase();s.total=await exactCount(f.fs.collection(f.db,COL.changes));store.dashboard.data.pendingChanges=s.total;}catch(e){console.error('change count',e);}}await runPagedQuery('changes',f=>[f.fs.orderBy('createdAt','desc')],normalizeChange,force);s.rows=s.rows.filter(r=>isPendingQueueRecord(r.raw));buildNav();}
 function requestsInbox(){const s=store.changes;if(!s.loaded&&s.loading)return loadingPanel();return `<div class="panel"><div class="panel-head"><div><h2>طلبات التعديل</h2><p>الطلبات المعلقة فقط متاحة على صفحات؛ الموافق/المرفوض القديم يُنظف نهائياً.</p></div><button class="btn secondary mini" onclick="refreshChanges()">تحديث</button></div><div class="cards">${s.rows.length?s.rows.map(r=>`<div class="admin-request unread"><div class="req-top"><h3>${esc(r.type)} <span class="status wait">بانتظار</span></h3><small class="muted">${esc(r.date)}</small></div><p><b>العضو:</b> ${esc(r.memberName||r.memberPhone||r.memberId||'-')}</p><p><b>القديم:</b> ${esc(r.oldValue==null?'-':r.oldValue)}<br><b>الجديد:</b> ${esc(r.newValue==null?r.details:r.newValue)}</p><div class="actions-row"><button class="btn mini" onclick="resolveChange('${esc(r.id)}',true)">موافقة</button><button class="btn warn mini" onclick="resolveChange('${esc(r.id)}',false)">رفض</button></div></div>`).join(''):'<div class="empty">لا توجد طلبات تعديل</div>'}</div>${pageBar('changes',s)}</div>`;}
 async function refreshChanges(){resetPager(store.changes);store.changes.total=null;await loadChanges(true);}
-async function resolveChange(id,approved){if(busy)return;const r=store.changes.rows.find(x=>x.id===id);if(!r)return toast('الطلب غير موجود');busy=true;try{const f=await firebase(),batch=f.fs.writeBatch(f.db),reqRef=f.fs.doc(f.db,COL.changes,id);if(approved&&r.memberId){const memberRef=f.fs.doc(f.db,COL.members,r.memberId),patch={updatedAt:f.fs.serverTimestamp()};if(r.field==='name')Object.assign(patch,{name:String(r.newValue),username:String(r.newValue),fullName:String(r.newValue)});else if(r.field==='phone')patch.phone=String(r.newValue);else if(r.field==='address')Object.assign(patch,{area:String(r.newValue),address:String(r.newValue)});else if(r.field==='password')Object.assign(patch,{code:String(r.newValue),password:String(r.newValue)});else if(r.field==='balance')patch.balance=f.fs.increment(Number(r.newValue||0));batch.update(memberRef,patch);}batch.delete(reqRef);const noticeNow=Date.now(),memberNoticeItem={id:`change_${noticeNow}_${Math.random().toString(36).slice(2,7)}`,source:'admin_change_v14',targetType:'member',targetValue:r.memberId||'',memberId:r.memberId||'',targetName:r.memberName||'',title:approved?'تم قبول طلبك':'تم رفض طلبك',text:(approved?'تم قبول ':'تم رفض ')+(r.type||'طلب التعديل'),message:(approved?'تم قبول ':'تم رفض ')+(r.type||'طلب التعديل'),clientCreatedAtMs:noticeNow};await batch.commit();if(r.memberId)await writeVerifiedMemberNotificationFeed(f,'member',r.memberId,memberNoticeItem);await writeAdminLog(approved?'موافقة طلب تعديل':'رفض طلب تعديل',`${r.memberName||r.memberId}: ${r.type}`);store.changes.rows=store.changes.rows.filter(x=>x.id!==id);store.changes.total=Math.max(0,Number(store.changes.total||1)-1);store.dashboard.data.pendingChanges=store.changes.total;render();buildNav();toast(approved?'تمت الموافقة':'تم الرفض');}catch(e){console.error(e);toast('تعذر تنفيذ الطلب');}finally{busy=false;}}
+
+async function resolveChange(id,approved){if(busy)return;const r=store.changes.rows.find(x=>x.id===id);if(!r)return toast('الطلب غير موجود');busy=true;try{const f=await firebase(),batch=f.fs.writeBatch(f.db),reqRef=f.fs.doc(f.db,COL.changes,id);if(approved&&r.memberId){const memberRef=f.fs.doc(f.db,COL.members,r.memberId),patch={updatedAt:f.fs.serverTimestamp()};if(r.field==='name')Object.assign(patch,{name:String(r.newValue),username:String(r.newValue),fullName:String(r.newValue)});else if(r.field==='phone')patch.phone=String(r.newValue);else if(r.field==='address')Object.assign(patch,{area:String(r.newValue),address:String(r.newValue)});else if(r.field==='password')Object.assign(patch,{code:String(r.newValue),password:String(r.newValue)});else if(r.field==='balance')patch.balance=f.fs.increment(Number(r.newValue||0));batch.update(memberRef,patch);}batch.delete(reqRef);await batch.commit();await writeAdminLog(approved?'موافقة طلب تعديل':'رفض طلب تعديل',`${r.memberName||r.memberId}: ${r.type}`);store.changes.rows=store.changes.rows.filter(x=>x.id!==id);store.changes.total=Math.max(0,Number(store.changes.total||1)-1);store.dashboard.data.pendingChanges=store.changes.total;render();buildNav();toast(approved?'تمت الموافقة':'تم الرفض');}catch(e){console.error(e);toast('تعذر تنفيذ الطلب');}finally{busy=false;}}
 async function seedWeeklyReport(f,start,end){
   const fs=f.fs,db=f.db,from=fs.Timestamp.fromDate(start),to=fs.Timestamp.fromDate(end);
   const orderSnap=await fs.getDocs(fs.query(fs.collection(db,COL.orders),fs.where('createdAt','>=',from),fs.where('createdAt','<',to)));
@@ -620,54 +658,6 @@ async function loadReports(force){
   finally{s.loading=false;if(active==='reports')render();}
 }
 function reports(){const s=store.reports,d=s.data;if(!s.loaded&&s.loading)return loadingPanel('جاري تحميل تقرير هذا الأسبوع فقط...');if(!s.loaded)return loadingPanel();const period=d.start?`${d.start.toLocaleDateString('ar-IQ')} — ${new Date(d.end.getTime()-1).toLocaleDateString('ar-IQ')}`:'—';return `<div class="panel"><div class="panel-head"><div><h2>تقرير الأسبوع الحالي</h2><p>${esc(period)} • تقرير حقيقي مختصر، ويتجدد تلقائياً مع الأسبوع الجديد.</p></div><button class="btn secondary mini" onclick="loadReports(true)">تحديث</button></div></div><div class="kpis"><div class="kpi" data-icon="inventory_2"><small>طلبات هذا الأسبوع</small><b>${d.total??'—'}</b></div><div class="kpi" data-icon="person_add"><small>أعضاء جدد هذا الأسبوع</small><b>${d.newMembers??'—'}</b></div><div class="kpi" data-icon="payments"><small>إجمالي مبالغ الطلبات</small><b>${money(d.totalAmount||0)}</b></div></div>`;}
-function notificationTargetHtml(){const branches=branchRows();return `<div class="field"><label>الجهة</label><select id="noteType" onchange="noteTypeChanged()"><option value="all_members">كل الأعضاء</option><option value="branch">فرع معين</option><option value="member">عضو معين</option></select></div><div class="field" id="noteTargetBox"><label>التحديد</label><input class="input" value="كل الأعضاء" disabled></div>`;}
-function notifications(){const n=store.notifications;return `${`<div class="panel"><div class="panel-head"><div><h2>إرسال إشعار</h2><p>السجل أدناه يعرض آخر 3 إشعارات أرسلتها الإدارة فقط.</p></div></div><div class="form-grid">${notificationTargetHtml()}<div class="field"><label>العنوان</label><input class="input" id="noteTitle"></div><div class="field wide"><label>النص</label><textarea id="noteText"></textarea></div><button class="btn wide" onclick="sendAdminNotification(this)">إرسال الإشعار</button></div></div>`}<div class="panel"><div class="panel-head"><div><h2>آخر 3 إشعارات إدارية</h2><p>هذا السجل مخصص فقط للإشعارات التي ترسلها الإدارة.</p></div><button class="btn secondary mini" onclick="loadNotificationHistory(true)">تحديث</button></div><div class="timeline">${n.rows.length?n.rows.map(x=>`<div class="log"><h3>${esc(x.title||'إشعار')}</h3><p>${esc(x.text||'')}<br><span class="muted">${esc(x.targetName||'-')} • ${esc(x.date||'-')}</span></p></div>`).join(''):'<div class="empty">لا توجد إشعارات إدارية مسجلة</div>'}</div></div>`;}
-function noteTypeChanged(){const type=$('noteType')?.value,box=$('noteTargetBox');store.notifications.selectedMember=null;if(!box)return;if(type==='branch')box.innerHTML=`<label>الفرع</label><select id="noteTarget">${branchRows().map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('')}</select>`;else if(type==='member')box.innerHTML='<label>العضو</label><div class="tools"><input class="input" id="noteMemberSearch" placeholder="اسم كامل أو هاتف أو رمز"><button class="btn secondary" type="button" onclick="searchNotificationMember()">بحث</button></div><div id="noteMemberResult" class="muted">لم يتم اختيار عضو</div>';else box.innerHTML='<label>التحديد</label><input class="input" value="كل الأعضاء" disabled>';}
-async function searchNotificationMember(){const term=clean($('noteMemberSearch')?.value);if(!term)return toast('اكتب بيانات العضو');try{const f=await firebase(),fields=['phone','code','name','username'];let row=null;for(const field of fields){const snap=await f.fs.getDocs(f.fs.query(f.fs.collection(f.db,COL.members),f.fs.where(field,'==',term),f.fs.limit(1)));if(!snap.empty){row=normalizeMember(snap.docs[0]);break;}}store.notifications.selectedMember=row;const el=$('noteMemberResult');if(el)el.innerHTML=row?`تم اختيار: <b>${esc(row.name)}</b> — ${esc(row.phone)}`:'لم يتم العثور على عضو';}catch(e){console.error(e);toast('تعذر البحث');}}
-function memberNotificationFeedId(type,value){
-  const safe=encodeURIComponent(clean(value||''));
-  if(type==='all_members') return 'admin_all';
-  if(type==='member') return 'admin_member_'+safe;
-  return 'admin_branch_'+safe;
-}
-async function writeVerifiedMemberNotificationFeed(f,type,value,item){
-  const feedId=memberNotificationFeedId(type,value),ref=f.fs.doc(f.db,COL.memberNotes,feedId),snap=await f.fs.getDoc(ref),data=snap.exists()?(snap.data()||{}):{};
-  const items=Array.isArray(data.items)?data.items.filter(x=>x&&x.id!==item.id):[];
-  items.unshift(item);
-  await f.fs.setDoc(ref,{feedKind:'admin_notifications_v2',targetType:type,targetValue:value,items:items.slice(0,3),updatedAt:f.fs.serverTimestamp()},{merge:true});
-  const verify=await f.fs.getDoc(ref),saved=Array.isArray((verify.data()||{}).items)?(verify.data()||{}).items:[];
-  if(!saved.some(x=>x&&x.id===item.id)) throw new Error('ADMIN_NOTIFICATION_VERIFY_FAILED');
-}
-async function sendAdminNotification(btn){
-  const type=$('noteType')?.value||'all_members',title=clean($('noteTitle')?.value),text=clean($('noteText')?.value);
-  if(!title||!text)return toast('أكمل العنوان والنص');
-  let targetValue='all',targetName='كل الأعضاء',targetMember=null;
-  if(type==='member'){
-    targetMember=store.notifications.selectedMember;
-    if(!targetMember)return toast('ابحث عن العضو وحدده أولاً');
-    targetValue=targetMember.id;targetName=targetMember.name;
-  }else if(type==='branch'){
-    const id=$('noteTarget')?.value,b=branchRows().find(x=>String(x.id)===String(id));
-    if(!b)return toast('اختر الفرع');
-    targetValue=id;targetName=b.name;
-  }
-  try{
-    btn.disabled=true;
-    const f=await firebase(),now=Date.now(),id=`admin_${now}_${Math.random().toString(36).slice(2,7)}`;
-    const item={id,title,text,message:text,source:'manual_admin',targetType:type,targetValue,targetName,memberId:type==='member'?targetValue:'',branchId:type==='branch'?targetValue:'',clientCreatedAtMs:now};
-    await writeVerifiedMemberNotificationFeed(f,type,targetValue,item);
-    await f.fs.setDoc(f.fs.doc(f.db,COL.adminNotes,id),{title,text,targetType:type,targetValue,targetName,createdAt:f.fs.serverTimestamp(),clientCreatedAtMs:now});
-    writeAdminLog('إرسال إشعار',`إلى ${targetName}: ${title}`).catch(()=>{});
-    store.notifications.rows.unshift({id,title,text,targetName,date:new Date(now).toLocaleString('ar-IQ')});
-    store.notifications.rows=store.notifications.rows.slice(0,3);
-    $('noteTitle').value='';$('noteText').value='';render();
-    toast('تم إرسال الإشعار وتأكيد وصوله إلى قاعدة البيانات');
-  }catch(e){
-    console.error('SEND ADMIN NOTIFICATION FAILED',e);
-    toast('تعذر إرسال الإشعار: '+clean(e&&e.code||e&&e.message||'خطأ'));
-  }finally{btn.disabled=false;}
-}
-async function loadNotificationHistory(force){const s=store.notifications;if(s.loaded&&!force)return;try{const f=await firebase(),snap=await f.fs.getDocs(f.fs.query(f.fs.collection(f.db,COL.adminNotes),f.fs.orderBy('clientCreatedAtMs','desc'),f.fs.limit(3)));s.rows=snap.docs.map(d=>{const x=d.data()||{};return{id:d.id,title:x.title,text:x.text,targetName:x.targetName,date:dateText(x.createdAt)};});s.loaded=true;}catch(e){console.error(e);s.rows=[];}if(active==='notifications')render();}
 async function writeAdminLog(type,details){try{const f=await firebase(),user=await currentAdmin(),id=`${String(Date.now()).padStart(13,'0')}_${Math.random().toString(36).slice(2,7)}`;await f.fs.setDoc(f.fs.doc(f.db,COL.logs,id),{type,details,adminEmail:user?.email||'admin',createdAt:f.fs.serverTimestamp(),clientCreatedAtMs:Date.now()});store.logs.rows.unshift({id,type,details,adminEmail:user?.email||'admin',date:new Date().toLocaleString('ar-IQ')});store.logs.rows=store.logs.rows.slice(0,3);store.logs.loaded=true;}catch(e){console.warn('admin log write failed',e);}}
 async function loadLogs(force){const s=store.logs;if(s.loaded&&!force)return;try{const f=await firebase(),snap=await f.fs.getDocs(f.fs.query(f.fs.collection(f.db,COL.logs),f.fs.orderBy('clientCreatedAtMs','desc'),f.fs.limit(3)));s.rows=snap.docs.map(d=>{const x=d.data()||{};return{id:d.id,type:x.type,details:x.details,adminEmail:x.adminEmail,date:dateText(x.createdAt),kind:x.kind};}).filter(x=>x.kind!=='systemMarker').slice(0,3);s.loaded=true;}catch(e){console.error(e);s.rows=[];}if(active==='logs')render();}
 function logs(){const s=store.logs;return `<div class="panel"><div class="panel-head"><div><h2>آخر 3 عمليات حقيقية</h2><p>كل عملية مهمة تُسجل في Firebase، لكن الواجهة تقرأ آخر 3 فقط.</p></div><button class="btn secondary mini" onclick="loadLogs(true)">تحديث</button></div><div class="timeline">${s.rows.length?s.rows.map(x=>`<div class="log"><h3>${esc(x.type||'عملية')}</h3><p>${esc(x.details||'')}<br><span class="muted">${esc(x.adminEmail||'admin')} • ${esc(x.date||'-')}</span></p></div>`).join(''):'<div class="empty">لا توجد عمليات مسجلة بعد</div>'}</div></div>`;}

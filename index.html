@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <!-- LINKO MEDINA MEMBER V7 FINAL CLEAN ARCHITECTURE - 20260822 -->
 <!--
 LINKO MEDINA - MEMBER ONLY ARCHITECTURE V6 - 2026-08-22
@@ -9,7 +10,7 @@ FILES:
 READ POLICY:
 - No Firestore realtime listeners in the member interface.
 - Catalog controls use two aggregate documents, loaded once per page session.
-- Orders/notifications/profile requests are bounded one-shot reads only when their pages are opened.
+- Orders/profile requests are bounded one-shot reads only when their pages are opened.
 -->
 <!--
 LINKO MEDINA - CLEAN ARCHITECTURE V4 - 2026-08-22
@@ -19,14 +20,11 @@ READ POLICY:
 - Member pages use bounded one-shot queries only when opened.
 - Admin heavy legacy patch generations were physically removed.
 -->
-
 <!-- LINKO RADICAL PHYSICAL READ CLEANUP V3 - 20260822 -->
 <!-- LINKO RADICAL FINAL: ZERO BACKGROUND MEMBER READS 20260821 -->
 <!-- LINKO_RADICAL_READ_AUDIT_CLEAN_PHASE2_20260821: ROOT READS REMOVED, LAZY MEMBER DATA -->
-
-<!-- LINKO FOUNDATION PHASE 2D: SHARED NOTIFICATIONS + CHANGE REQUEST LISTENERS 20260820 -->
+<!-- LINKO FOUNDATION PHASE 2D: CHANGE REQUEST DATA PATH 20260820 -->
 <!-- Based on tested Phase 2C -->
-
 <!-- MEDINA_BUILD_V71_STARTUP_GUARD_20260804 -->
 <!-- LINKO_DELIVERY_LOCATION_PHASE1_FIX_LAZY_MAP_20260819 -->
 <!-- LINKO_DELIVERY_LOCATION_REAL_FIX_20260819 -->
@@ -34,7 +32,7 @@ READ POLICY:
 <!-- LINKO_FOUNDATION_PHASE2A_SHARED_CONTROL_LISTENERS_20260820 -->
 <!-- LINKO SUBSCRIPTION REQUESTS FINAL V48: REAPPLY ON EVERY ADMIN OPEN/FRAME LOAD -->
 <!-- LINKO FOUNDATION PHASE 1A: EXTERNAL MEDIA 20260820 -->
-<html lang="ar" dir="rtl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
+<html dir="rtl" lang="ar"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/><title>سوق المدينة الكبير | واجهة الأعضاء</title><style id="linkoNoStartupBlackScreenFinal">
 html{color-scheme:light!important;background:#dcefe5!important;}
 html,body{margin:0!important;min-height:100%!important;background-color:#dcefe5!important;}
 body{background-image:radial-gradient(circle at 12% 8%,rgba(245,181,68,.22),transparent 34%),radial-gradient(circle at 88% 18%,rgba(22,199,132,.18),transparent 38%),linear-gradient(145deg,#e8f4ec,#dcefe5)!important;background-repeat:no-repeat!important;background-attachment:fixed!important;}
@@ -43,7 +41,7 @@ body{background-image:radial-gradient(circle at 12% 8%,rgba(245,181,68,.22),tran
 #authPage.app-page.active .auth-card,
 #authPage.app-page.active .brand-logo,
 #authPage.app-page.active .linko-auth-star{visibility:visible!important;opacity:1!important;animation:none!important;transition:none!important;}
-</style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,0,0" rel="stylesheet"><style>
+</style><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,0,0" rel="stylesheet"/><style>
 :root{
 --bg:#f5f8f6;--card:#ffffff;--ink:#101828;--muted:#667085;--line:#e5e7eb;--green:#0f8a55;--green2:#16c784;--gold:#f5b544;--dark:#111827;--red:#ef4444;--blue:#2563eb;--orange:#f59e0b;--shadow:0 24px 70px rgba(16,24,40,.12);--soft:0 12px 32px rgba(16,24,40,.08);--radius:28px;--max:1160px;
 }
@@ -422,14 +420,12 @@ transform:scale(1.55)!important;
 .product-img img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important;padding:0!important;background:#fff!important;display:block!important;}
 .cart-thumb img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important;padding:0!important;background:#fff!important;display:block!important;}
 </style>
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="سوق المدينة">
-<meta name="theme-color" content="#dcefe5">
-
-
+<link href="./manifest.webmanifest" rel="manifest"/>
+<link href="./apple-touch-icon.png" rel="apple-touch-icon"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="default" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="سوق المدينة" name="apple-mobile-web-app-title"/>
+<meta content="#dcefe5" name="theme-color"/>
 <style id="linkoPwaStableExtrasStyles">
 .linko-install-box{
   margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:20px;
@@ -482,8 +478,6 @@ body.linko-dark .linko-install-step{
   background:#111827!important;color:#fff!important;border-color:rgba(255,255,255,.20)!important
 }
 </style>
-
-
 <style id="linkoAuthModernStarsV27">
 .linko-auth-logo-row{
   display:grid;
@@ -563,8 +557,6 @@ body.linko-dark .linko-install-step{
   .linko-auth-star{animation:none}
 }
 </style>
-
-
 <style id="linkoReportsLightChartV28">
 .linko-orders-chart{
   margin:14px 0;
@@ -620,8 +612,6 @@ body.theme-dark .linko-chart-axis{stroke:#475569}
   .linko-chart-value{font-size:14px}
 }
 </style>
-
-
 <style id="linkoStartupLoadingStyle">
 #linkoStartupLoadingNotice{
   position:fixed;
@@ -677,7 +667,6 @@ body.theme-dark .linko-chart-axis{stroke:#475569}
 @keyframes linkoStartupSpin{to{transform:rotate(360deg)}}
 </style>
 <!-- MEDINA V65: no forced admin re-render on repeated open -->
-
 <style id="medinaV71StartupGuardStyle">
 html.medina-v71-startup-recovery #authPage{
   display:grid!important;
@@ -697,26 +686,19 @@ html.medina-v71-startup-recovery #floatCart{
   display:none!important;
 }
 </style>
-
-
-
-
-</head><body><div id="linkoStartupLoadingNotice" role="status" aria-live="polite" aria-label="جاري تحميل الموقع"><span class="linko-startup-spinner" aria-hidden="true"></span><span><b>جاري تحميل الموقع</b><small>الاتصال بالإنترنت قد يكون ضعيفًا، يرجى الانتظار لثوانٍ…</small></span></div><script id="linkoStartupLoadingController">(function(){'use strict';var box=document.getElementById('linkoStartupLoadingNotice');if(!box)return;var done=false;function hide(){if(done)return;done=true;box.classList.add('linko-startup-loading-hide');setTimeout(function(){if(box&&box.parentNode)box.parentNode.removeChild(box);},220);}if(document.readyState==='complete'){hide();}else{window.addEventListener('load',hide,{once:true});}window.addEventListener('pageshow',function(e){if(e.persisted)hide();},{once:true});setTimeout(hide,15000);})();</script>
-<img id="linkoSharedLogoSource" src="assets/images/asset-001-e14e9ce273.webp" alt="" aria-hidden="true" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none"><script id="linkoSharedLogoEarlySource">(function(){var source=document.getElementById("linkoSharedLogoSource");if(source&&source.src)window.__linkoSharedLogo=source.src;})();</script><section class="auth-screen app-page active" id="authPage"><div class="auth-card glass"><div class="linko-auth-logo-row"><span class="mi linko-auth-star linko-auth-star-left" aria-hidden="true">auto_awesome</span><div class="brand-logo"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار سوق المدينة الكبير"></div><span class="mi linko-auth-star linko-auth-star-right" aria-hidden="true">auto_awesome</span></div><script id="linkoStage8AuthLogoImmediateHydration">(function(){var value=window.__linkoSharedLogo||'';var img=document.querySelector('#authPage .brand-logo img[data-linko-shared-logo="1"]');if(value&&img){img.src=value;img.style.objectFit='contain';}})();</script><h1>سوق المدينة الكبير</h1><div class="auth-tabs"><button id="loginTab" class="active" onclick="return linkoInstantAuthTab('login',event)">دخول</button><button id="registerTab" onclick="return linkoInstantAuthTab('register',event)">اشتراك جديد</button></div><form id="loginForm" class="auth-form active" onsubmit="return linkoQueuedMemberLogin(event)"><div class="field"><label>الاسم الكامل</label><input id="loginUsername" autocomplete="name" required placeholder="اكتب الاسم الكامل"></div><div class="field"><label>الرمز</label><input id="loginPassword" autocomplete="current-password" required type="password" placeholder="اكتب الرمز"></div><button class="btn full" type="submit"><span class="mi">login</span> دخول الأعضاء</button></form><form id="registerForm" class="auth-form" onsubmit="return linkoQueuedRegister(event)"><div class="field"><label>الاسم الكامل</label><input id="regName" required placeholder="الاسم الكامل"></div><div class="field"><label>رقم الهاتف</label><input id="regPhone" required inputmode="tel" placeholder="07xxxxxxxxx"></div><div class="field"><label>العنوان</label><input id="regAddress" required placeholder="المنطقة / أقرب نقطة دالة"></div><div class="field"><label>الرمز</label><input id="regPassword" required type="password" minlength="4" placeholder="رمز خاص بالحساب"></div><div class="avatar-upload-card"><div class="avatar-preview" id="regAvatarPreview"><span class="mi">person</span></div><div><h4>صورة الملف الشخصي <small style="color:#98a2b3">اختياري</small></h4><p>ارفع صورة واضحة، وتقدر تضبطها بسهولة قبل حفظها. الصورة تظهر كاملة داخل حسابك بدون قص.</p><input class="avatar-file" id="regAvatarInput" type="file" accept="image/*" onchange="handleAvatarFile(event)"><div class="avatar-actions"><label for="regAvatarInput"><span class="mi">add_a_photo</span> اختيار صورة</label><button type="button" class="secondary" onclick="openPhotoEditor()"><span class="mi">tune</span> ضبط الصورة</button><button type="button" class="secondary" onclick="removeAvatar()"><span class="mi">delete</span> حذف</button></div></div></div><label class="terms"><input id="regTerms" type="checkbox"> أوافق على شروط استخدام الخدمة</label><button class="btn full" type="submit"><span class="mi">person_add</span> إرسال طلب الاشتراك</button></form></div></section>
-
+<style id="linkoFourTabNavFinalStyle">.bottom-nav{grid-template-columns:repeat(4,1fr)!important}</style></head><body><div aria-label="جاري تحميل الموقع" aria-live="polite" id="linkoStartupLoadingNotice" role="status"><span aria-hidden="true" class="linko-startup-spinner"></span><span><b>جاري تحميل الموقع</b><small>الاتصال بالإنترنت قد يكون ضعيفًا، يرجى الانتظار لثوانٍ…</small></span></div><script id="linkoStartupLoadingController">(function(){'use strict';var box=document.getElementById('linkoStartupLoadingNotice');if(!box)return;var done=false;function hide(){if(done)return;done=true;box.classList.add('linko-startup-loading-hide');setTimeout(function(){if(box&&box.parentNode)box.parentNode.removeChild(box);},220);}if(document.readyState==='complete'){hide();}else{window.addEventListener('load',hide,{once:true});}window.addEventListener('pageshow',function(e){if(e.persisted)hide();},{once:true});setTimeout(hide,15000);})();</script>
+<img alt="" aria-hidden="true" id="linkoSharedLogoSource" src="assets/images/asset-001-e14e9ce273.webp" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none"/><script id="linkoSharedLogoEarlySource">(function(){var source=document.getElementById("linkoSharedLogoSource");if(source&&source.src)window.__linkoSharedLogo=source.src;})();</script><section class="auth-screen app-page active" id="authPage"><div class="auth-card glass"><div class="linko-auth-logo-row"><span aria-hidden="true" class="mi linko-auth-star linko-auth-star-left">auto_awesome</span><div class="brand-logo"><img alt="شعار سوق المدينة الكبير" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><span aria-hidden="true" class="mi linko-auth-star linko-auth-star-right">auto_awesome</span></div><script id="linkoStage8AuthLogoImmediateHydration">(function(){var value=window.__linkoSharedLogo||'';var img=document.querySelector('#authPage .brand-logo img[data-linko-shared-logo="1"]');if(value&&img){img.src=value;img.style.objectFit='contain';}})();</script><h1>سوق المدينة الكبير</h1><div class="auth-tabs"><button class="active" id="loginTab" onclick="return linkoInstantAuthTab('login',event)">دخول</button><button id="registerTab" onclick="return linkoInstantAuthTab('register',event)">اشتراك جديد</button></div><form class="auth-form active" id="loginForm" onsubmit="return linkoQueuedMemberLogin(event)"><div class="field"><label>الاسم الكامل</label><input autocomplete="name" id="loginUsername" placeholder="اكتب الاسم الكامل" required=""/></div><div class="field"><label>الرمز</label><input autocomplete="current-password" id="loginPassword" placeholder="اكتب الرمز" required="" type="password"/></div><button class="btn full" type="submit"><span class="mi">login</span> دخول الأعضاء</button></form><form class="auth-form" id="registerForm" onsubmit="return linkoQueuedRegister(event)"><div class="field"><label>الاسم الكامل</label><input id="regName" placeholder="الاسم الكامل" required=""/></div><div class="field"><label>رقم الهاتف</label><input id="regPhone" inputmode="tel" placeholder="07xxxxxxxxx" required=""/></div><div class="field"><label>العنوان</label><input id="regAddress" placeholder="المنطقة / أقرب نقطة دالة" required=""/></div><div class="field"><label>الرمز</label><input id="regPassword" minlength="4" placeholder="رمز خاص بالحساب" required="" type="password"/></div><div class="avatar-upload-card"><div class="avatar-preview" id="regAvatarPreview"><span class="mi">person</span></div><div><h4>صورة الملف الشخصي <small style="color:#98a2b3">اختياري</small></h4><p>ارفع صورة واضحة، وتقدر تضبطها بسهولة قبل حفظها. الصورة تظهر كاملة داخل حسابك بدون قص.</p><input accept="image/*" class="avatar-file" id="regAvatarInput" onchange="handleAvatarFile(event)" type="file"/><div class="avatar-actions"><label for="regAvatarInput"><span class="mi">add_a_photo</span> اختيار صورة</label><button class="secondary" onclick="openPhotoEditor()" type="button"><span class="mi">tune</span> ضبط الصورة</button><button class="secondary" onclick="removeAvatar()" type="button"><span class="mi">delete</span> حذف</button></div></div></div><label class="terms"><input id="regTerms" type="checkbox"/> أوافق على شروط استخدام الخدمة</label><button class="btn full" type="submit"><span class="mi">person_add</span> إرسال طلب الاشتراك</button></form></div></section>
 <!-- LINKO V5: legacy V71 startup recovery removed -->
-
-
-<div id="linkoConnectionAlert" class="linko-connection-alert" role="status" aria-live="polite">
-  <span class="linko-alert-dot" aria-hidden="true"></span>
-  <span id="linkoConnectionAlertText">انتباه: أنت تعمل دون اتصال بالإنترنت، وسيتم عرض آخر البيانات المحفوظة.</span>
+<div aria-live="polite" class="linko-connection-alert" id="linkoConnectionAlert" role="status">
+<span aria-hidden="true" class="linko-alert-dot"></span>
+<span id="linkoConnectionAlertText">انتباه: أنت تعمل دون اتصال بالإنترنت، وسيتم عرض آخر البيانات المحفوظة.</span>
 </div>
-<div id="linkoInstallModal" class="linko-install-modal" aria-hidden="true">
-  <div class="linko-install-card">
-    <h3>تثبيت سوق المدينة على الشاشة الرئيسية</h3>
-    <div id="linkoInstallSteps"></div>
-    <button type="button" class="btn full" id="linkoInstallCloseButton">إغلاق</button>
-  </div>
+<div aria-hidden="true" class="linko-install-modal" id="linkoInstallModal">
+<div class="linko-install-card">
+<h3>تثبيت سوق المدينة على الشاشة الرئيسية</h3>
+<div id="linkoInstallSteps"></div>
+<button class="btn full" id="linkoInstallCloseButton" type="button">إغلاق</button>
+</div>
 </div>
 <!-- ===== LINKO STAGE 8.4: BOUNDED PATCH TIMERS ONLY ===== --><script id="linkoStage84BoundedPatchTimersOnly">
 (function(){
@@ -725,7 +707,7 @@ html.medina-v71-startup-recovery #floatCart{
   window.__linkoMemberTimerGuardV6=true;
   const MAX_PATCH_RUNS=18;
   const TARGET_NAMES=/\b(?:ensureSecretBlocks|fixLinkoBranch|finalFixLinkoBranch)\b/;
-  const KEEP_RUNNING=/\b(?:markNotificationsRead|refreshMemberFromFirebase|refreshMember|renderDeliveryBox|renderDeliveryBoxStrong|updateCartNow|updateDelivery|applyRequestHandlers|wrapChargeHandler|startNotifFinal)\b/;
+  const KEEP_RUNNING=/\b(?:refreshMemberFromFirebase|refreshMember|renderDeliveryBox|renderDeliveryBoxStrong|updateCartNow|updateDelivery|applyRequestHandlers|wrapChargeHandler)\b/;
   const nativeSetInterval=window.setInterval.bind(window);
   const nativeClearInterval=window.clearInterval.bind(window);
   window.setInterval=function(callback,delay){
@@ -821,7 +803,7 @@ html.medina-v71-startup-recovery #floatCart{
   },{once:true});
 })();
 </script>
-<section class="app-page" id="homePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>سوق المدينة الكبير</h2><small id="welcomeText">أهلاً بك</small></div></div><div class="top-actions"><button class="icon-btn" onclick="openMenu()"><span class="mi">menu</span></button><button class="icon-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span class="badge" id="notifBadge">3</span></button></div></div></header><div class="member-card"><div class="member-head"><div class="member-info"><b id="memberName">عضو تجريبي</b><small>بطاقة العضوية الرقمية</small></div><div class="member-avatar" id="memberAvatar"><span class="mi">person</span></div></div><div class="member-stats"><div class="member-stat"><small>الرصيد</small><b id="memberBalance">0 د.ع</b></div><div class="member-stat"><small>الحالة</small><b>مفعل</b></div><div class="member-stat"><small>الطلبات</small><b id="memberOrdersCount">0</b></div></div></div><div class="searchbar"><div class="input-icon"><span class="mi">search</span><input id="globalSearch" oninput="renderProducts()" placeholder="ابحث عن منتج أو فرع..."></div><button class="icon-btn" onclick="toast('تم فتح خيارات البحث')"><span class="mi">tune</span></button></div><div class="section-title"><div><h2>الفروع والأقسام</h2><small>اختَر فرعاً لعرض منتجاته</small></div><button class="chip" onclick="selectBranch('all')">الكل</button></div><div class="branch-rail" id="branchesRail"></div><section class="products-section" id="productsSection"><div class="section-title"><div><h2 id="selectedBranchTitle">منتجات الفروع</h2><small id="productsCount">اختَر فرعاً أو ابحث عن منتج</small></div></div><div class="cats-rail compact" id="catsRail"></div><div class="products-grid" id="productsGrid"></div></section></div></section><section class="app-page" id="cartPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>السلة</h2><small>راجع طلبك قبل الإرسال</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سلة الطلب</h1><p>يمكنك تعديل الكميات وحذف المنتجات قبل إرسال الطلب.</p></div><div class="cart-layout"><div class="list" id="cartList"></div><div class="summary-box"><div class="sum-row"><span>عدد المنتجات</span><b id="cartItemsCount">0</b></div><div class="sum-row"><span>المجموع</span><b id="cartSubtotal">0 د.ع</b></div><div class="sum-row"><span>التوصيل</span><b>حسب المنطقة</b></div><div class="sum-row total"><span>الإجمالي</span><b id="cartTotal">0 د.ع</b></div><div class="field"><label>ملاحظة للطلب</label><textarea id="orderNote" placeholder="ملاحظات اختيارية: نوع، ماركة، وقت مناسب..."></textarea></div><button class="btn full" id="sendOrderBtn" onclick="sendOrder()"><span class="mi">send</span> إرسال الطلب</button><button class="btn secondary full" onclick="clearCart()" style="margin-top:8px"><span class="mi">delete</span> تفريغ السلة</button></div></div></div></section><section class="app-page" id="ordersPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>طلباتي</h2><small>متابعة الطلبات السابقة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سجل الطلبات</h1><p>الطلبات التي تم إنشاؤها من الواجهة تظهر هنا.</p></div><div class="list" id="ordersList"></div></div></section><section class="app-page" id="notificationsPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>الإشعارات</h2><small>تنبيهات الحساب والطلبات</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>الإشعارات</h1><p>جميع التنبيهات الخاصة بعضويتك وطلباتك.</p></div><div class="list" id="notesList"></div></div></section><section class="app-page" id="profilePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>حسابي</h2><small>الملف الشخصي وطلبات الإدارة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="profile-hero"><div class="profile-top"><div class="avatar-big" id="profileAvatar"><span class="mi">person</span></div><div><h2 id="profileName">عضو تجريبي</h2><p id="profileUsername">عضو سوق المدينة الكبير</p></div></div></div><div class="profile-grid"><div class="info-box"><small>الهاتف</small><b id="profilePhone">07800000000</b></div><div class="info-box"><small>العنوان</small><b id="profileAddress">بغداد</b></div><div class="info-box"><small>الرصيد</small><b id="profileBalance">0 د.ع</b></div><div class="info-box"><small>تاريخ الإنشاء</small><b id="profileCreated">غير محدد</b></div></div><div class="section-title"><div><h2>طلبات الإدارة</h2><small>أرسل طلب تعديل أو إضافة رصيد</small></div></div><div class="request-actions"><button class="btn secondary" onclick="document.getElementById('profileAvatarInput').click()"><span class="mi">add_a_photo</span> تغيير صورة الملف</button><button class="btn secondary" onclick="openRequest('تغيير الاسم')"><span class="mi">badge</span> تغيير الاسم</button><button class="btn secondary" onclick="openRequest('تغيير الهاتف')"><span class="mi">call</span> تغيير الهاتف</button><button class="btn secondary" onclick="openRequest('تغيير العنوان')"><span class="mi">location_on</span> تغيير العنوان</button><button class="btn secondary" onclick="openRequest('إضافة رصيد')"><span class="mi">account_balance_wallet</span> إضافة رصيد</button><button class="btn secondary" onclick="openRequest('تغيير كلمة السر')"><span class="mi">lock_reset</span> تغيير كلمة السر</button></div><input id="profileAvatarInput" class="avatar-file" type="file" accept="image/*" onchange="handleProfileAvatarChange(event)"><div class="list" id="requestsList"></div></div></section><button class="float-cart" id="floatCart" onclick="go('cartPage')"><span class="mi">shopping_cart</span> السلة <span id="floatCount">0</span></button><nav class="bottom-nav" id="bottomNav"><button class="nav-btn active" onclick="go('homePage')"><span class="mi">home</span><span>الرئيسية</span></button><button class="nav-btn" onclick="go('cartPage')"><span class="mi">shopping_cart</span><span>السلة</span></button><button class="nav-btn" onclick="go('ordersPage')"><span class="mi">inventory_2</span><span>طلباتي</span></button><button class="nav-btn" onclick="go('notificationsPage')"><span class="mi">notifications</span><span>الإشعارات</span></button><button class="nav-btn" onclick="go('profilePage')"><span class="mi">person</span><span>حسابي</span></button></nav><div class="side-menu" id="sideMenu"><div class="menu-panel"><div class="top-row" style="margin-bottom:14px"><div class="brand"><div class="brand-mini"><img src="assets/images/asset-002-1e85ec81b9.gif" data-linko-shared-logo="1" alt="شعار"></div><div><h2>القائمة</h2><small>سوق المدينة الكبير</small></div></div><button class="icon-btn" onclick="closeMenu()"><span class="mi">close</span></button></div><button class="menu-item" onclick="showInfoPage('about')"><span><span class="mi">groups</span> من نحن</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('contact')"><span><span class="mi">share</span> حسابات التواصل</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('usage')"><span><span class="mi">help</span> كيفية استخدام الموقع</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('policy')"><span><span class="mi">policy</span> سياسة الاستخدام</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="logout()"><span><span class="mi">logout</span> تسجيل الخروج</span><span class="mi">chevron_left</span></button></div></div><div class="modal" id="infoModal"><div class="modal-card"><h2 id="infoTitle"></h2><div id="infoText" class="menu-page-body"></div><button class="btn full" onclick="closeModal('infoModal')">تم</button></div></div><div class="modal" id="requestModal"><div class="modal-card"><h2 id="requestTitle">طلب إلى الإدارة</h2><p>اكتب تفاصيل الطلب وسيظهر داخل سجل طلباتك بحالة قيد المراجعة.</p><div class="field"><label>التفاصيل</label><textarea id="requestText" placeholder="اكتب التفاصيل هنا..."></textarea></div><div class="modal-actions"><button class="btn" onclick="submitRequest()">إرسال</button><button class="btn secondary" onclick="closeModal('requestModal')">إلغاء</button></div></div></div><div class="modal" id="orderModal"><div class="modal-card"><h2>تم إرسال الطلب</h2><p>تم حفظ الطلب داخل سجل الطلبات التجريبي. عند الربط الحقيقي سيتم إرساله إلى قاعدة البيانات والإدارة.</p><button class="btn full" onclick="closeModal('orderModal');go('ordersPage')">عرض الطلبات</button></div></div><div class="photo-editor" id="photoEditor"><div class="photo-editor-card"><h2>ضبط الصورة</h2><p style="color:var(--muted);font-weight:800;line-height:1.8;margin:6px 0 12px">اسحب الصورة بإصبعك وعدّل الحجم. سيتم عرضها داخل الحساب بدون قص.</p><div class="photo-stage" id="photoStage"><img id="photoEditImg" alt="صورة العضو"></div><input id="photoZoom" type="range" min="1" max="2.2" step="0.05" value="1" oninput="updatePhotoTransform()"><div class="modal-actions"><button class="btn secondary" onclick="closePhotoEditor()">إلغاء</button><button class="btn" onclick="savePhotoEdit()">حفظ الصورة</button></div></div></div><div class="toast" id="toast"></div><script>
+<section class="app-page" id="homePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img alt="شعار" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><div><h2>سوق المدينة الكبير</h2><small id="welcomeText">أهلاً بك</small></div></div><div class="top-actions"><button class="icon-btn" onclick="openMenu()"><span class="mi">menu</span></button></div></div></header><div class="member-card"><div class="member-head"><div class="member-info"><b id="memberName">عضو تجريبي</b><small>بطاقة العضوية الرقمية</small></div><div class="member-avatar" id="memberAvatar"><span class="mi">person</span></div></div><div class="member-stats"><div class="member-stat"><small>الرصيد</small><b id="memberBalance">0 د.ع</b></div><div class="member-stat"><small>الحالة</small><b>مفعل</b></div><div class="member-stat"><small>الطلبات</small><b id="memberOrdersCount">0</b></div></div></div><div class="searchbar"><div class="input-icon"><span class="mi">search</span><input id="globalSearch" oninput="renderProducts()" placeholder="ابحث عن منتج أو فرع..."/></div><button class="icon-btn" onclick="toast('تم فتح خيارات البحث')"><span class="mi">tune</span></button></div><div class="section-title"><div><h2>الفروع والأقسام</h2><small>اختَر فرعاً لعرض منتجاته</small></div><button class="chip" onclick="selectBranch('all')">الكل</button></div><div class="branch-rail" id="branchesRail"></div><section class="products-section" id="productsSection"><div class="section-title"><div><h2 id="selectedBranchTitle">منتجات الفروع</h2><small id="productsCount">اختَر فرعاً أو ابحث عن منتج</small></div></div><div class="cats-rail compact" id="catsRail"></div><div class="products-grid" id="productsGrid"></div></section></div></section><section class="app-page" id="cartPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img alt="شعار" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><div><h2>السلة</h2><small>راجع طلبك قبل الإرسال</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سلة الطلب</h1><p>يمكنك تعديل الكميات وحذف المنتجات قبل إرسال الطلب.</p></div><div class="cart-layout"><div class="list" id="cartList"></div><div class="summary-box"><div class="sum-row"><span>عدد المنتجات</span><b id="cartItemsCount">0</b></div><div class="sum-row"><span>المجموع</span><b id="cartSubtotal">0 د.ع</b></div><div class="sum-row"><span>التوصيل</span><b>حسب المنطقة</b></div><div class="sum-row total"><span>الإجمالي</span><b id="cartTotal">0 د.ع</b></div><div class="field"><label>ملاحظة للطلب</label><textarea id="orderNote" placeholder="ملاحظات اختيارية: نوع، ماركة، وقت مناسب..."></textarea></div><button class="btn full" id="sendOrderBtn" onclick="sendOrder()"><span class="mi">send</span> إرسال الطلب</button><button class="btn secondary full" onclick="clearCart()" style="margin-top:8px"><span class="mi">delete</span> تفريغ السلة</button></div></div></div></section><section class="app-page" id="ordersPage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img alt="شعار" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><div><h2>طلباتي</h2><small>متابعة الطلبات السابقة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="page-head"><h1>سجل الطلبات</h1><p>الطلبات التي تم إنشاؤها من الواجهة تظهر هنا.</p></div><div class="list" id="ordersList"></div></div></section><section class="app-page" id="profilePage"><div class="app-wrap"><header class="topbar"><div class="top-row"><div class="brand"><div class="brand-mini"><img alt="شعار" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><div><h2>حسابي</h2><small>الملف الشخصي وطلبات الإدارة</small></div></div><button class="icon-btn" onclick="go('homePage')"><span class="mi">home</span></button></div></header><div class="profile-hero"><div class="profile-top"><div class="avatar-big" id="profileAvatar"><span class="mi">person</span></div><div><h2 id="profileName">عضو تجريبي</h2><p id="profileUsername">عضو سوق المدينة الكبير</p></div></div></div><div class="profile-grid"><div class="info-box"><small>الهاتف</small><b id="profilePhone">07800000000</b></div><div class="info-box"><small>العنوان</small><b id="profileAddress">بغداد</b></div><div class="info-box"><small>الرصيد</small><b id="profileBalance">0 د.ع</b></div><div class="info-box"><small>تاريخ الإنشاء</small><b id="profileCreated">غير محدد</b></div></div><div class="section-title"><div><h2>طلبات الإدارة</h2><small>أرسل طلب تعديل أو إضافة رصيد</small></div></div><div class="request-actions"><button class="btn secondary" onclick="document.getElementById('profileAvatarInput').click()"><span class="mi">add_a_photo</span> تغيير صورة الملف</button><button class="btn secondary" onclick="openRequest('تغيير الاسم')"><span class="mi">badge</span> تغيير الاسم</button><button class="btn secondary" onclick="openRequest('تغيير الهاتف')"><span class="mi">call</span> تغيير الهاتف</button><button class="btn secondary" onclick="openRequest('تغيير العنوان')"><span class="mi">location_on</span> تغيير العنوان</button><button class="btn secondary" onclick="openRequest('إضافة رصيد')"><span class="mi">account_balance_wallet</span> إضافة رصيد</button><button class="btn secondary" onclick="openRequest('تغيير كلمة السر')"><span class="mi">lock_reset</span> تغيير كلمة السر</button></div><input accept="image/*" class="avatar-file" id="profileAvatarInput" onchange="handleProfileAvatarChange(event)" type="file"/><div class="list" id="requestsList"></div></div></section><button class="float-cart" id="floatCart" onclick="go('cartPage')"><span class="mi">shopping_cart</span> السلة <span id="floatCount">0</span></button><nav class="bottom-nav" id="bottomNav"><button class="nav-btn active" onclick="go('homePage')"><span class="mi">home</span><span>الرئيسية</span></button><button class="nav-btn" onclick="go('cartPage')"><span class="mi">shopping_cart</span><span>السلة</span></button><button class="nav-btn" onclick="go('ordersPage')"><span class="mi">inventory_2</span><span>طلباتي</span></button><button class="nav-btn" onclick="go('profilePage')"><span class="mi">person</span><span>حسابي</span></button></nav><div class="side-menu" id="sideMenu"><div class="menu-panel"><div class="top-row" style="margin-bottom:14px"><div class="brand"><div class="brand-mini"><img alt="شعار" data-linko-shared-logo="1" src="assets/images/asset-002-1e85ec81b9.gif"/></div><div><h2>القائمة</h2><small>سوق المدينة الكبير</small></div></div><button class="icon-btn" onclick="closeMenu()"><span class="mi">close</span></button></div><button class="menu-item" onclick="showInfoPage('about')"><span><span class="mi">groups</span> من نحن</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('contact')"><span><span class="mi">share</span> حسابات التواصل</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('usage')"><span><span class="mi">help</span> كيفية استخدام الموقع</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="showInfoPage('policy')"><span><span class="mi">policy</span> سياسة الاستخدام</span><span class="mi">chevron_left</span></button><button class="menu-item" onclick="logout()"><span><span class="mi">logout</span> تسجيل الخروج</span><span class="mi">chevron_left</span></button></div></div><div class="modal" id="infoModal"><div class="modal-card"><h2 id="infoTitle"></h2><div class="menu-page-body" id="infoText"></div><button class="btn full" onclick="closeModal('infoModal')">تم</button></div></div><div class="modal" id="requestModal"><div class="modal-card"><h2 id="requestTitle">طلب إلى الإدارة</h2><p>اكتب تفاصيل الطلب وسيظهر داخل سجل طلباتك بحالة قيد المراجعة.</p><div class="field"><label>التفاصيل</label><textarea id="requestText" placeholder="اكتب التفاصيل هنا..."></textarea></div><div class="modal-actions"><button class="btn" onclick="submitRequest()">إرسال</button><button class="btn secondary" onclick="closeModal('requestModal')">إلغاء</button></div></div></div><div class="modal" id="orderModal"><div class="modal-card"><h2>تم إرسال الطلب</h2><p>تم حفظ الطلب داخل سجل الطلبات التجريبي. عند الربط الحقيقي سيتم إرساله إلى قاعدة البيانات والإدارة.</p><button class="btn full" onclick="closeModal('orderModal');go('ordersPage')">عرض الطلبات</button></div></div><div class="photo-editor" id="photoEditor"><div class="photo-editor-card"><h2>ضبط الصورة</h2><p style="color:var(--muted);font-weight:800;line-height:1.8;margin:6px 0 12px">اسحب الصورة بإصبعك وعدّل الحجم. سيتم عرضها داخل الحساب بدون قص.</p><div class="photo-stage" id="photoStage"><img alt="صورة العضو" id="photoEditImg"/></div><input id="photoZoom" max="2.2" min="1" oninput="updatePhotoTransform()" step="0.05" type="range" value="1"/><div class="modal-actions"><button class="btn secondary" onclick="closePhotoEditor()">إلغاء</button><button class="btn" onclick="savePhotoEdit()">حفظ الصورة</button></div></div></div><div class="toast" id="toast"></div><script>
 const DEMO_USER={username:'member_demo',password:'123456',name:'عضو سوق المدينة',phone:'07800000000',address:'بغداد',balance:75000,status:'مفعل',created:'2026/07/04',avatar:localStorage.getItem('lm_demo_avatar')||''};
 let currentUser=null, selectedBranch='all', selectedCat='all', currentRequestType='', cart=JSON.parse(localStorage.getItem('lm_cart')||'[]'), orders=JSON.parse(localStorage.getItem('lm_orders')||'[]'), requests=JSON.parse(localStorage.getItem('lm_requests')||'[]');
 const branches=[
@@ -1217,7 +1199,6 @@ Object.assign(productImages,{
 /* ===== /LINKO PATCH: BRANCHES 4-7 PRODUCT IMAGES FROM USER PDF ===== */
 const products=[]; Object.keys(branchProducts).forEach((bid,bi)=>{branchProducts[bid].forEach((name,i)=>products.push({id:bid+'_'+i,branch:bid,name,status:'متوفر',badge:'',group:productGroups[bid]?.[name]||'',icon:branches.find(b=>b.id===bid)?.icon||'shopping_bag',image:productImages[bid+'::'+name]||productImages[name]||''}))});
 branches.forEach(b=>{if(branchProducts[b.id]) b.count=branchProducts[b.id].length;});
-const notes=[{title:'مرحباً بك في سوق المدينة الكبير',text:'يمكنك الآن تصفح الفروع وإضافة المنتجات للسلة.',type:'info'},{title:'حسابك مفعل',text:'بطاقة العضوية جاهزة للاستخدام.',type:'ok'},{title:'تنبيه طلبات الإدارة',text:'طلبات التعديل تظهر في حسابك بحالة قيد المراجعة.',type:'pending'}];
 window.addEventListener('load',()=>{renderAll();});
 let pendingAvatarData='', avatarScale=1, avatarX=0, avatarY=0, dragStart=null;
 function getSavedMembers(){return JSON.parse(localStorage.getItem('lm_members')||'[]')}
@@ -1238,8 +1219,8 @@ function switchAuth(type){loginTab.classList.toggle('active',type==='login');reg
 function login(e){e.preventDefault();const fullName=loginUsername.value.trim(),p=loginPassword.value.trim(); const saved=getSavedMembers().find(x=>[x.name,x.username].some(v=>String(v||'').trim()===fullName)&&x.password===p); const demoOk=([DEMO_USER.name,DEMO_USER.username,'member'].includes(fullName)&&p===DEMO_USER.password); if(demoOk||saved){currentUser={...(saved||DEMO_USER)};fillUser();go('homePage');toast('تم تسجيل الدخول بنجاح');}else toast('الاسم الكامل أو الرمز غير صحيح')}
 function register(e){e.preventDefault();let members=getSavedMembers();const fullName=regName.value.trim();if(!fullName||!regPassword.value.trim()||!regPhone.value.trim()||!regAddress.value.trim()){toast('أكمل بيانات الاشتراك أولاً');return}const user={username:'member_'+Date.now(),password:regPassword.value.trim(),name:fullName,phone:regPhone.value.trim(),address:regAddress.value.trim(),balance:0,status:'قيد المراجعة',created:new Date().toLocaleDateString('ar-IQ'),avatar:pendingAvatarData};members.unshift(user);setSavedMembers(members);currentUser={...user};fillUser();e.target.reset();pendingAvatarData='';renderAvatarBox(regAvatarPreview,'');switchAuth('login');toast('تم إرسال طلب الاشتراك بنجاح، يمكنك الدخول بالاسم الكامل والرمز بعد الموافقة')}
 function fillUser(){memberName.textContent=currentUser.name;welcomeText.textContent='أهلاً، '+currentUser.name;memberBalance.textContent=money(currentUser.balance);profileName.textContent=currentUser.name;profileUsername.textContent='عضو سوق المدينة الكبير';profilePhone.textContent=currentUser.phone;profileAddress.textContent=currentUser.address;memberOrdersCount.textContent=orders.length;renderAvatarBox(memberAvatar,currentUser.avatar);renderAvatarBox(profileAvatar,currentUser.avatar)}
-function go(id){document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.getElementById('bottomNav').style.display=id==='authPage'?'none':'grid';document.getElementById('floatCart').classList.toggle('show',cart.length>0 && id==='homePage');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const map={homePage:0,cartPage:1,ordersPage:2,notificationsPage:3,profilePage:4};if(map[id]!=null)document.querySelectorAll('.nav-btn')[map[id]].classList.add('active'); if(id==='cartPage')renderCart(); if(id==='ordersPage')renderOrders(); if(id==='notificationsPage')renderNotes(); if(id==='profilePage')renderRequests(); window.scrollTo(0,0)}
-function renderAll(){renderBranches();renderCats();renderProducts();renderCart();renderOrders();renderNotes();renderRequests();updateCart()}
+function go(id){document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.getElementById('bottomNav').style.display=id==='authPage'?'none':'grid';document.getElementById('floatCart').classList.toggle('show',cart.length>0 && id==='homePage');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));const map={homePage:0,cartPage:1,ordersPage:2,profilePage:3};if(map[id]!=null)document.querySelectorAll('.nav-btn')[map[id]].classList.add('active'); if(id==='cartPage')renderCart(); if(id==='ordersPage')renderOrders(); if(id==='profilePage')renderRequests(); window.scrollTo(0,0)}
+function renderAll(){renderBranches();renderCats();renderProducts();renderCart();renderOrders();renderRequests();updateCart()}
 function renderBranches(){branchesRail.innerHTML=branches.map(b=>`<button class="branch-card ${selectedBranch===b.id?'active':''} ${b.id==='linko'?'linko-branch-card':''}" onclick="selectBranch('${b.id}')"><div class="branch-img"><span class="mi">${b.icon}</span></div><h3>${b.name}</h3><small>${b.count} منتج وخدمة</small></button>`).join('')}
 function renderCats(){catsRail.innerHTML=cats.map(c=>`<button class="chip ${selectedCat===c||selectedCat==='all'&&c==='الكل'?'active':''}" onclick="selectedCat='${c==='الكل'?'all':c}';renderCats();renderProducts();">${c}</button>`).join('')}
 function selectBranch(id){selectedBranch=id;selectedCat='all';renderBranches();renderCats();renderProducts();const sec=document.getElementById('productsSection'); if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'});toast(id==='all'?'تم عرض كل المنتجات':'تم اختيار الفرع')}
@@ -1321,7 +1302,6 @@ function qty(id,d){let item=cart.find(x=>x.id===id);if(!item)return;item.qty+=d;
 function clearCart(){cart=[];saveCart();renderCart();renderProducts();updateCart();toast('تم تفريغ السلة')}
 function __linkoLegacyCoreSendOrder(){if(!cart.length){toast('السلة فارغة');return}orders.unshift({id:Date.now(),items:[...cart],note:orderNote.value,status:'قيد المراجعة',date:new Date().toLocaleString('ar-IQ')});saveOrders();cart=[];saveCart();renderCart();renderProducts();updateCart();document.getElementById('orderModal').classList.add('show')}
 function renderOrders(){ordersList.innerHTML=orders.length?orders.map(o=>`<div class="order-card"><div class="order-top"><div><h3>طلب رقم ${o.id}</h3><p>${o.items.length} منتجات — ${money(o.total)}</p><small>${o.date}</small></div><span class="status pending">${o.status}</span></div></div>`).join(''):'<div class="empty-card">لا توجد طلبات بعد</div>';memberOrdersCount.textContent=orders.length}
-function renderNotes(){notesList.innerHTML=notes.map(n=>`<div class="note-card"><div class="note-top"><div><h3>${n.title}</h3><p>${n.text}</p></div><span class="status ${n.type}">${n.type==='ok'?'مهم':n.type==='pending'?'تنبيه':'معلومة'}</span></div></div>`).join('');notifBadge.textContent=notes.length}
 function handleProfileAvatarChange(e){const file=e.target.files&&e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{if(!currentUser)return;currentUser.avatar=r.result;if(currentUser.name===DEMO_USER.name){localStorage.setItem('lm_demo_avatar',r.result)}else{let members=getSavedMembers();members=members.map(m=>m.name===currentUser.name&&m.password===currentUser.password?{...m,avatar:r.result}:m);setSavedMembers(members)}fillUser();toast('تم تغيير صورة الملف الشخصي')};r.readAsDataURL(file)}
 function openRequest(type){currentRequestType=type;requestTitle.textContent=type;requestText.value='';document.getElementById('requestModal').classList.add('show')}
 function submitRequest(){if(!requestText.value.trim()){toast('اكتب تفاصيل الطلب أولاً');return}requests.unshift({type:currentRequestType,text:requestText.value.trim(),status:'قيد المراجعة',date:new Date().toLocaleString('ar-IQ')});saveRequests();closeModal('requestModal');renderRequests();toast('تم إرسال الطلب للإدارة')}
@@ -1808,7 +1788,7 @@ body.linko-dark .quantity-box{background:#111827!important;border-color:rgba(255
 body.linko-dark .add-product-head small,
 body.linko-dark .cart-details{color:#e5e7eb!important}
 body.linko-dark .unavailable-note{background:rgba(127,29,29,.55)!important;color:#fecaca!important}
-</style><div class="modal add-product-modal" id="addProductModal"><div class="modal-card"><h2>إضافة المنتج للسلة</h2><div class="add-product-head"><div class="add-product-img" id="addProductImg"></div><div><h3 id="addProductName">اسم المنتج</h3><small id="addProductMeta">تفاصيل المنتج</small></div></div><div class="quantity-box"><b>الكمية</b><div class="quantity-actions"><button type="button" onclick="changePendingQty(1)">+</button><span id="pendingQty">1</span><button type="button" onclick="changePendingQty(-1)">−</button></div></div><div class="field"><label>تفاصيل الطلب</label><textarea id="pendingDetails" placeholder="اكتب تفاصيل الطلب (الوزن، العدد، الحجم، اللون، المقاس…)"></textarea></div><div class="field"><label>ملاحظة إضافية (اختياري)</label><textarea id="pendingNote" placeholder="اكتب أي ملاحظة إضافية هنا..."></textarea></div><div class="modal-actions"><button class="btn" type="button" onclick="confirmAddProductToCart()"><span class="mi">add_shopping_cart</span> إضافة إلى السلة</button><button class="btn secondary" type="button" onclick="closeModal('addProductModal')">إلغاء</button></div></div></div><script id="linkoMemberFinalFunctionalScript">
+</style><div class="modal add-product-modal" id="addProductModal"><div class="modal-card"><h2>إضافة المنتج للسلة</h2><div class="add-product-head"><div class="add-product-img" id="addProductImg"></div><div><h3 id="addProductName">اسم المنتج</h3><small id="addProductMeta">تفاصيل المنتج</small></div></div><div class="quantity-box"><b>الكمية</b><div class="quantity-actions"><button onclick="changePendingQty(1)" type="button">+</button><span id="pendingQty">1</span><button onclick="changePendingQty(-1)" type="button">−</button></div></div><div class="field"><label>تفاصيل الطلب</label><textarea id="pendingDetails" placeholder="اكتب تفاصيل الطلب (الوزن، العدد، الحجم، اللون، المقاس…)"></textarea></div><div class="field"><label>ملاحظة إضافية (اختياري)</label><textarea id="pendingNote" placeholder="اكتب أي ملاحظة إضافية هنا..."></textarea></div><div class="modal-actions"><button class="btn" onclick="confirmAddProductToCart()" type="button"><span class="mi">add_shopping_cart</span> إضافة إلى السلة</button><button class="btn secondary" onclick="closeModal('addProductModal')" type="button">إلغاء</button></div></div></div><script id="linkoMemberFinalFunctionalScript">
 (function(){
   const adminSettings = JSON.parse(localStorage.getItem('linko_market_public_settings') || '{}');
 window.linkoMarketSettings = Object.assign({
@@ -2026,7 +2006,7 @@ body.linko-dark .chip.active,body.linko-dark .nav-btn.active{background:rgba(246
 body.linko-dark .linko-chat-card{background:#0f172a}.linko-dark .linko-chat-body{background:linear-gradient(180deg,#171C26,#0b0f17)}.linko-dark .linko-chat-questions{background:#0f172a;border-top-color:rgba(246,182,74,.20)}.linko-dark .linko-msg.user{background:#F6B64A;color:#111827}.linko-dark .linko-msg.bot{background:#252A34;color:#fff;border:1px solid rgba(246,182,74,.18)}
 .special-request-card{grid-column:1/-1;background:linear-gradient(135deg,#252A34,#171C26);color:#fff;border:1px solid rgba(246,182,74,.35);border-radius:26px;padding:18px;box-shadow:var(--soft);display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:right}.special-request-card b{color:#fff!important;font-size:18px}.special-request-card p{color:#f6e8c7!important;font-weight:800;line-height:1.7}.special-request-card .mi{font-size:34px;color:#F6B64A!important}.special-request-card button{min-height:44px;border-radius:16px;background:#F6B64A;color:#171C26;font-weight:900;padding:8px 12px;white-space:nowrap}
 @media(max-width:430px){.linko-smart-float{right:14px;bottom:86px;min-height:48px;padding:0 12px;font-size:13px}.linko-chat-modal{padding:0;align-items:stretch}.linko-chat-card{height:100dvh;max-height:none;border-radius:0}.special-request-card{display:grid}.special-request-card button{width:100%}}
-</style><button class="linko-smart-float" id="linkoSmartFloat" type="button" onclick="openSmartAssistant()"><span class="mi">forum</span> المساعد الذكي</button><div class="linko-chat-modal" id="smartAssistantModal" aria-hidden="true"><div class="linko-chat-card"><div class="linko-chat-head"><div><b>المساعد الذكي</b><small>إجابات سريعة حول استخدام سوق المدينة</small></div><button class="linko-chat-close" type="button" onclick="closeSmartAssistant()"><span class="mi">close</span></button></div><div class="linko-chat-body" id="smartChatBody"></div><div class="linko-chat-questions" id="smartQuestionsRail"></div></div></div><div class="modal" id="specialRequestModal"><div class="modal-card"><h2>طلب خاص</h2><p>اكتب المنتج الذي لم تجده داخل الفرع وسنراجعه ضمن طلبك.</p><div class="field"><label>اسم المنتج المطلوب</label><input id="specialProductName" placeholder="مثلاً: نوع رز محدد، لون معين، حجم خاص..."></div><div class="field"><label>تفاصيل المنتج</label><textarea id="specialProductDetails" placeholder="اكتب التفاصيل المطلوبة بوضوح"></textarea></div><div class="quantity-box"><b>الكمية</b><div class="quantity-actions"><button type="button" onclick="changeSpecialQty(1)">+</button><span id="specialQty">1</span><button type="button" onclick="changeSpecialQty(-1)">−</button></div></div><div class="field"><label>ملاحظة إضافية (اختياري)</label><textarea id="specialProductNote" placeholder="أي ملاحظة إضافية"></textarea></div><div class="modal-actions"><button class="btn" type="button" onclick="confirmSpecialRequest()"><span class="mi">add_shopping_cart</span> إضافة الطلب الخاص إلى السلة</button><button class="btn secondary" type="button" onclick="closeModal('specialRequestModal')">إلغاء</button></div></div></div><script id="medinaBazaarRequestedUpdateScript">
+</style><button class="linko-smart-float" id="linkoSmartFloat" onclick="openSmartAssistant()" type="button"><span class="mi">forum</span> المساعد الذكي</button><div aria-hidden="true" class="linko-chat-modal" id="smartAssistantModal"><div class="linko-chat-card"><div class="linko-chat-head"><div><b>المساعد الذكي</b><small>إجابات سريعة حول استخدام سوق المدينة</small></div><button class="linko-chat-close" onclick="closeSmartAssistant()" type="button"><span class="mi">close</span></button></div><div class="linko-chat-body" id="smartChatBody"></div><div class="linko-chat-questions" id="smartQuestionsRail"></div></div></div><div class="modal" id="specialRequestModal"><div class="modal-card"><h2>طلب خاص</h2><p>اكتب المنتج الذي لم تجده داخل الفرع وسنراجعه ضمن طلبك.</p><div class="field"><label>اسم المنتج المطلوب</label><input id="specialProductName" placeholder="مثلاً: نوع رز محدد، لون معين، حجم خاص..."/></div><div class="field"><label>تفاصيل المنتج</label><textarea id="specialProductDetails" placeholder="اكتب التفاصيل المطلوبة بوضوح"></textarea></div><div class="quantity-box"><b>الكمية</b><div class="quantity-actions"><button onclick="changeSpecialQty(1)" type="button">+</button><span id="specialQty">1</span><button onclick="changeSpecialQty(-1)" type="button">−</button></div></div><div class="field"><label>ملاحظة إضافية (اختياري)</label><textarea id="specialProductNote" placeholder="أي ملاحظة إضافية"></textarea></div><div class="modal-actions"><button class="btn" onclick="confirmSpecialRequest()" type="button"><span class="mi">add_shopping_cart</span> إضافة الطلب الخاص إلى السلة</button><button class="btn secondary" onclick="closeModal('specialRequestModal')" type="button">إلغاء</button></div></div></div><script id="medinaBazaarRequestedUpdateScript">
 (function(){
 window.linkoMarketSettings = Object.assign({ whatsappNumber:'07887624967', deliveryPer3Kg:0 }, window.linkoMarketSettings || {});
   let specialQtyValue=1;
@@ -3105,7 +3085,7 @@ target.classList.add('active');
     const bottom = document.getElementById('bottomNav');
     if(bottom) bottom.style.display = id === 'authPage' ? 'none' : 'grid';
 document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    const map = {homePage:0, cartPage:1, ordersPage:2, notificationsPage:3, profilePage:4};
+    const map = {homePage:0, cartPage:1, ordersPage:2, profilePage:3};
     if(map[id] != null){
       const navs = document.querySelectorAll('.nav-btn');
       if(navs[map[id]]) navs[map[id]].classList.add('active');
@@ -3113,7 +3093,6 @@ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
 try{
       if(id === 'cartPage' && typeof renderCart === 'function') renderCart();
       if(id === 'ordersPage' && typeof renderOrders === 'function') renderOrders();
-      if(id === 'notificationsPage' && typeof renderNotes === 'function') renderNotes();
       if(id === 'profilePage' && typeof renderRequests === 'function') renderRequests();
       if(id === 'homePage'){
         if(typeof renderBranches === 'function') renderBranches();
@@ -3675,7 +3654,7 @@ background:linear-gradient(135deg,#111827,#1e293b)!important;
 .linko-image-viewer-close{position:absolute;top:10px;left:10px;width:42px;height:42px;border-radius:15px;background:#111827;color:#fff;font-weight:900;display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.25);}
 body.linko-dark .linko-image-viewer-card{background:#0f172a!important;}
 body.linko-dark .linko-image-viewer-title{color:#fff!important;}
-</style><div class="linko-image-viewer" id="linkoImageViewer" onclick="if(event.target===this) linkoCloseImageViewer()"><div class="linko-image-viewer-card"><button type="button" class="linko-image-viewer-close" onclick="linkoCloseImageViewer()">×</button><img id="linkoImageViewerImg" alt="صورة المنتج"><div class="linko-image-viewer-title" id="linkoImageViewerTitle"></div></div></div><script id="linkoProductImageViewerScript">
+</style><div class="linko-image-viewer" id="linkoImageViewer" onclick="if(event.target===this) linkoCloseImageViewer()"><div class="linko-image-viewer-card"><button class="linko-image-viewer-close" onclick="linkoCloseImageViewer()" type="button">×</button><img alt="صورة المنتج" id="linkoImageViewerImg"/><div class="linko-image-viewer-title" id="linkoImageViewerTitle"></div></div></div><script id="linkoProductImageViewerScript">
 (function(){
 window.linkoOpenImageViewer=function(src,title){
     var box=document.getElementById('linkoImageViewer'), img=document.getElementById('linkoImageViewerImg'), t=document.getElementById('linkoImageViewerTitle');
@@ -4099,7 +4078,6 @@ else {try{renderBranches();}catch(e){}}
   };
   const CHANGE_COLLECTION = 'memberChangeRequests';
   const MEMBERS_COLLECTION = 'members';
-  const NOTIFICATIONS_COLLECTION = 'memberNotifications';
   let fbPromise = null;
   let currentRequestTypeClean = '';
 
@@ -4214,10 +4192,9 @@ else {try{renderBranches();}catch(e){}}
     list.prepend(card);
   }
 
-  // READ AUDIT: member and notification realtime listeners removed here;
-  // the authoritative lazy notification path lives later in the file.
+  // READ AUDIT: no realtime member-request listener runs here.
 })();
-</script><!-- ===== LINKO REGRESSION GUARD: PHASE 4 STABILITY + PHASE 5 LOGS ===== --><!-- ===== LINKO PHASE 5 ROOT REGRESSION FIX: no duplicate members, real order count, member notifications, clean request list ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoPhase5MenuNotificationsOrdersRecheckedFinal --><!-- ===== LINKO PHASE 5 ROOT FIX: ORDERS COUNT + ADMIN MEMBERS LIVE SOURCE ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoPhase5OrdersAndAdminMembersRootFix --><!-- ===== LINKO FINAL ROOT PATCH: orders counter, stable created date, wallet editor ===== --><!-- ===== LINKO FINAL STABLE FIX: orders count + balance + created date without blinking ===== --><script id="linkoFinalStableMemberLocalDisplayOnly">
+</script><!-- ===== LINKO REGRESSION GUARD: PHASE 4 STABILITY + PHASE 5 LOGS ===== --><!-- ===== LINKO PHASE 5 ROOT REGRESSION FIX: no duplicate members, real order count, clean request list ===== --><!-- ===== LINKO PHASE 5 ROOT FIX: ORDERS COUNT + ADMIN MEMBERS LIVE SOURCE ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoPhase5OrdersAndAdminMembersRootFix --><!-- ===== LINKO FINAL ROOT PATCH: orders counter, stable created date, wallet editor ===== --><!-- ===== LINKO FINAL STABLE FIX: orders count + balance + created date without blinking ===== --><script id="linkoFinalStableMemberLocalDisplayOnly">
 (function(){
   'use strict';
   if(window.__linkoFinalStableMemberLocalDisplayOnly) return;
@@ -4549,80 +4526,132 @@ else {try{renderBranches();}catch(e){}}
 (function(){
   'use strict';
   if(window.__linkoCatalogControlHub) return;
-  const channels = new Map();
-  const AGGREGATES = {productControls:'__linko_catalog_v1__',branchControls:'__linko_branches_v1__'};
+
+  const AGGREGATES={productControls:'__linko_catalog_v1__',branchControls:'__linko_branches_v1__'};
+  const channels=new Map();
+
   function clean(v){return String(v==null?'':v).trim();}
-  function mapKey(id){return 'k_'+Array.from(String(id||'')).map(function(ch){return /[A-Za-z0-9_-]/.test(ch)?ch:('_'+ch.codePointAt(0).toString(16)+'_');}).join('');}
-  function fakeDoc(name,id,data){return {id:encodeURIComponent(id),data:function(){return Object.assign({},data,name==='productControls'?{productId:id}:{branchId:id});}};}
-  function makeSynthetic(name,controls){
-    controls=controls||{};
-    const docs=[];
-    Object.keys(controls).forEach(function(k){const d=controls[k]||{},id=clean(name==='productControls'?d.productId:d.branchId);if(id)docs.push(fakeDoc(name,id,d));});
-    return {docs:docs,size:docs.length,empty:docs.length===0,forEach:function(fn){docs.forEach(fn);},docChanges:function(){return docs.map(function(doc){return {type:'added',doc:doc};});}};
+  function normalizeStatus(v){return (v==='unavailable'||v==='stopped'||v==='غير متوفر')?'unavailable':'available';}
+  function itemId(name,row,fallback){
+    row=row||{};
+    return clean(row.id || (name==='productControls'?row.productId:row.branchId) || fallback || '');
   }
-  async function loadAggregate(firebaseRef,name){
-    let channel=channels.get(name);
-    if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else if(!channel.subs){channel.subs=new Set();}
-    if(channel.loaded)return channel.last;
-    if(channel.loading)return channel.loading;
-    const fs=firebaseRef.fs,db=firebaseRef.db,docId=AGGREGATES[name];
-    channel.loading=(async function(){
-      const ref=fs.doc(db,name,docId);
-      const snap=await fs.getDoc(ref); // exactly one document read
-      const controls=snap.exists()?((snap.data()||{}).controls||{}):{};
-      channel.last=makeSynthetic(name,controls);
-      channel.loaded=true;
-      return channel.last;
-    })().finally(function(){channel.loading=null;});
-    return channel.loading;
+  function channel(name){
+    let c=channels.get(name);
+    if(!c){c={name,ready:false,rows:{},snapshot:null,subs:new Set(),unsub:null,startPromise:null,waiters:[]};channels.set(name,c);}
+    return c;
   }
-  function subscribe(firebaseRef,collectionName,onNext,onError){
-    const name=clean(collectionName);
-    if(!firebaseRef||!firebaseRef.fs||!firebaseRef.db||!name||typeof onNext!=='function')return function(){};
-    if(!AGGREGATES[name]){
-      const err=new Error('LINKO_FULL_COLLECTION_READ_DISABLED:'+name);
-      if(typeof onError==='function')Promise.resolve().then(function(){onError(err);});
-      else console.warn(err.message);
-      return function(){};
+  function parseRows(name,data){
+    data=data||{};const out={};
+    if(Array.isArray(data.items)){
+      data.items.forEach(function(row){
+        const id=itemId(name,row,'');if(!id)return;
+        const copy=Object.assign({},row);
+        if(name==='productControls')copy.productId=id;else copy.branchId=id;
+        copy.status=normalizeStatus(copy.status);
+        if(name==='productControls'&&!(Number(copy.price)>0))delete copy.price;
+        out[id]=copy;
+      });
+      return out;
     }
-    let channel=channels.get(name);
-    if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else if(!channel.subs){channel.subs=new Set();}
-    let alive=true,sub={onNext:onNext,onError:onError};channel.subs.add(sub);
-    loadAggregate(firebaseRef,name).then(function(snapshot){if(alive)onNext(snapshot);}).catch(function(error){if(alive&&typeof onError==='function')onError(error);});
-    return function(){alive=false;channel.subs.delete(sub);};
+    const controls=data.controls&&typeof data.controls==='object'?data.controls:{};
+    Object.keys(controls).forEach(function(k){
+      const row=controls[k]||{},id=itemId(name,row,k);if(!id)return;
+      const copy=Object.assign({},row);
+      if(name==='productControls')copy.productId=id;else copy.branchId=id;
+      copy.status=normalizeStatus(copy.status);
+      if(name==='productControls'&&!(Number(copy.price)>0))delete copy.price;
+      out[id]=copy;
+    });
+    return out;
+  }
+  function makeSnapshot(name,rows){
+    const docs=Object.keys(rows||{}).map(function(id){
+      const data=Object.assign({},rows[id]);
+      return {id:encodeURIComponent(id),data:function(){return Object.assign({},data);}};
+    });
+    return {docs,size:docs.length,empty:docs.length===0,forEach:function(fn){docs.forEach(fn);},docChanges:function(){return docs.map(function(doc){return{type:'added',doc};});}};
+  }
+  function publish(c){
+    c.snapshot=makeSnapshot(c.name,c.rows);
+    c.ready=true;
+    const waits=c.waiters.splice(0);waits.forEach(function(r){try{r(c.snapshot);}catch(e){}});
+    c.subs.forEach(function(sub){try{sub.onNext(c.snapshot);}catch(e){if(sub.onError)sub.onError(e);}});
+  }
+  function start(firebaseRef,name){
+    if(!AGGREGATES[name])return Promise.reject(new Error('CATALOG_COLLECTION_BLOCKED:'+name));
+    const c=channel(name);if(c.startPromise)return c.startPromise;
+    c.startPromise=new Promise(function(resolve,reject){
+      try{
+        const fs=firebaseRef.fs,db=firebaseRef.db,ref=fs.doc(db,name,AGGREGATES[name]);
+        c.unsub=fs.onSnapshot(ref,function(snap){
+          c.rows=parseRows(name,snap.exists()?(snap.data()||{}):{});publish(c);resolve(c.snapshot);
+        },function(error){
+          c.subs.forEach(function(sub){try{if(sub.onError)sub.onError(error);}catch(e){}});reject(error);
+        });
+      }catch(error){reject(error);}
+    });
+    return c.startPromise;
+  }
+  async function waitReady(firebaseRef,name){
+    const c=channel(name);if(c.ready)return c.snapshot;
+    start(firebaseRef,name).catch(function(){});
+    return new Promise(function(resolve){c.waiters.push(resolve);});
+  }
+  function subscribe(firebaseRef,name,onNext,onError){
+    name=clean(name);
+    if(!AGGREGATES[name]){const e=new Error('CATALOG_COLLECTION_BLOCKED:'+name);if(onError)Promise.resolve().then(function(){onError(e);});return function(){};}
+    const c=channel(name),sub={onNext,onError};c.subs.add(sub);
+    if(c.ready)Promise.resolve().then(function(){try{onNext(c.snapshot);}catch(e){if(onError)onError(e);}});
+    start(firebaseRef,name).catch(function(e){if(onError)onError(e);});
+    return function(){c.subs.delete(sub);};
   }
   async function refresh(firebaseRef,name){
-    name=clean(name);if(!AGGREGATES[name])return null;
-    let channel=channels.get(name);if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else{channel.loaded=false;channel.last=null;}
-    const snapshot=await loadAggregate(firebaseRef,name);
-    (channel.subs||new Set()).forEach(function(sub){try{sub.onNext(snapshot);}catch(error){if(typeof sub.onError==='function')sub.onError(error);}});
-    return snapshot;
+    // Live onSnapshot is authoritative. This returns the current in-memory snapshot without a new read.
+    name=clean(name);await waitReady(firebaseRef,name);return channel(name).snapshot;
   }
-  async function refreshAll(firebaseRef){return Promise.all(Object.keys(AGGREGATES).map(function(name){return refresh(firebaseRef,name);}));}
-  async function ensureAggregate(firebaseRef,name){
-    const fs=firebaseRef.fs,db=firebaseRef.db,docId=AGGREGATES[name];
-    if(!docId)throw new Error('INVALID_AGGREGATE');
-    const ref=fs.doc(db,name,docId);
-    const snap=await fs.getDoc(ref);
-    if(snap.exists())return {ref:ref,data:snap.data()||{}};
-    // Never scan legacy per-item documents. Create the aggregate empty and let explicit admin edits populate it.
-    await fs.setDoc(ref,{schemaVersion:1,controls:{},createdAt:fs.serverTimestamp(),updatedAt:fs.serverTimestamp()},{merge:true});
-    return {ref:ref,data:{controls:{}}};
+  async function refreshAll(firebaseRef){
+    return Promise.all(Object.keys(AGGREGATES).map(function(name){return refresh(firebaseRef,name);}));
   }
-  function sanitizeControlPatch(name,patch){const out={};patch=patch||{};if(Object.prototype.hasOwnProperty.call(patch,'name')){const v=clean(patch.name);if(v)out.name=v;}if(Object.prototype.hasOwnProperty.call(patch,'status'))out.status=patch.status==='unavailable'?'unavailable':'available';if(name==='productControls'&&Object.prototype.hasOwnProperty.call(patch,'price')){const n=Math.round(Number(patch.price));if(Number.isFinite(n)&&n>0)out.price=n;}return out;}
-  async function writeControl(firebaseRef,collectionName,id,patch){
-    const name=clean(collectionName),itemId=clean(id);
-    if(!AGGREGATES[name]||!itemId)throw new Error('INVALID_CONTROL_WRITE');
-    const fs=firebaseRef.fs,db=firebaseRef.db,info=await ensureAggregate(firebaseRef,name),ref=info.ref,key=mapKey(itemId),recordBase=name==='productControls'?{productId:itemId}:{branchId:itemId},safePatch=sanitizeControlPatch(name,patch),existing=((info.data||{}).controls||{})[key]||{},next=Object.assign({},existing,recordBase,safePatch);
-    Object.keys(next).forEach(function(k){if(next[k]===undefined||(typeof next[k]==='number'&&!Number.isFinite(next[k])))delete next[k];});
-    const nextControls=Object.assign({},(info.data||{}).controls||{});nextControls[key]=next;
-    await fs.setDoc(ref,{schemaVersion:1,controls:nextControls,updatedAt:fs.serverTimestamp()},{merge:true});
-    const channel=channels.get(name);if(channel){channel.loaded=false;channel.last=null;}
+  function sanitizedPatch(name,patch){
+    patch=patch||{};const out={};
+    if(Object.prototype.hasOwnProperty.call(patch,'name')){const v=clean(patch.name);if(v)out.name=v;}
+    if(Object.prototype.hasOwnProperty.call(patch,'status'))out.status=normalizeStatus(patch.status);
+    if(name==='productControls'&&Object.prototype.hasOwnProperty.call(patch,'price')){const n=Math.round(Number(patch.price));if(Number.isFinite(n)&&n>0)out.price=n;}
+    return out;
   }
-  function stats(){const result={};channels.forEach(function(channel,name){result[name]={loaded:!!channel.loaded,mode:'one-shot-aggregate'};});return result;}
-  window.__linkoCatalogControlHub={subscribe:subscribe,refresh:refresh,refreshAll:refreshAll,writeControl:writeControl,stats:stats,aggregateIds:Object.assign({},AGGREGATES)};
+  function snapshotItems(name,rows){
+    return Object.keys(rows).sort().map(function(id){
+      const r=rows[id]||{};
+      if(name==='productControls'){
+        const x={id:id,productId:id,name:clean(r.name),status:normalizeStatus(r.status)};
+        if(Number(r.price)>0)x.price=Math.round(Number(r.price));
+        return x;
+      }
+      return {id:id,branchId:id,name:clean(r.name),status:normalizeStatus(r.status)};
+    });
+  }
+  async function writeControl(firebaseRef,name,id,patch){
+    name=clean(name);id=clean(id);if(!AGGREGATES[name]||!id)throw new Error('INVALID_CONTROL_WRITE');
+    await waitReady(firebaseRef,name);
+    const c=channel(name),fs=firebaseRef.fs,db=firebaseRef.db,safe=sanitizedPatch(name,patch);
+    const existing=Object.assign({},c.rows[id]||{}),next=Object.assign({},existing,safe);
+    if(name==='productControls')next.productId=id;else next.branchId=id;
+    next.status=normalizeStatus(next.status);
+    if(name==='productControls'&&!(Number(next.price)>0))delete next.price;
+    c.rows[id]=next;
+    const direct=Object.assign({},next,{updatedAt:fs.serverTimestamp()});
+    const batch=fs.writeBatch(db);
+    batch.set(fs.doc(db,name,encodeURIComponent(id)),direct,{merge:true});
+    batch.set(fs.doc(db,name,AGGREGATES[name]),{schemaVersion:2,items:snapshotItems(name,c.rows),updatedAt:fs.serverTimestamp()},{merge:true});
+    try{await batch.commit();}catch(error){c.rows[id]=existing;throw error;}
+    return Object.assign({},next);
+  }
+  function stats(){const out={};channels.forEach(function(c,n){out[n]={loaded:c.ready,mode:'single-live-aggregate'};});return out;}
+
+  window.__linkoCatalogControlHub={subscribe,refresh,refreshAll,writeControl,stats,aggregateIds:Object.assign({},AGGREGATES)};
 })();
-</script><!-- ===== LINKO FOUNDATION PHASE 2F REBUILT: MEMBER-SCOPED FIRESTORE READS ===== --><!-- ===== LINKO FIRESTORE READ OPTIMIZATION: MEMBER/ORDER SHARED HUB ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoFirestoreReadOptimizationHub --><!-- ===== LINKO STAGE 6.2: SMOOTH PRODUCT STATUS + NAME EDIT ONLY ===== --><!-- ===== LINKO STAGE 7.1 FINAL: WHATSAPP + MEMBER ORDERS + ADMIN ORDERS + COUNTS ONLY ===== --><!-- ===== LINKO STAGE 7.4: COMPLETE NOTIFICATIONS ONLY ===== -->
+</script><!-- ===== LINKO FOUNDATION PHASE 2F REBUILT: MEMBER-SCOPED FIRESTORE READS ===== --><!-- ===== LINKO FIRESTORE READ OPTIMIZATION: MEMBER/ORDER SHARED HUB ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoFirestoreReadOptimizationHub --><!-- ===== LINKO STAGE 6.2: SMOOTH PRODUCT STATUS + NAME EDIT ONLY ===== --><!-- ===== LINKO STAGE 7.1 FINAL: WHATSAPP + MEMBER ORDERS + ADMIN ORDERS + COUNTS ONLY ===== -->
 <!-- ===== LINKO STAGE 7.5: REPORTS ONLY ===== --><!-- LINKO STAGE 7.7 VISUAL POLISH ONLY --><style id="linkoStage77VisualPolishStyle">
 @keyframes linkoAccountBorderFlow {
   0% { background-position: 0% 50%; opacity: .78; }
@@ -4687,41 +4716,8 @@ body.linko-dark .info-box b{color:#fff!important}
 body:not(.linko-dark) .info-box{
   box-shadow:0 14px 32px rgba(15,23,42,.08), 0 0 0 1px rgba(255,255,255,.42) inset!important;
 }
-</style><!-- ===== LINKO STAGE 8.4: BALANCE PARSER + CURRENT NOTIFICATION MEMBERS ROOT FIX ===== --><!-- LINKO PHASE 9.3A-3 MEMBER DATA UID LINKING + SELF VERIFY --><!-- LINKO PHASE 9.3A-4 + 9.3B PRODUCTION SECURITY BRIDGE --><!-- LINKO READ AUDIT: obsolete full-collection security preparation removed --><!-- ===== LINKO URGENT FIX: MEMBER NOTIFICATION SCREEN POPUP ONLY ===== --><style id="linkoUrgentMemberNotificationPopupStyle">
-#linkoUrgentMemberNotificationPopup{
-  position:fixed!important;z-index:2147483000!important;
-  top:calc(env(safe-area-inset-top,0px) + 14px)!important;
-  left:50%!important;width:min(92vw,440px)!important;
-  transform:translate(-50%,-24px)!important;
-  opacity:0!important;visibility:hidden!important;
-  display:block!important;pointer-events:none!important;
-  direction:rtl!important;padding:16px 18px!important;
-  border-radius:19px!important;border:2px solid #22c55e!important;
-  background:linear-gradient(145deg,#ffffff,#ecfdf5)!important;
-  color:#0f172a!important;box-shadow:0 20px 65px rgba(5,150,105,.34)!important;
-  transition:opacity .22s ease,transform .22s ease,visibility .22s ease!important;
-}
-#linkoUrgentMemberNotificationPopup.show{
-  opacity:1!important;visibility:visible!important;
-  transform:translate(-50%,0)!important;
-}
-#linkoUrgentMemberNotificationPopup h3{margin:0 0 5px!important;font-size:18px!important;font-weight:900!important;color:#065f46!important}
-#linkoUrgentMemberNotificationPopup p{margin:0!important;font-size:15px!important;line-height:1.8!important;font-weight:800!important;color:#0f172a!important}
-#linkoUrgentMemberNotificationPopup small{display:block!important;margin-top:6px!important;font-size:12px!important;font-weight:900!important;color:#166534!important}
-body.linko-dark #linkoUrgentMemberNotificationPopup{background:linear-gradient(145deg,#020617,#0f172a)!important;color:#fff!important;border-color:#34d399!important}
-body.linko-dark #linkoUrgentMemberNotificationPopup h3{color:#86efac!important}
-body.linko-dark #linkoUrgentMemberNotificationPopup p{color:#f8fafc!important}
-body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!important}
-</style><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoUrgentMemberNotificationPopupOnly -->
-<!-- ===== LINKO FINAL TWO ROOT FIXES: NOTIFICATIONS + EXACT MEMBER ORDER COUNT ONLY ===== -->
-<style id="linkoFinalTwoRootFixesStyle">
-#linkoFinalNotificationPopup{position:fixed;top:16px;left:14px;right:14px;z-index:100000;background:#111827;color:#fff;border-radius:20px;padding:14px 16px;box-shadow:0 24px 70px rgba(0,0,0,.28);transform:translateY(-130%);opacity:0;transition:transform .24s ease,opacity .24s ease;pointer-events:none;text-align:right}
-#linkoFinalNotificationPopup.show{transform:translateY(0);opacity:1}
-#linkoFinalNotificationPopup h3{font-size:17px;margin:0 0 4px;color:#fff!important}
-#linkoFinalNotificationPopup p{font-size:14px;margin:0;color:#fff!important;line-height:1.7}
-</style>
-
-
+</style><!-- ===== LINKO STAGE 8.4: BALANCE PARSER ROOT FIX ===== --><!-- LINKO PHASE 9.3A-3 MEMBER DATA UID LINKING + SELF VERIFY --><!-- LINKO PHASE 9.3A-4 + 9.3B PRODUCTION SECURITY BRIDGE --><!-- LINKO READ AUDIT: obsolete full-collection security preparation removed -->
+<!-- ===== LINKO FINAL EXACT MEMBER ORDER COUNT ===== -->
 <script id="linkoCartMemberPhoneLocalOnly">
 (function(){
   'use strict';
@@ -4760,7 +4756,6 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   };
 })();
 </script>
-
 <script id="linkoPwaStableExtrasScript">
 (function(){
   'use strict';
@@ -4997,30 +4992,13 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   registerServiceWorker();
 })();
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- LINKO_FIRESTORE_READ_OPTIMIZATION_PHASE1_20260821 -->
 <!-- LINKO_FIRESTORE_READ_OPTIMIZATION_PHASE2_20260821 -->
-
 <!-- LINKO_READ_OPTIMIZATION_PHASE3_TARGETED_MEMBER_LOGIN_20260821 -->
-
 <!-- LINKO_RADICAL_READ_ARCHITECTURE_V1_20260821 -->
 <!-- LINKO_RADICAL_READ_ARCHITECTURE_V1B: orders lazy+limit10, order create zero-read batch, no exact counter listener, no public settings listener -->
-<!-- LINKO_RADICAL_READ_ARCHITECTURE_V1C: zero background member runtime, login fastpath, notifications max2 -->
+<!-- LINKO_RADICAL_READ_ARCHITECTURE_V1C: zero background member runtime, login fastpath -->
 <!-- LINKO_MEMBER_PRODUCTION_LOW_READ_ARCHITECTURE_20260822 -->
-
 <script id="linkoCleanMemberDataRuntimeV4">
 (function(){
   'use strict';
@@ -5028,7 +5006,7 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   window.__linkoCleanMemberDataRuntimeV4=true;
 
   const FIREBASE_CONFIG={apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',authDomain:'medina-bazaar-e2c18.firebaseapp.com',projectId:'medina-bazaar-e2c18',storageBucket:'medina-bazaar-e2c18.firebasestorage.app',messagingSenderId:'375693456199',appId:'1:375693456199:web:2b36e0368ed898a7a11262'};
-  const session={profileMemberId:'',profileRows:[],ordersRows:[],notificationsRows:[],busyLogin:false};
+  const session={profileMemberId:'',profileRows:[],ordersRows:[],busyLogin:false};
   let firebasePromise=null;
 
   function clean(v){return String(v==null?'':v).trim();}
@@ -5090,64 +5068,19 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
   function orderDate(row){const v=row.createdAt||row.date;try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(row.createdAtText||row.date)||new Date(Number(row.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');}
   function renderOrders(){const list=document.getElementById('ordersList');if(!list)return;const rows=session.ordersRows.slice().sort(function(a,b){return Number(b.clientCreatedAtMs||timeValue(b.createdAt))-Number(a.clientCreatedAtMs||timeValue(a.createdAt));});list.innerHTML=rows.length?rows.map(function(o){const items=Array.isArray(o.items)?o.items:[],names=items.slice(0,4).map(function(i){return esc(i.name)+' × '+Number(i.quantity||i.qty||1);}).join('، '),status=clean(o.status||'pending').toLowerCase(),cancelled=(status==='rejected'||status==='cancelled'),completed=(status==='completed'||status==='done'||status==='delivered'),label=cancelled?'ملغي':completed?'مكتمل':'قيد المراجعة',cls=cancelled?'bad':completed?'ok':'pending';return '<div class="order-card"><div class="order-top"><div><h3>طلب رقم '+esc(o.orderNumber||o.id)+'</h3><p>'+(names||'طلب محفوظ')+'</p><small>'+esc(orderDate(o))+'</small></div><span class="status '+cls+'">'+label+'</span></div></div>';}).join(''):'<div class="empty-card">لا توجد طلبات بعد</div>'; }
     async function loadOrders(){const u=currentMember(),id=memberId(u);session.ordersRows=[];if(!id){renderOrders();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'orders'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(6)),snap=await f.fs.getDocs(q);session.ordersRows=snap.docs.map(function(d){return Object.assign({id:d.id},d.data()||{});});renderOrders();}catch(e){console.warn('orders bounded load failed',e);renderOrders();}}
-
-  function notificationDate(d){const v=d.createdAt||d.date;try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(d.date||'');}
-  function renderNotes(){const list=document.getElementById('notesList');if(!list)return;list.innerHTML=session.notificationsRows.length?session.notificationsRows.map(function(n){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(n.title||'إشعار من الإدارة')+'</h3><p>'+esc(n.text||n.message||'')+'</p><small>'+esc(n.date||'')+'</small></div></div></div>';}).join(''):'<div class="empty-card">لا توجد إشعارات حالياً</div>';}
-  function memberNotificationFeedId(type,value){const safe=encodeURIComponent(clean(value||''));if(type==='all_members')return'admin_all';if(type==='member')return'admin_member_'+safe;return'admin_branch_'+safe;}
-  async function loadNotifications(){
-    const u=currentMember(),id=memberId(u);session.notificationsRows=[];
-    if(!u){renderNotes();return;}
-    try{
-      const f=await firebase(),docIds=['admin_all'];
-      if(id)docIds.push(memberNotificationFeedId('member',id));
-      const branch=clean(u.branchId||u.branch||u.section);
-      if(branch)docIds.push(memberNotificationFeedId('branch',branch));
-      const refs=[...new Set(docIds)].map(function(docId){return f.fs.doc(f.db,'memberNotifications',docId);});
-      const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();
-      snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});
-      session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});
-      const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}
-      renderNotes();
-    }catch(e){console.warn('member admin notification load failed',e);renderNotes();}
-  }
-
+  function requestDate(d){const v=d&&((d.createdAt)||(d.date));try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(d&&d.date||'');}
   function renderRequests(){const list=document.getElementById('requestsList');if(!list)return;const rows=session.profileRows.filter(function(r){return clean(r.status||'pending')==='pending';});list.innerHTML=rows.length?rows.map(function(r){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(r.type||r.title||'طلب تعديل')+'</h3><p>'+esc(r.details||r.newValue||'')+'</p><small>'+esc(r.date||'')+'</small></div><span class="status pending">قيد المراجعة</span></div></div>';}).join(''):'<div class="empty-card">لا توجد طلبات إدارة حالياً</div>';}
-  async function loadProfileRequests(){const u=currentMember(),id=memberId(u);if(!id){session.profileRows=[];renderRequests();return;}if(session.profileMemberId===id){renderRequests();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'memberChangeRequests'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)),snap=await f.fs.getDocs(q);session.profileRows=snap.docs.map(function(d){const x=d.data()||{};return{id:d.id,type:x.type||x.title,details:x.details||x.newValue,status:x.status||'pending',date:clean(x.date)||notificationDate(x)};});session.profileMemberId=id;renderRequests();}catch(e){console.warn('profile requests bounded load failed',e);renderRequests();}}
+  async function loadProfileRequests(){const u=currentMember(),id=memberId(u);if(!id){session.profileRows=[];renderRequests();return;}if(session.profileMemberId===id){renderRequests();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'memberChangeRequests'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)),snap=await f.fs.getDocs(q);session.profileRows=snap.docs.map(function(d){const x=d.data()||{};return{id:d.id,type:x.type||x.title,details:x.details||x.newValue,status:x.status||'pending',date:clean(x.date)||requestDate(x)};});session.profileMemberId=id;renderRequests();}catch(e){console.warn('profile requests bounded load failed',e);renderRequests();}}
 
-  window.renderOrders=renderOrders;window.renderNotes=renderNotes;window.renderRequests=renderRequests;
+  window.renderOrders=renderOrders;window.renderRequests=renderRequests;
   const oldGo=window.go;
-  if(typeof oldGo==='function')window.go=function(id){const r=oldGo.apply(this,arguments);if(id==='ordersPage')setTimeout(loadOrders,0);else if(id==='notificationsPage')setTimeout(loadNotifications,0);else if(id==='profilePage')setTimeout(loadProfileRequests,0);return r;};
+  if(typeof oldGo==='function')window.go=function(id){const r=oldGo.apply(this,arguments);if(id==='ordersPage')setTimeout(loadOrders,0);else if(id==='profilePage')setTimeout(loadProfileRequests,0);return r;};
   const oldLogout=window.logout;
-  window.logout=function(){session.profileMemberId='';session.profileRows=[];session.ordersRows=[];session.notificationsRows=[];clearMember();Promise.resolve().then(async function(){try{const f=await firebase();if(f.auth.currentUser)await f.authMod.signOut(f.auth);}catch(e){}});return typeof oldLogout==='function'?oldLogout.apply(this,arguments):undefined;};
+  window.logout=function(){session.profileMemberId='';session.profileRows=[];session.ordersRows=[];clearMember();Promise.resolve().then(async function(){try{const f=await firebase();if(f.auth.currentUser)await f.authMod.signOut(f.auth);}catch(e){}});return typeof oldLogout==='function'?oldLogout.apply(this,arguments):undefined;};
   const oldSendOrder=window.sendOrder;
   if(typeof oldSendOrder==='function')window.sendOrder=function(){const result=oldSendOrder.apply(this,arguments);Promise.resolve(result).finally(function(){session.ordersRows=[];});return result;};
   const u=currentMember();if(u)setOrderCount(u.ordersCount||u.orderCount||0);
-  window.__linkoMemberDataV4={loadOrders:loadOrders,loadNotifications:loadNotifications,loadProfileRequests:loadProfileRequests};
-})();
-</script>
-
-<script id="linkoCatalogReturnRefreshV1">
-(function(){
-  'use strict';
-  if(window.__linkoCatalogReturnRefreshV1)return;window.__linkoCatalogReturnRefreshV1=true;
-  let last=Date.now(),busy=false;const COOLDOWN=10000;
-  async function refresh(target,force){
-    const name=typeof target==='string'&&['productControls','branchControls'].includes(target)?target:'';
-    if(busy||(!force&&Date.now()-last<COOLDOWN)||!window.__linkoCatalogControlHub)return;
-    busy=true;last=Date.now();
-    try{
-      const mods=await Promise.all([import('https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js')]);
-      const appMod=mods[0],fs=mods[1],cfg={apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',authDomain:'medina-bazaar-e2c18.firebaseapp.com',projectId:'medina-bazaar-e2c18',storageBucket:'medina-bazaar-e2c18.firebasestorage.app',messagingSenderId:'375693456199',appId:'1:375693456199:web:2b36e0368ed898a7a11262'};
-      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(cfg),ref={db:fs.getFirestore(app),fs:fs};
-      if(name&&typeof window.__linkoCatalogControlHub.refresh==='function')await window.__linkoCatalogControlHub.refresh(ref,name);
-      else if(typeof window.__linkoCatalogControlHub.refreshAll==='function')await window.__linkoCatalogControlHub.refreshAll(ref);
-    }catch(e){console.warn('catalog return refresh skipped',e);}finally{busy=false;}
-  }
-  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refresh('',false);});
-  window.addEventListener('pageshow',function(e){if(e.persisted)refresh('',false);});
-  window.addEventListener('focus',function(){refresh('',false);});
-  window.addEventListener('storage',function(e){if(e.key==='linko_catalog_refresh_signal'){let p={};try{p=JSON.parse(e.newValue||'{}');}catch(_e){}refresh(p.type||'',true);}});
-  try{const bc=new BroadcastChannel('linko_catalog_updates');bc.addEventListener('message',function(e){refresh(e&&e.data&&e.data.type||'',true);});}catch(e){}
+  window.__linkoMemberDataV4={loadOrders:loadOrders,loadProfileRequests:loadProfileRequests};
 })();
 </script>
 <script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-FINAL-ROOTFIX-V14-20260822';</script>
@@ -6056,78 +5989,8 @@ refreshMemberViews();
 startListener();
 document.addEventListener('DOMContentLoaded',function(){extendBranchAPI();applySavedNames();refreshMemberViews();startListener();},{once:true});
 })();
-</script><!-- ===== LINKO STAGE 6.4 VISIBILITY FIX ONLY: SHOW BRANCH NAME BUTTON ===== --><!-- ===== LINKO STAGE 7.3: FINAL AMOUNT + ONE-TIME BALANCE DEDUCTION ONLY ===== --><!-- ===== LINKO STAGE 7.4: NOTIFICATION FORM STABILITY + DELETE ALL ONLY ===== -->
-<!-- ===== LINKO STAGE 7.4: MEMBER LAST-5 + GLOWING POPUP ONLY ===== --><style id="linkoStage74Latest5GlowingPopupStyle">
-#linkoStage74MemberNotificationPopup{
-  isolation:isolate!important;
-  overflow:hidden!important;
-  border:0!important;
-  background:transparent!important;
-  color:#0f172a!important;
-  padding:17px 19px!important;
-  box-shadow:0 18px 55px rgba(5,150,105,.28),0 0 28px rgba(16,185,129,.26)!important;
-  animation:linkoStage74PopupGlow 1.7s ease-in-out infinite!important;
-}
-#linkoStage74MemberNotificationPopup::before{
-  content:"";
-  position:absolute;
-  z-index:-2;
-  inset:-120%;
-  background:conic-gradient(from 0deg,transparent 0deg,rgba(16,185,129,.18) 35deg,#22c55e 90deg,#fbbf24 145deg,rgba(255,255,255,.2) 190deg,#34d399 255deg,transparent 330deg);
-  animation:linkoStage74BorderSpin 3.2s linear infinite;
-}
-#linkoStage74MemberNotificationPopup::after{
-  content:"";
-  position:absolute;
-  z-index:-1;
-  inset:3px;
-  border-radius:15px;
-  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(236,253,245,.97));
-  box-shadow:inset 0 0 24px rgba(16,185,129,.16),inset 0 0 7px rgba(245,181,68,.15);
-}
-#linkoStage74MemberNotificationPopup h3{
-  color:#064e3b!important;
-  font-size:18px!important;
-  line-height:1.45!important;
-  font-weight:1000!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.9)!important;
-}
-#linkoStage74MemberNotificationPopup p{
-  color:#0f172a!important;
-  font-size:15.5px!important;
-  line-height:1.85!important;
-  font-weight:850!important;
-}
-#linkoStage74MemberNotificationPopup small{
-  color:#166534!important;
-  font-size:13px!important;
-  opacity:1!important;
-  font-weight:900!important;
-}
-body.linko-dark #linkoStage74MemberNotificationPopup{
-  color:#f8fafc!important;
-  box-shadow:0 18px 58px rgba(0,0,0,.62),0 0 34px rgba(52,211,153,.42)!important;
-}
-body.linko-dark #linkoStage74MemberNotificationPopup::after{
-  background:linear-gradient(145deg,rgba(2,6,23,.98),rgba(15,23,42,.98));
-  box-shadow:inset 0 0 28px rgba(52,211,153,.20),inset 0 0 10px rgba(251,191,36,.12);
-}
-body.linko-dark #linkoStage74MemberNotificationPopup h3{
-  color:#86efac!important;
-  text-shadow:0 0 12px rgba(52,211,153,.22)!important;
-}
-body.linko-dark #linkoStage74MemberNotificationPopup p{color:#f8fafc!important;}
-body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!important;}
-@keyframes linkoStage74BorderSpin{to{transform:rotate(360deg)}}
-@keyframes linkoStage74PopupGlow{
-  0%,100%{filter:drop-shadow(0 0 3px rgba(16,185,129,.30))}
-  50%{filter:drop-shadow(0 0 11px rgba(52,211,153,.55))}
-}
-@media (prefers-reduced-motion:reduce){
-  #linkoStage74MemberNotificationPopup,
-  #linkoStage74MemberNotificationPopup::before{animation:none!important}
-}
-</style><!-- ===== LINKO STAGE 7.6: WEEKLY COMPACT OPERATION LOG + EYE-SAFE PROFESSIONAL GLOW ONLY ===== --><!-- ===== LINKO STAGE 7.7: GENERAL SETTINGS ONLY ===== --><script id="linkoStage77GeneralSettingsOnly">
+</script><!-- ===== LINKO STAGE 6.4 VISIBILITY FIX ONLY: SHOW BRANCH NAME BUTTON ===== --><!-- ===== LINKO STAGE 7.3: FINAL AMOUNT + ONE-TIME BALANCE DEDUCTION ONLY ===== -->
+<!-- ===== LINKO STAGE 7.4: MEMBER LAST-5 + GLOWING POPUP ONLY ===== --><!-- ===== LINKO STAGE 7.6: WEEKLY COMPACT OPERATION LOG + EYE-SAFE PROFESSIONAL GLOW ONLY ===== --><!-- ===== LINKO STAGE 7.7: GENERAL SETTINGS ONLY ===== --><script id="linkoStage77GeneralSettingsOnly">
 (function(){
   'use strict';
   if(window.__linkoCleanPublicSettings) return;
@@ -6510,7 +6373,6 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   setTimeout(clearLegacyProperty,950);
 })();
 </script><!-- ===== LINKO FINAL LIGHT FIX: ADMIN REAL COUNTS ONLY ===== -->
-
 <script id="linkoRootOrderFixV22">
 (function(){
   'use strict';
@@ -6821,16 +6683,12 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   };
 })();
 </script>
-
-
 <!-- LINKO_FIRESTORE_READ_OPTIMIZATION_PHASE2_MEMBER_THROTTLE_20260821 -->
-
 <style id="linkoAuthoritativeCreatedDateV31Style">
 #profileCreated.linko-created-loading{
   opacity:0!important;
 }
 </style>
-
 <script id="linkoAuthoritativeCreatedDateLocalOnly">
 (function(){
   'use strict';
@@ -6866,8 +6724,6 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   if(typeof previousGo==='function')window.go=function(pageId){const result=previousGo.apply(this,arguments);if(pageId==='profilePage')setTimeout(render,0);return result;};
 })();
 </script>
-
-
 <!-- LINKO_PRE_AUDIT_PHASE3_20260819 -->
 <style id="linkoPreAuditPhase3Styles">
 .linko-live-price{
@@ -6887,7 +6743,6 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
 .linko-order-estimated-total{margin-top:7px;color:#047857;font-weight:900}
 
 </style>
-
 <script id="linkoPreAuditPriceSessionRatingRuntime">
 (function(){
   'use strict';
@@ -7182,12 +7037,10 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   setTimeout(function(){extendProductAPI();},1400);
 })();
 </script>
-
-
-<script id="linkoMemberPerformanceAndNotificationFinalV12">
+<script id="linkoMemberPerformanceFinalV13">
 (function(){
   'use strict';
-  if(window.__linkoMemberPerformanceAndNotificationFinalV12)return;window.__linkoMemberPerformanceAndNotificationFinalV12=true;
+  if(window.__linkoMemberPerformanceFinalV13)return;window.__linkoMemberPerformanceFinalV13=true;
   function optimizeVisibleImages(){
     const imgs=[...document.querySelectorAll('#productsGrid .product-card img')];
     imgs.forEach(function(img,i){img.decoding='async';if(i<8){img.loading='eager';try{img.fetchPriority=i<4?'high':'auto';}catch(e){}}else{img.loading='lazy';try{img.fetchPriority='low';}catch(e){}}});
@@ -7195,7 +7048,7 @@ body.linko-dark #linkoStage74MemberNotificationPopup small{color:#fde68a!importa
   const oldRender=window.renderProducts;
   if(typeof oldRender==='function')window.renderProducts=function(){const r=oldRender.apply(this,arguments);requestAnimationFrame(optimizeVisibleImages);return r;};
   const oldGoFinal=window.go;
-  if(typeof oldGoFinal==='function')window.go=function(pageId){const r=oldGoFinal.apply(this,arguments);if(pageId==='notificationsPage'&&window.__linkoMemberDataV4&&typeof window.__linkoMemberDataV4.loadNotifications==='function')setTimeout(function(){window.__linkoMemberDataV4.loadNotifications();},0);if(pageId==='homePage')setTimeout(optimizeVisibleImages,0);return r;};
+  if(typeof oldGoFinal==='function')window.go=function(pageId){const r=oldGoFinal.apply(this,arguments);if(pageId==='homePage')setTimeout(optimizeVisibleImages,0);return r;};
   document.addEventListener('DOMContentLoaded',optimizeVisibleImages,{once:true});
 })();
 </script>
