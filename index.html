@@ -4562,7 +4562,7 @@ else {try{renderBranches();}catch(e){}}
   }
   async function loadAggregate(firebaseRef,name){
     let channel=channels.get(name);
-    if(!channel){channel={loaded:false,loading:null,last:null};channels.set(name,channel);}
+    if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else if(!channel.subs){channel.subs=new Set();}
     if(channel.loaded)return channel.last;
     if(channel.loading)return channel.loading;
     const fs=firebaseRef.fs,db=firebaseRef.db,docId=AGGREGATES[name];
@@ -4580,16 +4580,25 @@ else {try{renderBranches();}catch(e){}}
     const name=clean(collectionName);
     if(!firebaseRef||!firebaseRef.fs||!firebaseRef.db||!name||typeof onNext!=='function')return function(){};
     if(!AGGREGATES[name]){
-      // Final read guard: never allow an accidental whole-collection listener through the shared hub.
       const err=new Error('LINKO_FULL_COLLECTION_READ_DISABLED:'+name);
       if(typeof onError==='function')Promise.resolve().then(function(){onError(err);});
       else console.warn(err.message);
       return function(){};
     }
-    let alive=true;
+    let channel=channels.get(name);
+    if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else if(!channel.subs){channel.subs=new Set();}
+    let alive=true,sub={onNext:onNext,onError:onError};channel.subs.add(sub);
     loadAggregate(firebaseRef,name).then(function(snapshot){if(alive)onNext(snapshot);}).catch(function(error){if(alive&&typeof onError==='function')onError(error);});
-    return function(){alive=false;};
+    return function(){alive=false;channel.subs.delete(sub);};
   }
+  async function refresh(firebaseRef,name){
+    name=clean(name);if(!AGGREGATES[name])return null;
+    let channel=channels.get(name);if(!channel){channel={loaded:false,loading:null,last:null,subs:new Set()};channels.set(name,channel);}else{channel.loaded=false;channel.last=null;}
+    const snapshot=await loadAggregate(firebaseRef,name);
+    (channel.subs||new Set()).forEach(function(sub){try{sub.onNext(snapshot);}catch(error){if(typeof sub.onError==='function')sub.onError(error);}});
+    return snapshot;
+  }
+  async function refreshAll(firebaseRef){return Promise.all(Object.keys(AGGREGATES).map(function(name){return refresh(firebaseRef,name);}));}
   async function ensureAggregate(firebaseRef,name){
     const fs=firebaseRef.fs,db=firebaseRef.db,docId=AGGREGATES[name];
     if(!docId)throw new Error('INVALID_AGGREGATE');
@@ -4613,7 +4622,7 @@ else {try{renderBranches();}catch(e){}}
     const channel=channels.get(name);if(channel){channel.loaded=false;channel.last=null;}
   }
   function stats(){const result={};channels.forEach(function(channel,name){result[name]={loaded:!!channel.loaded,mode:'one-shot-aggregate'};});return result;}
-  window.__linkoCatalogControlHub={subscribe:subscribe,writeControl:writeControl,stats:stats,aggregateIds:Object.assign({},AGGREGATES)};
+  window.__linkoCatalogControlHub={subscribe:subscribe,refresh:refresh,refreshAll:refreshAll,writeControl:writeControl,stats:stats,aggregateIds:Object.assign({},AGGREGATES)};
 })();
 </script><!-- ===== LINKO FOUNDATION PHASE 2F REBUILT: MEMBER-SCOPED FIRESTORE READS ===== --><!-- ===== LINKO FIRESTORE READ OPTIMIZATION: MEMBER/ORDER SHARED HUB ===== --><!-- READ_AUDIT_REMOVED_OBSOLETE:linkoFirestoreReadOptimizationHub --><!-- ===== LINKO STAGE 6.2: SMOOTH PRODUCT STATUS + NAME EDIT ONLY ===== --><!-- ===== LINKO STAGE 7.1 FINAL: WHATSAPP + MEMBER ORDERS + ADMIN ORDERS + COUNTS ONLY ===== --><!-- ===== LINKO STAGE 7.4: COMPLETE NOTIFICATIONS ONLY ===== -->
 <!-- ===== LINKO STAGE 7.5: REPORTS ONLY ===== --><!-- LINKO STAGE 7.7 VISUAL POLISH ONLY --><style id="linkoStage77VisualPolishStyle">
@@ -5090,7 +5099,8 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 
   function notificationDate(d){const v=d.createdAt||d.date;try{if(v&&typeof v.toDate==='function')return v.toDate().toLocaleString('ar-IQ');if(v&&typeof v.seconds==='number')return new Date(v.seconds*1000).toLocaleString('ar-IQ');}catch(e){}return clean(d.date||'');}
   function renderNotes(){const list=document.getElementById('notesList');if(!list)return;list.innerHTML=session.notificationsRows.length?session.notificationsRows.map(function(n){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(n.title||'إشعار من الإدارة')+'</h3><p>'+esc(n.text||n.message||'')+'</p><small>'+esc(n.date||'')+'</small></div></div></div>';}).join(''):'<div class="empty-card">لا توجد إشعارات حالياً</div>';}
-  async function loadNotifications(){const u=currentMember(),id=memberId(u);session.notificationsRows=[];if(!u){renderNotes();return;}try{const f=await firebase(),col=f.fs.collection(f.db,'memberNotifications'),qs=[];if(id)qs.push(f.fs.query(col,f.fs.where('targetValue','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)));else{const name=clean(u.name||u.username);if(name)qs.push(f.fs.query(col,f.fs.where('memberName','==',name),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)));}qs.push(f.fs.query(col,f.fs.where('targetType','==','all_members'),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(2)));const snaps=await Promise.all(qs.map(function(q){return f.fs.getDocs(q);})),map=new Map();snaps.forEach(function(snap){snap.forEach(function(d){map.set(d.id,Object.assign({id:d.id},d.data()||{}));});});session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).map(function(d){d.date=notificationDate(d);return d;}).sort(function(a,b){return timeValue(b.createdAt)-timeValue(a.createdAt);});renderNotes();}catch(e){console.warn('notifications bounded load failed',e);renderNotes();}}
+  function feedDocId(type,value){const raw=type==='all_members'?'all':(type==='member'?'member_':'branch_')+String(value||'');return encodeURIComponent(raw);}
+  async function loadNotifications(){const u=currentMember(),id=memberId(u);session.notificationsRows=[];if(!u){renderNotes();return;}try{const f=await firebase(),refs=[f.fs.doc(f.db,'notificationFeeds',feedDocId('all_members','all'))];if(id)refs.push(f.fs.doc(f.db,'notificationFeeds',feedDocId('member',id)));const branch=clean(u.branchId||u.branch||u.section);if(branch)refs.push(f.fs.doc(f.db,'notificationFeeds',feedDocId('branch',branch)));const snaps=await Promise.all(refs.map(function(ref){return f.fs.getDoc(ref);})),map=new Map();snaps.forEach(function(snap){if(!snap.exists())return;const rows=Array.isArray((snap.data()||{}).items)?snap.data().items:[];rows.forEach(function(row){if(row&&row.id)map.set(row.id,Object.assign({},row));});});session.notificationsRows=Array.from(map.values()).filter(function(d){return clean(d.source)!=='delivery_driver';}).sort(function(a,b){return Number(b.clientCreatedAtMs||0)-Number(a.clientCreatedAtMs||0);}).slice(0,5).map(function(d){d.date=new Date(Number(d.clientCreatedAtMs||Date.now())).toLocaleString('ar-IQ');return d;});const badge=document.getElementById('notifBadge');if(badge){badge.textContent=String(session.notificationsRows.length);badge.style.display=session.notificationsRows.length?'inline-flex':'none';}renderNotes();}catch(e){console.warn('notification feed load failed',e);renderNotes();}}
 
   function renderRequests(){const list=document.getElementById('requestsList');if(!list)return;const rows=session.profileRows.filter(function(r){return clean(r.status||'pending')==='pending';});list.innerHTML=rows.length?rows.map(function(r){return '<div class="note-card"><div class="note-top"><div><h3>'+esc(r.type||r.title||'طلب تعديل')+'</h3><p>'+esc(r.details||r.newValue||'')+'</p><small>'+esc(r.date||'')+'</small></div><span class="status pending">قيد المراجعة</span></div></div>';}).join(''):'<div class="empty-card">لا توجد طلبات إدارة حالياً</div>';}
   async function loadProfileRequests(){const u=currentMember(),id=memberId(u);if(!id){session.profileRows=[];renderRequests();return;}if(session.profileMemberId===id){renderRequests();return;}try{const f=await firebase(),q=f.fs.query(f.fs.collection(f.db,'memberChangeRequests'),f.fs.where('memberId','==',id),f.fs.orderBy(f.fs.documentId(),'desc'),f.fs.limit(3)),snap=await f.fs.getDocs(q);session.profileRows=snap.docs.map(function(d){const x=d.data()||{};return{id:d.id,type:x.type||x.title,details:x.details||x.newValue,status:x.status||'pending',date:clean(x.date)||notificationDate(x)};});session.profileMemberId=id;renderRequests();}catch(e){console.warn('profile requests bounded load failed',e);renderRequests();}}
@@ -5107,7 +5117,27 @@ body.linko-dark #linkoUrgentMemberNotificationPopup small{color:#fde68a!importan
 })();
 </script>
 
-<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='V5-CLEAN-20260822';</script>
+<script id="linkoCatalogReturnRefreshV1">
+(function(){
+  'use strict';
+  if(window.__linkoCatalogReturnRefreshV1)return;window.__linkoCatalogReturnRefreshV1=true;
+  let last=Date.now(),busy=false;const COOLDOWN=45000;
+  async function refresh(){
+    if(busy||Date.now()-last<COOLDOWN||!window.__linkoCatalogControlHub||typeof window.__linkoCatalogControlHub.refreshAll!=='function')return;
+    busy=true;last=Date.now();
+    try{
+      const mods=await Promise.all([import('https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js')]);
+      const appMod=mods[0],fs=mods[1],cfg={apiKey:'AIzaSyC01S-7aVAi4N-kpRWne1kQbc1W8jSngnA',authDomain:'medina-bazaar-e2c18.firebaseapp.com',projectId:'medina-bazaar-e2c18',storageBucket:'medina-bazaar-e2c18.firebasestorage.app',messagingSenderId:'375693456199',appId:'1:375693456199:web:2b36e0368ed898a7a11262'};
+      const app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp(cfg);
+      await window.__linkoCatalogControlHub.refreshAll({db:fs.getFirestore(app),fs:fs});
+    }catch(e){console.warn('catalog return refresh skipped',e);}finally{busy=false;}
+  }
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refresh();});
+  window.addEventListener('pageshow',function(e){if(e.persisted)refresh();});
+  window.addEventListener('focus',refresh);
+})();
+</script>
+<script id="linkoBuildMarkerV5">window.__LINKO_BUILD='PROD-CATALOG-NOTIFY-FIX-20260822';</script>
 </body></html><style id="linkoSafePatchFinal">
 /* خانة التوصيل تحت بطاقة العضوية */
 #homeDeliveryStatusBox{
