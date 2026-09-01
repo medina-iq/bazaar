@@ -617,7 +617,67 @@ function collectionFor(kind){return kind==='subscriptions'?COL.subscriptions:kin
 function activeMatches(kind){return active===kind||(kind==='changes'&&active==='requests');}
 function normalizeSubscription(d){const x=d.data()||{};return{id:d.id,name:clean(x.name||x.fullName||x.username),phone:clean(x.phone||x.mobile),area:clean(x.area||x.address||x.location),branch:clean(x.branch||x.branchName||x.section),code:clean(x.code||x.password||x.pin),status:statusKey(x.status||x.state||x.requestStatus||'pending'),createdAt:x.createdAt,date:dateText(x.createdAt||x.date),raw:x};}
 async function loadSubscriptions(force){const s=store.subscriptions;if(s.total==null||force&&s.page===0){try{const f=await firebase();s.total=await exactCount(f.fs.collection(f.db,COL.subscriptions));store.dashboard.data.pendingSubscriptions=s.total;}catch(e){console.error('subscription count',e);}}await runPagedQuery('subscriptions',f=>[f.fs.orderBy('createdAt','desc')],normalizeSubscription,force);s.rows=s.rows.filter(r=>isPendingQueueRecord(r.raw));buildNav();}
-function subscriptions(){const s=store.subscriptions;if(!s.loaded&&s.loading)return loadingPanel();const q=clean($('reqSearch')?.value).toLowerCase(),rows=s.rows.filter(r=>!q||[r.name,r.phone,r.area,r.code].join(' ').toLowerCase().includes(q));return `<div class="panel"><div class="panel-head"><div><h2>طلبات الاشتراك</h2><p>المعلقة فقط؛ يظهر أول 20 والأحدث أولاً، وزر عرض المزيد يجلب الدفعة التالية. السجلات الموافق/المرفوض/المحذوفة لا تظهر.</p></div><button class="btn secondary mini" onclick="refreshSubscriptions()">تحديث</button></div><div class="tools"><input class="input" id="reqSearch" oninput="render()" value="${esc(q)}" placeholder="بحث داخل الصفحة الحالية"></div><div class="sub-requests-grid">${rows.length?rows.map(r=>`<div class="admin-req-card"><h3>${esc(r.name||'طلب اشتراك')} <span class="status wait">بانتظار</span></h3><p>الهاتف: ${esc(r.phone||'-')}<br>العنوان: ${esc(r.area||'-')}<br>الفرع: ${esc(r.branch||'-')}<br>الرمز: ${esc(r.code||'-')}<br>${esc(r.date)}</p><div class="actions-row"><button class="btn mini" onclick="approveSubscription('${esc(r.id)}')">موافقة</button><button class="btn warn mini" onclick="rejectSubscription('${esc(r.id)}')">رفض</button><button class="btn danger mini" onclick="deleteSubscription('${esc(r.id)}')">حذف</button></div></div>`).join(''):'<div class="empty">لا توجد طلبات اشتراك في هذه الصفحة</div>'}</div>${pageBar('subscriptions',s)}</div>`;}
+function subscriptions(){const s=store.subscriptions;if(!s.loaded&&s.loading)return loadingPanel();const q=clean($('reqSearch')?.value).toLowerCase(),rows=s.rows.filter(r=>!q||[r.name,r.phone,r.area,r.code].join(' ').toLowerCase().includes(q));return `<div class="panel"><div class="panel-head"><div><h2>طلبات الاشتراك</h2><p>المعلقة فقط؛ يظهر أول 20 والأحدث أولاً، وزر عرض المزيد يجلب الدفعة التالية. السجلات الموافق/المرفوض/المحذوفة لا تظهر.</p></div><div class="actions-row"><button class="btn blue mini" onclick="exportSubscriptionRequests()"><span class="material-symbols-rounded">download</span> تصدير طلبات الاشتراك</button><button class="btn secondary mini" onclick="refreshSubscriptions()">تحديث</button></div></div><div class="tools"><input class="input" id="reqSearch" oninput="render()" value="${esc(q)}" placeholder="بحث داخل الصفحة الحالية"></div><div class="sub-requests-grid">${rows.length?rows.map(r=>`<div class="admin-req-card"><h3>${esc(r.name||'طلب اشتراك')} <span class="status wait">بانتظار</span></h3><p>الهاتف: ${esc(r.phone||'-')}<br>العنوان: ${esc(r.area||'-')}<br>الفرع: ${esc(r.branch||'-')}<br>الرمز: ${esc(r.code||'-')}<br>${esc(r.date)}</p><div class="actions-row"><button class="btn mini" onclick="approveSubscription('${esc(r.id)}')">موافقة</button><button class="btn warn mini" onclick="rejectSubscription('${esc(r.id)}')">رفض</button><button class="btn danger mini" onclick="deleteSubscription('${esc(r.id)}')">حذف</button></div></div>`).join(''):'<div class="empty">لا توجد طلبات اشتراك في هذه الصفحة</div>'}</div>${pageBar('subscriptions',s)}</div>`;}
+
+function medinaExportNormalize(v){
+  if(v==null)return v;
+  if(Array.isArray(v))return v.map(medinaExportNormalize);
+  if(typeof v==='object'){
+    if(typeof v.toDate==='function'){
+      try{return {__firestoreType:'Timestamp',iso:v.toDate().toISOString(),seconds:v.seconds??null,nanoseconds:v.nanoseconds??null};}catch(e){}
+    }
+    const o={};Object.keys(v).forEach(k=>o[k]=medinaExportNormalize(v[k]));return o;
+  }
+  return v;
+}
+function medinaMakeBlob(payload){const text=JSON.stringify(payload,null,2);return {text,blob:new Blob([text],{type:'application/json;charset=utf-8'})};}
+async function exportSubscriptionRequests(){
+  if(busy)return toast('انتظر انتهاء العملية الحالية');
+  busy=true;toast('جاري تجهيز طلبات الاشتراك...');
+  try{
+    const f=await firebase(),snap=await f.fs.getDocs(f.fs.collection(f.db,COL.subscriptions));
+    const rows=snap.docs.map(d=>({id:d.id,...medinaExportNormalize(d.data()||{})})).filter(r=>isPendingQueueRecord(r));
+    const built=medinaMakeBlob({exportType:'MEDINA_SUBSCRIPTION_REQUESTS_ONLY',projectId:CFG.projectId,exportedAt:new Date().toISOString(),count:rows.length,subscriptionRequests:rows});
+    window.__medinaSubscriptionExport={...built,count:rows.length};
+    openModal('تصدير طلبات الاشتراك',`<div class="panel" style="margin:0"><div class="empty" style="margin-bottom:12px">تم تجهيز <b>${rows.length}</b> طلب اشتراك بدون تعديل أو حذف أي بيانات.</div><div class="actions-row"><button class="btn full" onclick="shareSubscriptionExport()"><span class="material-symbols-rounded">ios_share</span> مشاركة / حفظ الملف</button><button class="btn secondary full" onclick="downloadSubscriptionExport()"><span class="material-symbols-rounded">download</span> تنزيل الملف</button></div><p class="muted" style="margin-top:12px;line-height:1.8">اسم الملف: medina-subscription-requests-export.json</p></div>`);
+  }catch(e){console.error(e);toast('تعذر تصدير طلبات الاشتراك: '+(e?.code||e?.message||'خطأ غير معروف'));}finally{busy=false;}
+}
+async function shareSubscriptionExport(){
+  const x=window.__medinaSubscriptionExport;if(!x)return toast('جهز الملف أولاً');
+  try{
+    const file=new File([x.blob],'medina-subscription-requests-export.json',{type:'application/json'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'طلبات اشتراك سوق المدينة الكبير'});return;}
+  }catch(e){if(e?.name==='AbortError')return;console.warn(e);}
+  downloadSubscriptionExport();
+}
+function downloadSubscriptionExport(){
+  const x=window.__medinaSubscriptionExport;if(!x)return toast('جهز الملف أولاً');
+  const url=URL.createObjectURL(x.blob),a=document.createElement('a');a.href=url;a.download='medina-subscription-requests-export.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('تم تجهيز ملف طلبات الاشتراك للتنزيل');
+}
+async function exportMemberChangeRequests(){
+  if(busy)return toast('انتظر انتهاء العملية الحالية');
+  busy=true;toast('جاري تجهيز طلبات التعديل...');
+  try{
+    const f=await firebase(),snap=await f.fs.getDocs(f.fs.collection(f.db,COL.changes));
+    const rows=snap.docs.map(d=>({id:d.id,...medinaExportNormalize(d.data()||{})})).filter(r=>isPendingQueueRecord(r));
+    const built=medinaMakeBlob({exportType:'MEDINA_MEMBER_CHANGE_REQUESTS_ONLY',projectId:CFG.projectId,exportedAt:new Date().toISOString(),count:rows.length,memberChangeRequests:rows});
+    window.__medinaChangeExport={...built,count:rows.length};
+    openModal('تصدير طلبات التعديل',`<div class="panel" style="margin:0"><div class="empty" style="margin-bottom:12px">تم تجهيز <b>${rows.length}</b> طلب تعديل بدون تعديل أو حذف أي بيانات.</div><div class="actions-row"><button class="btn full" onclick="shareChangeExport()"><span class="material-symbols-rounded">ios_share</span> مشاركة / حفظ الملف</button><button class="btn secondary full" onclick="downloadChangeExport()"><span class="material-symbols-rounded">download</span> تنزيل الملف</button></div><p class="muted" style="margin-top:12px;line-height:1.8">اسم الملف: medina-member-change-requests-export.json</p></div>`);
+  }catch(e){console.error(e);toast('تعذر تصدير طلبات التعديل: '+(e?.code||e?.message||'خطأ غير معروف'));}finally{busy=false;}
+}
+async function shareChangeExport(){
+  const x=window.__medinaChangeExport;if(!x)return toast('جهز الملف أولاً');
+  try{
+    const file=new File([x.blob],'medina-member-change-requests-export.json',{type:'application/json'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'طلبات تعديل أعضاء سوق المدينة الكبير'});return;}
+  }catch(e){if(e?.name==='AbortError')return;console.warn(e);}
+  downloadChangeExport();
+}
+function downloadChangeExport(){
+  const x=window.__medinaChangeExport;if(!x)return toast('جهز الملف أولاً');
+  const url=URL.createObjectURL(x.blob),a=document.createElement('a');a.href=url;a.download='medina-member-change-requests-export.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('تم تجهيز ملف طلبات التعديل للتنزيل');
+}
+
 async function refreshSubscriptions(){resetPager(store.subscriptions);store.subscriptions.total=null;await loadSubscriptions(true);}
 async function loginKeyId(name,secret){const raw=(clean(name).normalize?clean(name).normalize('NFKC'):clean(name)).replace(/\s+/g,' ').toLowerCase(),bytes=new TextEncoder().encode('LINKO_MEMBER_LOGIN_V2|'+raw+'|'+clean(secret)),hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');}
 function normalizePendingName(v){let s=clean(v);try{s=s.normalize('NFKC');}catch(e){}return s.toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[\u064B-\u065F\u0670]/g,'').replace(/\s+/g,' ');}
@@ -728,7 +788,7 @@ function openBranch(id){const b=branchRows().find(x=>String(x.id)===String(id));
 async function saveBranch(id,btn){const b=branchRows().find(x=>String(x.id)===String(id));if(!b)return;const name=clean($('bName')?.value),status=$('bStatus')?.value==='unavailable'?'unavailable':'available';if(!name)return toast('اكتب اسم الفرع');try{btn.disabled=true;const api=window.__linkoStage63BranchAvailabilityAPI;if(!api||typeof api.setAll!=='function')throw new Error('BRANCH_CONTROL_API_UNAVAILABLE');await api.setAll(id,{name,status});closeModal();render();toast('تم حفظ الفرع وتحديثه');writeAdminLog('تعديل فرع',`تم تعديل ${name}`).catch(()=>{});}catch(e){console.error('SAVE BRANCH FAILED',e);toast('تعذر حفظ الفرع: '+clean(e&&e.code||e&&e.message||'خطأ'));}finally{btn.disabled=false;}}
 function normalizeChange(d){const x=d.data()||{};return{id:d.id,type:clean(x.type||x.title||'طلب تعديل'),field:clean(x.field),oldValue:x.oldValue,newValue:x.newValue,details:clean(x.details||x.newValue),memberId:clean(x.memberId),memberName:clean(x.memberName),memberPhone:clean(x.memberPhone),status:statusKey(x.status||x.state||x.requestStatus||'pending'),createdAt:x.createdAt,date:dateText(x.createdAt||x.date),raw:x};}
 async function loadChanges(force){const s=store.changes;if(s.total==null||force&&s.page===0){try{const f=await firebase();s.total=await exactCount(f.fs.collection(f.db,COL.changes));store.dashboard.data.pendingChanges=s.total;}catch(e){console.error('change count',e);}}await runPagedQuery('changes',f=>[f.fs.orderBy('createdAt','desc')],normalizeChange,force);s.rows=s.rows.filter(r=>isPendingQueueRecord(r.raw));buildNav();}
-function requestsInbox(){const s=store.changes;if(!s.loaded&&s.loading)return loadingPanel();return `<div class="panel"><div class="panel-head"><div><h2>طلبات التعديل</h2><p>يظهر أول 20 طلباً معلقاً، وزر عرض المزيد يجلب الدفعة التالية؛ الموافق/المرفوض القديم يُنظف نهائياً.</p></div><button class="btn secondary mini" onclick="refreshChanges()">تحديث</button></div><div class="cards">${s.rows.length?s.rows.map(r=>`<div class="admin-request unread"><div class="req-top"><h3>${esc(r.type)} <span class="status wait">بانتظار</span></h3><small class="muted">${esc(r.date)}</small></div><p><b>العضو:</b> ${esc(r.memberName||r.memberPhone||r.memberId||'-')}</p><p><b>القديم:</b> ${esc(r.oldValue==null?'-':r.oldValue)}<br><b>الجديد:</b> ${esc(r.newValue==null?r.details:r.newValue)}</p><div class="actions-row"><button class="btn mini" onclick="resolveChange('${esc(r.id)}',true)">موافقة</button><button class="btn warn mini" onclick="resolveChange('${esc(r.id)}',false)">رفض</button></div></div>`).join(''):'<div class="empty">لا توجد طلبات تعديل</div>'}</div>${pageBar('changes',s)}</div>`;}
+function requestsInbox(){const s=store.changes;if(!s.loaded&&s.loading)return loadingPanel();return `<div class="panel"><div class="panel-head"><div><h2>طلبات التعديل</h2><p>يظهر أول 20 طلباً معلقاً، وزر عرض المزيد يجلب الدفعة التالية؛ الموافق/المرفوض القديم يُنظف نهائياً.</p></div><div class="actions-row"><button class="btn blue mini" onclick="exportMemberChangeRequests()"><span class="material-symbols-rounded">download</span> تصدير طلبات التعديل</button><button class="btn secondary mini" onclick="refreshChanges()">تحديث</button></div></div><div class="cards">${s.rows.length?s.rows.map(r=>`<div class="admin-request unread"><div class="req-top"><h3>${esc(r.type)} <span class="status wait">بانتظار</span></h3><small class="muted">${esc(r.date)}</small></div><p><b>العضو:</b> ${esc(r.memberName||r.memberPhone||r.memberId||'-')}</p><p><b>القديم:</b> ${esc(r.oldValue==null?'-':r.oldValue)}<br><b>الجديد:</b> ${esc(r.newValue==null?r.details:r.newValue)}</p><div class="actions-row"><button class="btn mini" onclick="resolveChange('${esc(r.id)}',true)">موافقة</button><button class="btn warn mini" onclick="resolveChange('${esc(r.id)}',false)">رفض</button></div></div>`).join(''):'<div class="empty">لا توجد طلبات تعديل</div>'}</div>${pageBar('changes',s)}</div>`;}
 async function refreshChanges(){resetPager(store.changes);store.changes.total=null;await loadChanges(true);}
 
 async function resolveChange(id,approved){if(busy)return;const r=store.changes.rows.find(x=>x.id===id);if(!r)return toast('الطلب غير موجود');busy=true;try{const f=await firebase(),batch=f.fs.writeBatch(f.db),reqRef=f.fs.doc(f.db,COL.changes,id);if(approved&&r.memberId){const memberRef=f.fs.doc(f.db,COL.members,r.memberId),patch={updatedAt:f.fs.serverTimestamp()};if(r.field==='name')Object.assign(patch,{name:String(r.newValue),username:String(r.newValue),fullName:String(r.newValue)});else if(r.field==='phone')patch.phone=String(r.newValue);else if(r.field==='address')Object.assign(patch,{area:String(r.newValue),address:String(r.newValue)});else if(r.field==='password')Object.assign(patch,{code:String(r.newValue),password:String(r.newValue)});else if(r.field==='balance')patch.balance=f.fs.increment(Number(r.newValue||0));batch.update(memberRef,patch);}batch.delete(reqRef);await batch.commit();await writeAdminLog(approved?'موافقة طلب تعديل':'رفض طلب تعديل',`${r.memberName||r.memberId}: ${r.type}`);store.changes.rows=store.changes.rows.filter(x=>x.id!==id);store.changes.total=Math.max(0,Number(store.changes.total||1)-1);store.dashboard.data.pendingChanges=store.changes.total;render();buildNav();toast(approved?'تمت الموافقة':'تم الرفض');}catch(e){console.error(e);toast('تعذر تنفيذ الطلب');}finally{busy=false;}}
