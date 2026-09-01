@@ -648,7 +648,62 @@ async function removeSubscription(id,logType,msg){if(busy)return;const r=store.s
 function normalizeMember(d){const x=d.data()||{};return{id:d.id,name:clean(x.name||x.username||x.fullName),username:clean(x.username||x.name),phone:clean(x.phone||x.mobile),area:clean(x.area||x.address),code:clean(x.code||x.password||x.pin),balance:Number(x.balance||0),ordersCount:Number(x.ordersCount||x.orderCount||0),status:clean(x.status||'active'),img:clean(x.img||x.avatar),createdAt:x.createdAt,raw:x};}
 async function loadMembers(force){const s=store.members;if(s.total==null||force&&s.page===0){try{const f=await firebase(),all=await exactCount(f.fs.collection(f.db,COL.members)),deleted=await exactCount(f.fs.query(f.fs.collection(f.db,COL.members),f.fs.where('status','==','deleted')));s.total=Math.max(0,all-deleted);store.dashboard.data.members=s.total;}catch(e){}}await runPagedQuery('members',f=>[],normalizeMember,force);s.rows=s.rows.filter(m=>m.status!=='deleted'&&m.raw.deleted!==true);}
 function memberCard(m){return `<div class="admin-member-box"><div class="member-admin-head"><div class="member-admin-avatar">${m.img?`<img src="${esc(m.img)}" alt="${esc(m.name)}" loading="lazy">`:esc((m.name||'?').slice(0,1))}</div><div class="member-admin-info"><h3>${esc(m.name||'-')} <span class="status ${cls(m.status)}">${statusText(m.status)}</span></h3><p>الهاتف: ${esc(m.phone||'-')}<br>العنوان: ${esc(m.area||'-')}</p></div></div><div class="member-admin-meta"><div class="member-admin-pill"><small>اسم المستخدم</small>${esc(m.username||'-')}</div><div class="member-admin-pill"><small>الرمز</small>${esc(m.code||'-')}</div><div class="member-admin-pill"><small>عدد الطلبات</small>${m.ordersCount}</div><div class="member-admin-pill"><small>الرصيد</small>${money(m.balance)}</div></div><div class="actions-row"><button class="btn secondary mini" onclick="openMember('${esc(m.id)}')">تعديل</button><button class="btn mini" onclick="openWallet('${esc(m.id)}')">الرصيد</button><button class="btn warn mini" onclick="toggleMember('${esc(m.id)}')">${m.status==='active'?'إيقاف':'تفعيل'}</button><button class="btn danger mini" onclick="deleteMember('${esc(m.id)}')">حذف</button></div></div>`;}
-function members(){const s=store.members;if(!s.loaded&&s.loading)return loadingPanel();const rows=store.memberSearchMode?store.memberSearchRows:s.rows;return `<div class="panel"><div class="panel-head"><div><h2>إدارة الأعضاء</h2><p>يظهر أول 20 عضواً، وزر عرض المزيد يجلب الدفعة التالية. البحث المباشر يصل لأي عضو بدون تحميل الجميع.</p></div><button class="btn secondary mini" onclick="refreshMembers()">تحديث</button></div><div class="tools"><input class="input" id="memberGlobalSearch" placeholder="اسم كامل أو هاتف أو رمز"><button class="btn secondary" onclick="searchMemberGlobal()">بحث مباشر</button>${store.memberSearchMode?'<button class="btn secondary" onclick="clearMemberSearch()">عودة للقائمة</button>':''}</div><div class="members-admin-grid">${rows.length?rows.map(memberCard).join(''):'<div class="empty">لا يوجد أعضاء</div>'}</div>${store.memberSearchMode?'':pageBar('members',s)}</div>`;}
+function members(){const s=store.members;if(!s.loaded&&s.loading)return loadingPanel();const rows=store.memberSearchMode?store.memberSearchRows:s.rows;return `<div class="panel"><div class="panel-head"><div><h2>إدارة الأعضاء</h2><p>يظهر أول 20 عضواً، وزر عرض المزيد يجلب الدفعة التالية. البحث المباشر يصل لأي عضو بدون تحميل الجميع.</p></div><div class="actions-row"><button class="btn blue mini" onclick="exportAllMembers()"><span class="material-symbols-rounded">download</span> تصدير كل الأعضاء</button><button class="btn secondary mini" onclick="refreshMembers()">تحديث</button></div></div><div class="tools"><input class="input" id="memberGlobalSearch" placeholder="اسم كامل أو هاتف أو رمز"><button class="btn secondary" onclick="searchMemberGlobal()">بحث مباشر</button>${store.memberSearchMode?'<button class="btn secondary" onclick="clearMemberSearch()">عودة للقائمة</button>':''}</div><div class="members-admin-grid">${rows.length?rows.map(memberCard).join(''):'<div class="empty">لا يوجد أعضاء</div>'}</div>${store.memberSearchMode?'':pageBar('members',s)}</div>`;}
+async function exportAllMembers(){
+  if(busy)return toast('انتظر انتهاء العملية الحالية');
+  busy=true;
+  toast('جاري تجهيز ملف الأعضاء...');
+  try{
+    const f=await firebase();
+    const snap=await f.fs.getDocs(f.fs.collection(f.db,COL.members));
+    const normalizeExportValue=(v)=>{
+      if(v==null)return v;
+      if(Array.isArray(v))return v.map(normalizeExportValue);
+      if(typeof v==='object'){
+        if(typeof v.toDate==='function'){
+          try{return {__firestoreType:'Timestamp',iso:v.toDate().toISOString(),seconds:v.seconds??null,nanoseconds:v.nanoseconds??null};}catch(e){}
+        }
+        const o={};
+        Object.keys(v).forEach(k=>o[k]=normalizeExportValue(v[k]));
+        return o;
+      }
+      return v;
+    };
+    const members=snap.docs.map(d=>({id:d.id,...normalizeExportValue(d.data()||{})})).filter(m=>m.status!=='deleted'&&m.deleted!==true);
+    const payload={
+      exportType:'MEDINA_MEMBERS_ONLY',
+      projectId:CFG.projectId,
+      exportedAt:new Date().toISOString(),
+      count:members.length,
+      members
+    };
+    const text=JSON.stringify(payload,null,2);
+    const blob=new Blob([text],{type:'application/json;charset=utf-8'});
+    window.__medinaMembersExport={blob,text,count:members.length};
+    openModal('تصدير الأعضاء',`<div class="panel" style="margin:0"><div class="empty" style="margin-bottom:12px">تم تجهيز <b>${members.length}</b> عضو بدون تعديل أو حذف أي بيانات.</div><div class="actions-row"><button class="btn full" onclick="shareMembersExport()"><span class="material-symbols-rounded">ios_share</span> مشاركة / حفظ الملف</button><button class="btn secondary full" onclick="downloadMembersExport()"><span class="material-symbols-rounded">download</span> تنزيل الملف</button></div><p class="muted" style="margin-top:12px;line-height:1.8">اسم الملف: medina-members-export.json</p></div>`);
+  }catch(e){
+    console.error(e);
+    toast('تعذر تصدير الأعضاء: '+(e?.code||e?.message||'خطأ غير معروف'));
+  }finally{busy=false;}
+}
+async function shareMembersExport(){
+  const x=window.__medinaMembersExport;if(!x)return toast('جهز الملف أولاً');
+  try{
+    const file=new File([x.blob],'medina-members-export.json',{type:'application/json'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+      await navigator.share({files:[file],title:'بيانات أعضاء سوق المدينة الكبير'});
+      return;
+    }
+  }catch(e){if(e?.name==='AbortError')return;console.warn(e);}
+  downloadMembersExport();
+}
+function downloadMembersExport(){
+  const x=window.__medinaMembersExport;if(!x)return toast('جهز الملف أولاً');
+  const url=URL.createObjectURL(x.blob),a=document.createElement('a');
+  a.href=url;a.download='medina-members-export.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  toast('تم تجهيز ملف الأعضاء للتنزيل');
+}
 async function refreshMembers(){store.memberSearchMode=false;store.memberSearchRows=[];resetPager(store.members);store.members.total=null;await loadMembers(true);}
 async function searchMemberGlobal(){const term=clean($('memberGlobalSearch')?.value);if(!term)return toast('اكتب الاسم أو الهاتف أو الرمز');try{const f=await firebase(),fields=['phone','code','name','username'];let found=[];for(const field of fields){const snap=await f.fs.getDocs(f.fs.query(f.fs.collection(f.db,COL.members),f.fs.where(field,'==',term),f.fs.limit(5)));found.push(...snap.docs.map(normalizeMember));if(found.length)break;}const map=new Map(found.map(x=>[x.id,x]));store.memberSearchRows=[...map.values()].filter(x=>x.status!=='deleted');store.memberSearchMode=true;render();if(!store.memberSearchRows.length)toast('لم يتم العثور على عضو مطابق');}catch(e){console.error(e);toast('تعذر تنفيذ البحث');}}
 function clearMemberSearch(){store.memberSearchMode=false;store.memberSearchRows=[];render();}
